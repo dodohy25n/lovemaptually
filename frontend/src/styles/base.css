@@ -1,0 +1,138 @@
+@import './tokens.css';
+
+*,
+*::before,
+*::after { box-sizing: border-box; }
+
+html, body, #app { height: 100%; }
+
+body {
+  margin: 0;
+  font-family: var(--lm-font);
+  font-size: var(--lm-text-md);
+  color: var(--lm-ink);
+  background-color: var(--lm-bg);
+  background-image: url('/assets/paper-texture.svg');
+  background-repeat: repeat;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3, h4 { margin: 0; line-height: 1.3; }
+p { margin: 0; }
+ul, ol { margin: 0; padding: 0; list-style: none; }
+img { max-width: 100%; }
+
+button {
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+  background: none;
+  border: none;
+  padding: 0;
+}
+
+a { color: inherit; }
+
+:focus-visible {
+  outline: 3px solid var(--lm-pink);
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+
+.lm-sr-only {
+  position: absolute;
+  width: 1px; height: 1px;
+  padding: 0; margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* ── 종이 카드 ─────────────────────────────── */
+.lm-card {
+  position: relative;
+  background: var(--lm-card);
+  border: 1px solid var(--lm-card-edge);
+  border-radius: var(--lm-radius);
+  box-shadow: var(--lm-shadow-card);
+}
+.lm-card__title {
+  font-size: var(--lm-text-md);
+  font-weight: 700;
+  color: var(--lm-ink);
+}
+
+/* ── 버튼 ─────────────────────────────────── */
+.lm-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--lm-space-2);
+  padding: 9px 18px;
+  border-radius: 999px;
+  border: 1px solid transparent;
+  font-weight: 600;
+  font-size: var(--lm-text-sm);
+  transition: transform 0.12s ease, box-shadow 0.12s ease, background-color 0.12s ease;
+}
+.lm-btn:hover:not(:disabled) { transform: translateY(-1px); }
+.lm-btn:active:not(:disabled) { transform: translateY(0); }
+.lm-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.lm-btn--primary {
+  background: var(--lm-pink);
+  color: #fff;
+  box-shadow: 0 4px 12px rgba(236, 116, 137, 0.3);
+}
+.lm-btn--ghost {
+  background: var(--lm-card);
+  border-color: var(--lm-pink-line);
+  color: var(--lm-pink);
+}
+.lm-btn--quiet {
+  background: var(--lm-card);
+  border-color: var(--lm-card-edge);
+  color: var(--lm-ink-soft);
+}
+
+/* ── 입력 ─────────────────────────────────── */
+.lm-field { display: flex; flex-direction: column; gap: 5px; }
+.lm-field > label {
+  font-size: var(--lm-text-xs);
+  font-weight: 700;
+  color: var(--lm-ink-soft);
+}
+.lm-field input,
+.lm-field select,
+.lm-field textarea {
+  font: inherit;
+  font-size: var(--lm-text-sm);
+  color: var(--lm-ink);
+  padding: 9px 11px;
+  border: 1px solid var(--lm-card-edge);
+  border-radius: var(--lm-radius-sm);
+  background: #fff;
+  width: 100%;
+}
+.lm-field textarea { resize: vertical; min-height: 80px; }
+.lm-field__error { font-size: var(--lm-text-xs); color: var(--lm-danger); }
+
+/* ── 테이프 장식 (장식이 텍스트를 가리지 않도록 pointer-events 해제) ── */
+.lm-tape {
+  position: absolute;
+  width: 74px;
+  height: 24px;
+  background: url('/assets/pink-tape.svg') center/contain no-repeat;
+  pointer-events: none;
+  opacity: 0.9;
+}
+.lm-tape--tl { top: -11px; left: -14px; transform: rotate(-16deg); }
+.lm-tape--br { right: -14px; bottom: -10px; transform: rotate(-8deg); }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}

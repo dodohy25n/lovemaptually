@@ -1,0 +1,97 @@
+/* Love Maptually 디자인 토큰
+ *
+ * 색상값은 Figma 와이어프레임(Love Maptually - Wireframe@2x.png)에서
+ * 픽셀을 직접 추출한 값입니다. 컴포넌트에서는 반드시 var()로만 사용합니다.
+ */
+:root {
+  /* ── 종이 / 배경 ───────────────────────────── */
+  --lm-bg: #f4ede5;              /* 페이지·지도 바탕 */
+  --lm-header-bg: #fdfaf5;       /* 헤더 종이 */
+  --lm-card: #fff9f1;            /* 카드 종이 */
+  --lm-card-edge: #e5d5c8;       /* 카드 테두리 */
+  --lm-card-edge-soft: #e6d6c7;  /* 구분선 */
+  --lm-paper-shade: #e5dad0;     /* 종이 음영 */
+  --lm-spring-dot: #a9837d;      /* 스프링 제본 구멍 */
+
+  /* ── 핑크 (강조색) ─────────────────────────── */
+  --lm-pink: #ec7489;            /* 메인: 제목, 활성 탭, 숫자 */
+  --lm-pink-heart: #ef6f88;      /* 하트 채움 */
+  --lm-pink-btn: #f26f8a;        /* 챗봇 버튼 */
+  --lm-pink-soft: #f28ba0;       /* 아바타, 보조 */
+  --lm-pink-tape: #f7c0ba;       /* 테이프 장식 */
+  --lm-pink-bg: #f7e9e5;         /* 연핑크 배경 */
+  --lm-pink-bg-2: #fde8e4;       /* 더 연한 핑크 배경 */
+  --lm-pink-line: #f7c7ca;       /* 핑크 얇은 선 */
+
+  /* ── 리뷰 주체 구분 (색상만으로 구분하지 않도록 라벨과 함께 사용) ── */
+  --lm-him: #8b6b61;             /* 그의 리뷰 강조 (따뜻한 갈색) */
+  --lm-him-bg: #f3ebe4;
+  --lm-him-line: #ddcabd;
+  --lm-her: #ec7489;             /* 그녀의 리뷰 강조 (핑크) */
+  --lm-her-bg: #f7e9e5;
+  --lm-her-line: #f7c7ca;
+
+  /* ── 텍스트 ────────────────────────────────── */
+  --lm-ink: #705149;             /* 제목·본문 */
+  --lm-ink-soft: #8b6b61;        /* 보조 텍스트 */
+  --lm-ink-faint: #b7a59d;       /* 흐린 텍스트 */
+
+  /* ── 지도 ─────────────────────────────────── */
+  --lm-map-bg: #f4ede5;
+  --lm-map-road: #fefefe;
+  --lm-map-river: #cce3e8;
+  --lm-map-park: #dfe9d4;
+  --lm-map-block: #e5dad0;
+
+  /* ── 상태 ─────────────────────────────────── */
+  --lm-danger: #c0563f;
+  --lm-ok: #6f9b6a;
+
+  /* ── 하트 등급 (색상만으로 구분하지 않도록 라벨/아이콘과 함께 사용) ── */
+  --lm-grade-good: #ef6f88;
+  --lm-grade-normal: #f0a3ae;
+  --lm-grade-bad: #c6a9a2;
+
+  /* ── 간격 ─────────────────────────────────── */
+  --lm-space-1: 4px;
+  --lm-space-2: 8px;
+  --lm-space-3: 12px;
+  --lm-space-4: 16px;
+  --lm-space-5: 20px;
+  --lm-space-6: 28px;
+  --lm-space-7: 40px;
+
+  /* ── 모서리 / 그림자 ───────────────────────── */
+  --lm-radius-sm: 10px;
+  --lm-radius: 16px;
+  --lm-radius-lg: 22px;
+  --lm-shadow-card: 0 4px 14px rgba(112, 81, 73, 0.1);
+  --lm-shadow-lift: 0 12px 30px rgba(112, 81, 73, 0.2);
+  --lm-shadow-pin: 0 4px 10px rgba(112, 81, 73, 0.28);
+
+  /* ── 타이포 ───────────────────────────────── */
+  /* 로고: Great Vibes / 한글 본문: Jeju Hallasan (Figma 지정)
+   * Jeju Hallasan은 웨이트가 400 하나뿐이라 bold가 없습니다.
+   * 위계는 굵기 대신 크기·색으로 잡고, 숫자/영문 가독성을 위해 sans 폴백을 함께 둡니다. */
+  --lm-font: 'Jeju Hallasan', 'Apple SD Gothic Neo', 'Noto Sans KR', system-ui, sans-serif;
+  --lm-font-logo: 'Great Vibes', 'Snell Roundhand', cursive;
+  --lm-text-xs: 11px;
+  --lm-text-sm: 12px;
+  --lm-text-md: 14px;
+  --lm-text-lg: 16px;
+  --lm-text-xl: 20px;
+  --lm-text-2xl: 28px;
+  --lm-text-3xl: 34px;
+
+  /* ── 레이아웃 (와이어프레임 실측: 프레임 1536, 사이드바 250, 지도 1216) ── */
+  --lm-frame-max: 1536px;
+  --lm-header-h: 120px;
+  --lm-sidebar-w: 250px;
+  --lm-gutter: 28px;
+
+  /* ── z-index ──────────────────────────────── */
+  --lm-z-map-ui: 20;
+  --lm-z-panel: 40;
+  --lm-z-modal: 60;
+  --lm-z-chat: 70;
+}

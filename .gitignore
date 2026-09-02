@@ -1,0 +1,28 @@
+node_modules/
+dist/
+.cache/
+playwright-report/
+test-results/
+.env
+.env.*
+!.env.example
+.DS_Store
+__MACOSX/
+
+# 빌드 산출물 / 캐시
+frontend/node_modules/
+frontend/dist/
+frontend/.vite/
+frontend/coverage/
+frontend/playwright-report/
+frontend/test-results/
+frontend/blob-report/
+frontend/.playwright/
+
+# API 응답 원본 캐시, 테스트 영상
+**/*.har
+**/api-cache/
+**/*.webm
+
+# 디자인 원본 (Figma 내보내기 · 용량이 커서 저장소에 넣지 않음)
+frontend/design/

@@ -241,7 +241,88 @@ describe('Repository 인터페이스', () => {
 
   it('아직 연동하지 않은 API 메서드는 준비되지 않았음을 명시적으로 알린다', async () => {
     const api = new ApiPlaceRepository({ baseUrl: 'https://example.test' })
-    await expect(api.list()).rejects.toMatchObject({ code: 'backend_not_ready' })
+    await expect(api.get('place-1')).rejects.toMatchObject({ code: 'backend_not_ready' })
+  })
+})
+
+describe('장소 목록 API', () => {
+  it('GET /api/places 응답을 화면의 장소 목록으로 변환한다', async () => {
+    const fetchImpl = vi.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: async () => ({
+        status: 200,
+        message: '조회했습니다',
+        data: {
+          content: [
+            {
+              placeId: 412,
+              provider: 'KAKAO',
+              providerPlaceId: 'DEMO-412',
+              name: '○○찻집',
+              address: '서울 종로구 인사동길',
+              category: '카페',
+              latitude: 37.5741,
+              longitude: 126.9853,
+            },
+            { placeId: 999, name: '', latitude: null, longitude: null },
+          ],
+          page: 0,
+          size: 10,
+          totalElements: 2,
+        },
+      }),
+    })
+    const api = new ApiPlaceRepository({
+      baseUrl: 'https://demo.mock.pstmn.io',
+      fetchImpl,
+    })
+
+    await expect(api.list()).resolves.toMatchObject([
+      {
+        id: '412',
+        provider: 'kakao',
+        providerPlaceId: 'DEMO-412',
+        name: '○○찻집',
+        tags: [],
+        reviews: [],
+      },
+    ])
+    const [url, request] = fetchImpl.mock.calls[0]
+    expect(String(url)).toBe('https://demo.mock.pstmn.io/api/places')
+    expect(request).toMatchObject({
+      method: 'GET',
+      headers: { Accept: 'application/json', Authorization: 'Bearer mock-token' },
+    })
+  })
+
+  it('content가 없는 성공 응답을 거부한다', async () => {
+    const api = new ApiPlaceRepository({
+      baseUrl: 'https://example.test',
+      fetchImpl: vi.fn().mockResolvedValue({
+        ok: true,
+        status: 200,
+        json: async () => ({ status: 200, data: {} }),
+      }),
+    })
+
+    await expect(api.list()).rejects.toMatchObject({ code: 'invalid_response' })
+  })
+
+  it('HTTP 오류의 API 메시지를 전달한다', async () => {
+    const api = new ApiPlaceRepository({
+      baseUrl: 'https://example.test',
+      fetchImpl: vi.fn().mockResolvedValue({
+        ok: false,
+        status: 500,
+        json: async () => ({ message: '잠시 후 다시 시도해주세요' }),
+      }),
+    })
+
+    await expect(api.list()).rejects.toMatchObject({
+      code: 'http_error',
+      message: '잠시 후 다시 시도해주세요',
+    })
   })
 })
 

@@ -1,7 +1,9 @@
 <script setup>
 import { ref, shallowRef, onMounted, onBeforeUnmount, watch, nextTick } from 'vue'
 import HeartMarker from './HeartMarker.vue'
+import BaseIcon from './BaseIcon.vue'
 import { createMapEngine } from '@/services/mapEngine.js'
+import { getCurrentPosition } from '@/services/geolocation.js'
 
 /**
  * 실제 지도(카카오 지도).
@@ -28,6 +30,20 @@ const positions = ref({})
 const mapImageMissing = ref(false)
 const ready = ref(false)
 
+// ── 내 위치 ──────────────────────────────────────────────
+const myLocation = ref(null)
+const myLocationPoint = ref(null)
+const locating = ref(false)
+const locateError = ref('')
+
+const LOCATE_ERRORS = {
+  denied: '위치 권한이 거부되어 있어요. 브라우저 주소창의 자물쇠에서 허용해주세요.',
+  insecure: 'https 연결에서만 현재 위치를 쓸 수 있어요.',
+  unsupported: '이 브라우저에서는 현재 위치를 쓸 수 없어요.',
+  timeout: '위치를 찾는 데 너무 오래 걸려요. 잠시 후 다시 시도해주세요.',
+  unavailable: '현재 위치를 가져오지 못했어요.',
+}
+
 let resizeObserver = null
 // 장소는 마운트 직후가 아니라 스토어 로딩이 끝난 뒤 도착합니다.
 // 목록이 처음 채워지는 순간 한 번만 지도 범위를 맞춥니다.
@@ -48,8 +64,29 @@ function syncPositions() {
     next[place.id] = engine.value.containerPointOf(place)
   }
   positions.value = next
+  // 내 위치 표시도 지도와 함께 따라 움직여야 합니다.
+  myLocationPoint.value = myLocation.value
+    ? engine.value.containerPointOf(myLocation.value)
+    : null
 }
 
+/** '내 위치' — 현재 위치로 지도를 옮기고 그 자리에 표시를 남깁니다. */
+async function locateMe() {
+  if (locating.value) return
+  locating.value = true
+  locateError.value = ''
+  try {
+    const coordinate = await getCurrentPosition()
+    myLocation.value = coordinate
+    engine.value?.panTo(coordinate)
+    await nextTick()
+    syncPositions()
+  } catch (error) {
+    locateError.value = LOCATE_ERRORS[error?.code] ?? LOCATE_ERRORS.unavailable
+  } finally {
+    locating.value = false
+  }
+}
 
 /** 저장된 장소가 모두 보이도록 지도 범위를 맞춥니다. */
 function fitToPlaces() {
@@ -147,6 +184,33 @@ defineExpose({ focusPlace, fitToPlaces })
       </div>
     </div>
 
+    <!-- 내 위치 표시. 지도와 함께 움직이도록 핀과 같은 방식으로 좌표를 계산합니다. -->
+    <div
+      v-if="ready && myLocationPoint"
+      class="map__me"
+      data-testid="map-my-location"
+      aria-hidden="true"
+      :style="{ left: `${myLocationPoint.x}px`, top: `${myLocationPoint.y}px` }"
+    >
+      <span class="map__me-dot"></span>
+    </div>
+
+    <button
+      type="button"
+      class="map__locate"
+      :aria-label="locating ? '현재 위치를 찾는 중' : '내 위치로 이동'"
+      :aria-busy="locating"
+      :disabled="locating"
+      data-testid="map-locate"
+      @click="locateMe"
+    >
+      <BaseIcon name="locate" :size="20" />
+    </button>
+
+    <p v-if="locateError" class="map__notice map__notice--error" role="status" data-testid="map-locate-error">
+      {{ locateError }}
+    </p>
+
     <p v-if="picking" class="map__hint" role="status">
       지도를 클릭해 장소의 위치를 찍어주세요.
     </p>
@@ -228,6 +292,48 @@ defineExpose({ focusPlace, fitToPlaces })
   background: var(--lm-card);
   border: 1px solid var(--lm-card-edge);
   color: var(--lm-ink);
+}
+
+/* 내 위치 버튼 — 카카오 로고(좌하단)와 카테고리 필터(하단 중앙)를 피해 놓습니다. */
+.map__locate {
+  position: absolute;
+  left: var(--lm-space-3);
+  bottom: 44px;
+  z-index: var(--lm-z-map-ui);
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: var(--lm-card);
+  border: 1px solid var(--lm-card-edge);
+  color: var(--lm-ink);
+  box-shadow: var(--lm-shadow-card);
+  transition: color 0.16s ease, transform 0.16s ease;
+}
+.map__locate:hover { color: var(--lm-pink); transform: translateY(-1px); }
+.map__locate:disabled { opacity: 0.6; cursor: progress; transform: none; }
+
+.map__me {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  z-index: var(--lm-z-map-ui);
+}
+.map__me-dot {
+  display: block;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--lm-pink-btn);
+  border: 3px solid #fff;
+  box-shadow: 0 0 0 4px rgba(242, 111, 138, 0.28);
+}
+
+.map__notice--error {
+  max-width: min(88%, 460px);
+  text-align: center;
+  line-height: 1.5;
 }
 
 /* 대체 지도(Leaflet)의 기본 UI만 디자인 톤에 맞춥니다.

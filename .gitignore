@@ -19,6 +19,13 @@ frontend/test-results/
 frontend/blob-report/
 frontend/.playwright/
 
+# Backend build output / IDE files
+backend/.gradle/
+backend/build/
+backend/out/
+backend/.idea/
+backend/*.iml
+
 # API 응답 원본 캐시, 테스트 영상
 **/*.har
 **/api-cache/

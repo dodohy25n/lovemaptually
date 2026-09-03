@@ -241,7 +241,7 @@ describe('Repository 인터페이스', () => {
 
   it('아직 연동하지 않은 API 메서드는 준비되지 않았음을 명시적으로 알린다', async () => {
     const api = new ApiPlaceRepository({ baseUrl: 'https://example.test' })
-    await expect(api.get('place-1')).rejects.toMatchObject({ code: 'backend_not_ready' })
+    await expect(api.create({})).rejects.toMatchObject({ code: 'backend_not_ready' })
   })
 })
 

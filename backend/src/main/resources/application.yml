@@ -1,0 +1,30 @@
+spring:
+  application:
+    name: lovemaptually-backend
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/lovemaptually}
+    username: ${DB_USERNAME:lovemaptually}
+    password: ${DB_PASSWORD:lovemaptually}
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+    properties:
+      hibernate:
+        jdbc:
+          time_zone: UTC
+  flyway:
+    enabled: true
+
+server:
+  port: ${SERVER_PORT:8080}
+
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+
+logging:
+  level:
+    root: INFO

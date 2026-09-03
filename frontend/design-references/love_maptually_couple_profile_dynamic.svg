@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="240" height="240" viewBox="0 0 240 240">
+ <rect width="240" height="240" rx="12" fill="#FFF9F1" stroke="#E6D6C7" stroke-width="2"/>
+ <rect x="5" y="14" width="58" height="17" rx="3" fill="#F5B4AE" transform="rotate(-17 5 14)" opacity=".82"/>
+ <text x="120" y="48" text-anchor="middle" font-family="Arial,sans-serif" font-size="16" font-weight="700" fill="#EC7489">♡ 우리의 러브맵 ♡</text>
+ <!-- profileImageUrl -->
+ <circle cx="120" cy="112" r="48" fill="#F7E9E5" stroke="#F1B0BA" stroke-width="2"/>
+ <circle cx="120" cy="100" r="17" fill="#D8C3BD"/>
+ <path d="M88 148C92 122 105 116 120 116C135 116 148 122 152 148Z" fill="#D8C3BD"/>
+ <circle cx="153" cy="143" r="15" fill="#EC7489" stroke="#FFF9F1" stroke-width="3"/>
+ <rect x="146" y="138" width="14" height="10" rx="2" fill="none" stroke="#FFFFFF" stroke-width="1.8"/>
+ <circle cx="153" cy="143" r="3" fill="none" stroke="#FFFFFF" stroke-width="1.5"/>
+ <!-- visitedPlaceCount -->
+ <text x="120" y="184" text-anchor="middle" font-family="Arial,sans-serif" font-size="13" fill="#705149">우리가 함께한 장소</text>
+ <text x="105" y="219" text-anchor="middle" font-family="Arial,sans-serif" font-size="31" font-weight="800" fill="#EC7489">12</text>
+ <text x="137" y="217" font-family="Arial,sans-serif" font-size="14" fill="#705149">곳</text>
+</svg>

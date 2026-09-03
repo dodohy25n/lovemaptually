@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="220" height="224" viewBox="0 0 220 224">
+  <!-- welcome bubble -->
+  <path d="M18 10H190C199 10 206 17 206 26V92C206 101 199 108 190 108H153L143 124L135 108H18C9 108 2 101 2 92V26C2 17 9 10 18 10Z" fill="#FFF9F1" stroke="#F3B0B8" stroke-width="2"/>
+  <text x="19" y="38" font-family="Arial,sans-serif" font-size="13" font-weight="700" fill="#EC7489">안녕! 나는 러비야!</text>
+  <text x="19" y="62" font-family="Arial,sans-serif" font-size="12" fill="#705149">궁금한 게 있으면</text>
+  <text x="19" y="82" font-family="Arial,sans-serif" font-size="12" fill="#705149">무엇이든 물어봐줘! ♡</text>
+
+  <!-- raccoon tail -->
+  <path d="M162 156C194 137 215 153 207 174C201 191 179 192 165 178" fill="#9A725D" stroke="#61473D" stroke-width="3"/>
+  <path d="M184 149C192 151 199 156 202 162M190 186C198 182 204 177 207 170" fill="none" stroke="#4D3A35" stroke-width="8" opacity=".75"/>
+
+  <!-- ears -->
+  <path d="M79 139L67 116C65 111 70 106 75 109L96 122Z" fill="#8A6655" stroke="#553E35" stroke-width="3"/>
+  <path d="M145 139L157 116C159 111 154 106 149 109L128 122Z" fill="#8A6655" stroke="#553E35" stroke-width="3"/>
+  <path d="M77 117L86 132L92 124Z" fill="#E9A3A8"/>
+  <path d="M147 117L138 132L132 124Z" fill="#E9A3A8"/>
+
+  <!-- body and head -->
+  <ellipse cx="112" cy="182" rx="54" ry="25" fill="#956F5C" stroke="#553E35" stroke-width="3"/>
+  <ellipse cx="112" cy="151" rx="48" ry="42" fill="#A77B64" stroke="#553E35" stroke-width="3"/>
+  <ellipse cx="112" cy="160" rx="33" ry="27" fill="#F4E5D6"/>
+
+  <!-- face mask -->
+  <path d="M72 143C81 128 96 126 108 141C98 155 84 157 72 143Z" fill="#4D3A35"/>
+  <path d="M152 143C143 128 128 126 116 141C126 155 140 157 152 143Z" fill="#4D3A35"/>
+  <ellipse cx="91" cy="142" rx="5" ry="6" fill="#FFFFFF"/><circle cx="92" cy="143" r="3" fill="#30231F"/>
+  <ellipse cx="133" cy="142" rx="5" ry="6" fill="#FFFFFF"/><circle cx="132" cy="143" r="3" fill="#30231F"/>
+  <path d="M106 155Q112 150 118 155Q116 162 112 162Q108 162 106 155Z" fill="#382923"/>
+  <path d="M104 166Q112 173 120 166" fill="none" stroke="#553E35" stroke-width="2" stroke-linecap="round"/>
+  <circle cx="80" cy="158" r="5" fill="#EFA6AA" opacity=".8"/><circle cx="144" cy="158" r="5" fill="#EFA6AA" opacity=".8"/>
+
+  <!-- heart held by mascot -->
+  <path d="M112 183C101 169 80 177 80 191C80 203 112 219 112 219C112 219 144 203 144 191C144 177 123 169 112 183Z" fill="#EF6F88" stroke="#FFF9F1" stroke-width="3"/>
+
+  <!-- floating chat button -->
+  <circle cx="193" cy="186" r="25" fill="#EF7188" stroke="#FFF9F1" stroke-width="4"/>
+  <path d="M181 177H204C208 177 211 180 211 184V190C211 194 208 197 204 197H198L193 202L191 197H181C177 197 174 194 174 190V184C174 180 177 177 181 177Z" fill="none" stroke="#FFFFFF" stroke-width="2"/>
+  <circle cx="184" cy="187" r="1.5" fill="#FFFFFF"/><circle cx="192" cy="187" r="1.5" fill="#FFFFFF"/><circle cx="200" cy="187" r="1.5" fill="#FFFFFF"/>
+</svg>

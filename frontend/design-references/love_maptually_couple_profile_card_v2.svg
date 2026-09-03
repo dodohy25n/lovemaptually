@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="240" height="300" viewBox="0 0 240 300">
+ <rect width="240" height="300" rx="12" fill="#FFF9F1" stroke="#E6D6C7" stroke-width="2"/>
+ <rect x="4" y="15" width="62" height="18" rx="3" fill="#F5B4AE" transform="rotate(-18 4 15)"/>
+ <text x="120" y="52" text-anchor="middle" font-family="Arial,sans-serif" font-size="17" font-weight="700" fill="#EC7489">♡ 우리의 러브맵 ♡</text>
+ <circle cx="120" cy="132" r="63" fill="#FFF5F2" stroke="#F3B5BB" stroke-width="2"/>
+ <circle cx="91" cy="124" r="24" fill="#F2C2A5" stroke="#62463B" stroke-width="2"/>
+ <path d="M68 119Q72 88 99 94Q116 98 114 119Q101 106 86 110Q78 114 68 119Z" fill="#574034" stroke="#3C2D28" stroke-width="2"/>
+ <circle cx="84" cy="126" r="2.5" fill="#332724"/><circle cx="100" cy="126" r="2.5" fill="#332724"/>
+ <path d="M87 138Q93 144 100 138" fill="none" stroke="#A34F55" stroke-width="2" stroke-linecap="round"/>
+ <path d="M59 181Q62 143 93 143Q122 143 126 181Z" fill="#F0A5A5" stroke="#62463B" stroke-width="2"/>
+ <circle cx="150" cy="124" r="24" fill="#F2C2A5" stroke="#62463B" stroke-width="2"/>
+ <path d="M126 121Q127 89 153 92Q176 95 176 125Q165 103 155 102Q143 114 126 121Z" fill="#734B39" stroke="#4E362D" stroke-width="2"/>
+ <path d="M129 118Q120 145 130 165M173 117Q180 144 170 166" fill="none" stroke="#734B39" stroke-width="9" stroke-linecap="round"/>
+ <circle cx="142" cy="126" r="2.5" fill="#332724"/><circle cx="158" cy="126" r="2.5" fill="#332724"/>
+ <path d="M144 138Q150 144 157 138" fill="none" stroke="#A34F55" stroke-width="2" stroke-linecap="round"/>
+ <path d="M120 181Q124 143 151 143Q180 143 184 181Z" fill="#F5B2B2" stroke="#62463B" stroke-width="2"/>
+ <path d="M120 76C109 65 95 81 120 101C145 81 131 65 120 76Z" fill="#EC7489" stroke="#FFFFFF" stroke-width="2"/>
+ <text x="120" y="221" text-anchor="middle" font-family="Arial,sans-serif" font-size="14" fill="#705149">우리가 함께한 장소</text>
+ <text x="101" y="263" text-anchor="middle" font-family="Arial,sans-serif" font-size="36" font-weight="800" fill="#EC7489">12</text>
+ <text x="140" y="260" font-family="Arial,sans-serif" font-size="15" fill="#705149">곳</text>
+</svg>

@@ -40,12 +40,17 @@ describe('평점에 따른 하트 등급 계산', () => {
     expect(toHeartGrade('4.5')).toBe('good')
   })
 
-  it('등급마다 라벨과 아이콘 경로가 있다', () => {
-    for (const key of ['good', 'normal', 'bad']) {
+  it('등급마다 라벨과 서로 다른 아이콘이 있다', () => {
+    // 아이콘은 번들러가 처리합니다(해시가 붙거나 data URI로 인라인됨).
+    // 경로 모양 대신 '세 등급의 아이콘이 서로 다르다'는 실제 규칙을 확인합니다.
+    const assets = ['good', 'normal', 'bad'].map((key) => {
       const info = heartGradeInfo(key)
       expect(info.label).toBeTruthy()
-      expect(info.asset).toMatch(/^\/assets\/heart-.+\.svg$/)
-    }
+      expect(typeof info.asset).toBe('string')
+      expect(info.asset.length).toBeGreaterThan(0)
+      return info.asset
+    })
+    expect(new Set(assets).size).toBe(3)
   })
 
   it('알 수 없는 등급은 bad로 폴백한다', () => {

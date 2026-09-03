@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="240" height="286" viewBox="0 0 240 286">
+  <rect x="1" y="1" width="238" height="284" rx="10" fill="#FFF9F1" stroke="#E6D6C7" stroke-width="2"/>
+  <text x="20" y="30" font-family="Arial,sans-serif" font-size="14" font-weight="700" fill="#705149">최근 방문 장소</text>
+
+  <!-- place item 1 -->
+  <circle cx="37" cy="67" r="20" fill="#E8D7CA"/>
+  <path d="M21 70L31 58L39 65L46 57L53 70Z" fill="#B89B86"/>
+  <circle cx="31" cy="59" r="4" fill="#FFF1D1"/>
+  <text x="68" y="61" font-family="Arial,sans-serif" font-size="13" font-weight="700" fill="#4C3A35">디어 모먼트</text>
+  <text x="68" y="79" font-family="Arial,sans-serif" font-size="11" fill="#967C73">카페 / 강남구</text>
+  <path d="M192 57C188 52 179 55 179 62C179 69 192 77 192 77C192 77 205 69 205 62C205 55 196 52 192 57Z" fill="#EF6F88"/>
+  <text x="211" y="68" font-family="Arial,sans-serif" font-size="12" fill="#705149">4.5</text>
+  <line x1="20" y1="98" x2="220" y2="98" stroke="#EEDFD4"/>
+
+  <!-- place item 2 -->
+  <circle cx="37" cy="128" r="20" fill="#E6D6C6"/>
+  <path d="M20 134L30 118L37 126L45 116L54 134Z" fill="#9B7B65"/>
+  <path d="M20 134H54" stroke="#715B4C" stroke-width="2"/>
+  <text x="68" y="122" font-family="Arial,sans-serif" font-size="13" font-weight="700" fill="#4C3A35">로맨틱 가든</text>
+  <text x="68" y="140" font-family="Arial,sans-serif" font-size="11" fill="#967C73">레스토랑 / 서초구</text>
+  <path d="M192 118C188 113 179 116 179 123C179 130 192 138 192 138C192 138 205 130 205 123C205 116 196 113 192 118Z" fill="#FFF9F1" stroke="#EF8B9C" stroke-width="1.6"/>
+  <path d="M192 118C188 113 179 116 179 123C179 130 192 138 192 138Z" fill="#F08A9D"/>
+  <text x="211" y="129" font-family="Arial,sans-serif" font-size="12" fill="#705149">3.2</text>
+  <line x1="20" y1="159" x2="220" y2="159" stroke="#EEDFD4"/>
+
+  <!-- place item 3 -->
+  <circle cx="37" cy="189" r="20" fill="#E8D1B9"/>
+  <path d="M19 194L27 183L34 188L42 178L55 194Z" fill="#A97855"/>
+  <circle cx="47" cy="183" r="5" fill="#F4C47D"/>
+  <text x="68" y="183" font-family="Arial,sans-serif" font-size="13" font-weight="700" fill="#4C3A35">달빛 라멘</text>
+  <text x="68" y="201" font-family="Arial,sans-serif" font-size="11" fill="#967C73">일식 / 마포구</text>
+  <path d="M192 179C188 174 179 177 179 184C179 191 192 199 192 199C192 199 205 191 205 184C205 177 196 174 192 179Z" fill="#FFF9F1" stroke="#B77D73" stroke-width="1.6"/>
+  <path d="M194 177L189 184L194 189L189 196" fill="none" stroke="#B77D73" stroke-width="1.5"/>
+  <text x="211" y="190" font-family="Arial,sans-serif" font-size="12" fill="#705149">1.8</text>
+
+  <rect x="20" y="232" width="200" height="36" rx="8" fill="#FFF6ED" stroke="#E4D0C1"/>
+  <text x="112" y="255" text-anchor="middle" font-family="Arial,sans-serif" font-size="12" fill="#8B6B61">더 보기</text>
+  <path d="M147 247L152 252L157 247" fill="none" stroke="#8B6B61" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1536" height="120" viewBox="0 0 1536 120">
+  <defs>
+    <linearGradient id="paper" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#fffdf9"/><stop offset="1" stop-color="#fbf7f0"/>
+    </linearGradient>
+    <filter id="shadow" x="-10%" y="-30%" width="120%" height="180%">
+      <feDropShadow dx="0" dy="3" stdDeviation="4" flood-color="#9b6f67" flood-opacity=".13"/>
+    </filter>
+    <style>
+      .kr{font-family:'Apple SD Gothic Neo','Noto Sans KR',sans-serif}.logo{font-family:'Snell Roundhand','Apple Chancery',cursive}
+    </style>
+  </defs>
+  <rect x="1" y="1" width="1534" height="118" rx="18" fill="url(#paper)" stroke="#eadfd4" filter="url(#shadow)"/>
+  <g opacity=".75">
+    <path d="M0 18h1536M0 106h1536" stroke="#f1e6de"/>
+    <circle cx="45" cy="15" r="7" fill="#8d5b54"/><circle cx="82" cy="15" r="7" fill="#8d5b54"/><circle cx="119" cy="15" r="7" fill="#8d5b54"/><circle cx="156" cy="15" r="7" fill="#8d5b54"/><circle cx="193" cy="15" r="7" fill="#8d5b54"/><circle cx="230" cy="15" r="7" fill="#8d5b54"/><circle cx="267" cy="15" r="7" fill="#8d5b54"/><circle cx="304" cy="15" r="7" fill="#8d5b54"/><circle cx="341" cy="15" r="7" fill="#8d5b54"/><circle cx="378" cy="15" r="7" fill="#8d5b54"/><circle cx="415" cy="15" r="7" fill="#8d5b54"/><circle cx="452" cy="15" r="7" fill="#8d5b54"/><circle cx="489" cy="15" r="7" fill="#8d5b54"/><circle cx="526" cy="15" r="7" fill="#8d5b54"/><circle cx="563" cy="15" r="7" fill="#8d5b54"/><circle cx="600" cy="15" r="7" fill="#8d5b54"/><circle cx="637" cy="15" r="7" fill="#8d5b54"/><circle cx="674" cy="15" r="7" fill="#8d5b54"/><circle cx="711" cy="15" r="7" fill="#8d5b54"/><circle cx="748" cy="15" r="7" fill="#8d5b54"/><circle cx="785" cy="15" r="7" fill="#8d5b54"/><circle cx="822" cy="15" r="7" fill="#8d5b54"/><circle cx="859" cy="15" r="7" fill="#8d5b54"/><circle cx="896" cy="15" r="7" fill="#8d5b54"/><circle cx="933" cy="15" r="7" fill="#8d5b54"/><circle cx="970" cy="15" r="7" fill="#8d5b54"/><circle cx="1007" cy="15" r="7" fill="#8d5b54"/><circle cx="1044" cy="15" r="7" fill="#8d5b54"/><circle cx="1081" cy="15" r="7" fill="#8d5b54"/><circle cx="1118" cy="15" r="7" fill="#8d5b54"/><circle cx="1155" cy="15" r="7" fill="#8d5b54"/><circle cx="1192" cy="15" r="7" fill="#8d5b54"/><circle cx="1229" cy="15" r="7" fill="#8d5b54"/><circle cx="1266" cy="15" r="7" fill="#8d5b54"/><circle cx="1303" cy="15" r="7" fill="#8d5b54"/><circle cx="1340" cy="15" r="7" fill="#8d5b54"/><circle cx="1377" cy="15" r="7" fill="#8d5b54"/><circle cx="1414" cy="15" r="7" fill="#8d5b54"/><circle cx="1451" cy="15" r="7" fill="#8d5b54"/><circle cx="1488" cy="15" r="7" fill="#8d5b54"/>
+  </g>
+  <text x="52" y="68" class="logo" font-size="30" font-weight="700" fill="#ee8094">Love Maptually</text>
+  <path d="m251 44 5-9 5 9 10 2-7 7 2 10-10-5-9 5 2-10-7-7z" fill="#ee8094" opacity=".8"/>
+  <text x="105" y="91" class="kr" font-size="11" fill="#ee8094">러브 맵츄얼리</text>
+  <g class="kr" font-size="15" fill="#76554d" text-anchor="middle">
+    <text x="487" y="70" fill="#ed7188" font-weight="700">홈</text><text x="580" y="70">지도</text><text x="690" y="70">추천 맛집</text><text x="825" y="70">데이트 코스</text><text x="955" y="70">커뮤니티</text><text x="1080" y="70">마이페이지</text>
+  </g>
+  <rect x="463" y="87" width="48" height="2.5" rx="1.25" fill="#ed7188"/>
+  <g fill="none" stroke="#805f56" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="1342" cy="63" r="11"/><path d="m1350 71 9 9"/>
+    <path d="M1392 75h25l-5-7V55a8 8 0 0 0-16 0v13z"/><path d="M1400 79q5 5 10 0"/>
+  </g>
+  <circle cx="1471" cy="63" r="22" fill="#f28ba0"/><circle cx="1471" cy="56" r="6" fill="#fff"/><path d="M1459 77c2-12 22-12 24 0" fill="#fff"/>
+</svg>

@@ -1,0 +1,79 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="640" viewBox="0 0 960 640">
+  <rect x="1" y="1" width="958" height="638" rx="18" fill="#F8F2EC" stroke="#E5D5C8" stroke-width="2"/>
+
+  <!-- future map API replacement area -->
+  <rect x="14" y="14" width="932" height="612" rx="14" fill="#F4EDE5"/>
+  <path d="M510 -20C500 80 545 134 532 225C518 320 468 356 475 450C481 530 546 575 570 660" fill="none" stroke="#C9E2E8" stroke-width="68" opacity=".92"/>
+  <path d="M510 -20C500 80 545 134 532 225C518 320 468 356 475 450C481 530 546 575 570 660" fill="none" stroke="#E8F2F2" stroke-width="5" opacity=".9"/>
+
+  <!-- parks -->
+  <g fill="#DDE8D2" opacity=".9">
+    <rect x="72" y="76" width="98" height="66" rx="18"/>
+    <rect x="730" y="62" width="132" height="86" rx="22"/>
+    <rect x="95" y="434" width="146" height="88" rx="24"/>
+    <rect x="682" y="420" width="112" height="72" rx="20"/>
+  </g>
+
+  <!-- street grid -->
+  <g fill="none" stroke="#FFFFFF" stroke-linecap="round" opacity=".95">
+    <path d="M-20 80L440 108M585 120L990 92" stroke-width="13"/>
+    <path d="M-20 188L450 210M580 226L990 196" stroke-width="10"/>
+    <path d="M-20 318L445 300M585 315L990 338" stroke-width="14"/>
+    <path d="M-20 475L440 452M585 466L990 492" stroke-width="11"/>
+    <path d="M118 -20L142 660M256 -20L292 660M390 -20L365 660M680 -20L645 660M810 -20L842 660" stroke-width="9"/>
+    <path d="M0 600L450 30M566 35L950 570" stroke-width="7"/>
+    <path d="M20 15L445 580M590 570L940 20" stroke-width="6"/>
+  </g>
+  <g fill="none" stroke="#DDCFC4" stroke-width="2" opacity=".65">
+    <path d="M0 132L440 155M590 165L960 140"/><path d="M0 252L445 260M585 270L960 250"/>
+    <path d="M0 390L445 372M585 385L960 408"/><path d="M55 0L82 640M200 0L220 640M335 0L320 640M740 0L710 640M890 0L910 640"/>
+  </g>
+
+  <!-- decorative trees -->
+  <g fill="#F3B7BC" opacity=".72">
+    <circle cx="87" cy="162" r="14"/><circle cx="864" cy="172" r="16"/><circle cx="195" cy="380" r="18"/><circle cx="754" cy="532" r="16"/><circle cx="625" cy="85" r="12"/>
+  </g>
+  <g stroke="#B98577" stroke-width="3"><path d="M87 174V192"/><path d="M864 187V207"/><path d="M195 397V419"/><path d="M754 547V568"/><path d="M625 96V111"/></g>
+
+  <!-- good pin -->
+  <g transform="translate(190 145)">
+    <path d="M0 0C-22-25-66-8-66 28C-66 58 0 104 0 104C0 104 66 58 66 28C66-8 22-25 0 0Z" fill="#FFF9F1" stroke="#F3A0AD" stroke-width="3"/>
+    <path d="M0 25C-12 10-37 18-37 38C-37 55 0 78 0 78C0 78 37 55 37 38C37 18 12 10 0 25Z" fill="#EF6F88"/>
+    <rect x="-23" y="105" width="46" height="27" rx="13" fill="#FFF9F1" stroke="#F3A0AD"/><text x="0" y="124" text-anchor="middle" font-family="Arial,sans-serif" font-size="14" font-weight="700" fill="#EF6F88">4.8</text>
+  </g>
+
+  <!-- normal pin -->
+  <g transform="translate(590 172)">
+    <path d="M0 0C-22-25-66-8-66 28C-66 58 0 104 0 104C0 104 66 58 66 28C66-8 22-25 0 0Z" fill="#FFF9F1" stroke="#F3A0AD" stroke-width="3"/>
+    <path d="M0 25C-12 10-37 18-37 38C-37 55 0 78 0 78Z" fill="#F08A9D"/><path d="M0 25C12 10 37 18 37 38C37 55 0 78 0 78Z" fill="#FFF9F1" stroke="#F08A9D" stroke-width="2"/>
+    <rect x="-23" y="105" width="46" height="27" rx="13" fill="#FFF9F1" stroke="#F3A0AD"/><text x="0" y="124" text-anchor="middle" font-family="Arial,sans-serif" font-size="14" font-weight="700" fill="#EF6F88">3.2</text>
+  </g>
+
+  <!-- good pin 2 -->
+  <g transform="translate(470 350)">
+    <path d="M0 0C-20-23-59-7-59 25C-59 52 0 94 0 94C0 94 59 52 59 25C59-7 20-23 0 0Z" fill="#FFF9F1" stroke="#F3A0AD" stroke-width="3"/>
+    <path d="M0 23C-11 9-33 16-33 34C-33 49 0 70 0 70C0 70 33 49 33 34C33 16 11 9 0 23Z" fill="#EF6F88"/>
+    <rect x="-23" y="95" width="46" height="27" rx="13" fill="#FFF9F1" stroke="#F3A0AD"/><text x="0" y="114" text-anchor="middle" font-family="Arial,sans-serif" font-size="14" font-weight="700" fill="#EF6F88">5.0</text>
+  </g>
+
+  <!-- bad pin -->
+  <g transform="translate(250 430)">
+    <path d="M0 0C-18-21-54-7-54 23C-54 48 0 86 0 86C0 86 54 48 54 23C54-7 18-21 0 0Z" fill="#FFF9F1" stroke="#F3A0AD" stroke-width="3"/>
+    <path d="M0 20C-10 8-31 15-31 31C-31 46 0 65 0 65C0 65 31 46 31 31C31 15 10 8 0 20Z" fill="#FFF9F1" stroke="#B77D73" stroke-width="2"/>
+    <path d="M3 17L-4 30L3 38L-5 54" fill="none" stroke="#B77D73" stroke-width="3"/>
+    <rect x="-23" y="88" width="46" height="27" rx="13" fill="#FFF9F1" stroke="#F3A0AD"/><text x="0" y="107" text-anchor="middle" font-family="Arial,sans-serif" font-size="14" font-weight="700" fill="#EF6F88">1.5</text>
+  </g>
+
+  <!-- category filter -->
+  <rect x="245" y="563" width="470" height="58" rx="18" fill="#FFF9F1" stroke="#E4D0C1" stroke-width="2"/>
+  <g font-family="Arial,sans-serif" font-size="11" text-anchor="middle">
+    <text x="292" y="602" fill="#EC7489">전체</text><text x="386" y="602" fill="#705149">맛집</text><text x="480" y="602" fill="#705149">카페</text><text x="574" y="602" fill="#705149">데이트 코스</text><text x="668" y="602" fill="#705149">기타</text>
+  </g>
+  <g fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M292 578C284 578 280 584 280 590C280 600 292 611 292 611C292 611 304 600 304 590C304 584 300 578 292 578ZM292 586A4 4 0 1 0 292 594A4 4 0 1 0 292 586Z" stroke="#EC7489"/>
+    <path d="M378 579V593M386 579V593M394 579V593M378 586H394M386 593V611" stroke="#8B6B61"/>
+    <path d="M469 590H488V605H469ZM488 594H493V600H488M472 584H485" stroke="#8B6B61"/>
+    <path d="M574 582C568 574 555 579 555 589C555 600 574 611 574 611C574 611 593 600 593 589C593 579 580 574 574 582Z" stroke="#8B6B61"/>
+    <path d="M668 579L672 588L682 589L674 596L676 606L668 601L660 606L662 596L654 589L664 588Z" stroke="#8B6B61"/>
+  </g>
+</svg>

@@ -1,0 +1,68 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="900" viewBox="0 0 1440 900">
+  <defs>
+    <style>
+      .t{font-family:Arial,'Apple SD Gothic Neo',sans-serif;fill:#3f3f46}.h{font-weight:700}.s{font-size:13px}.m{font-size:16px}.l{font-size:24px}.line{stroke:#a1a1aa;stroke-width:2;fill:none}.thin{stroke:#d4d4d8;stroke-width:1;fill:none}.panel{fill:#fff;stroke:#a1a1aa;stroke-width:2}.soft{fill:#fafafa;stroke:#d4d4d8;stroke-width:1.5}.pink{fill:#f4728a}.pinkline{stroke:#f4728a;stroke-width:2;fill:none}
+    </style>
+    <pattern id="grid" width="76" height="58" patternUnits="userSpaceOnUse" patternTransform="rotate(-8)">
+      <path d="M76 0H0V58" class="thin"/>
+      <path d="M0 29H76M38 0V58" stroke="#e4e4e7" stroke-width="1"/>
+    </pattern>
+  </defs>
+  <rect width="1440" height="900" fill="#f5f5f4"/>
+  <rect x="18" y="18" width="1404" height="864" rx="20" fill="#fff" stroke="#71717a" stroke-width="2"/>
+
+  <!-- Header -->
+  <rect x="38" y="38" width="1364" height="86" rx="12" class="panel"/>
+  <text x="70" y="78" class="t l h">Love Maptually</text>
+  <text x="70" y="101" class="t s">우리의 장소와 기억을 지도에 기록해요</text>
+  <g class="t m"><text x="448" y="84" class="h">홈</text><text x="530" y="84">지도</text><text x="615" y="84">추천 맛집</text><text x="735" y="84">데이트 코스</text><text x="870" y="84">커뮤니티</text><text x="985" y="84">마이페이지</text></g>
+  <path d="M442 102h43" class="pinkline"/>
+  <circle cx="1270" cy="79" r="13" class="line"/><path d="m1280 89 10 10" class="line"/>
+  <path d="M1320 91h28l-5-7v-12a9 9 0 0 0-18 0v12z" class="line"/><circle cx="1334" cy="96" r="2" fill="#71717a"/>
+  <circle cx="1380" cy="79" r="22" fill="#f4a0b0"/><circle cx="1380" cy="72" r="7" fill="#fff"/><path d="M1368 91c2-10 22-10 24 0" fill="#fff"/>
+
+  <!-- Left column -->
+  <rect x="42" y="144" width="220" height="254" rx="12" class="panel"/>
+  <text x="80" y="181" class="t m h">♡ 우리의 러브맵 ♡</text>
+  <circle cx="152" cy="251" r="56" class="soft"/>
+  <circle cx="132" cy="240" r="18" class="line"/><circle cx="172" cy="240" r="18" class="line"/>
+  <path d="M104 290c3-34 52-34 56 0M145 290c3-34 52-34 56 0" class="line"/>
+  <text x="104" y="330" class="t s">우리가 함께한 장소</text>
+  <text x="126" y="370" class="t l h pink">12</text><text x="162" y="370" class="t m">곳</text>
+
+  <rect x="42" y="416" width="220" height="174" rx="12" class="panel"/>
+  <text x="68" y="449" class="t m h">점수에 따른 하트 등급</text>
+  <text x="69" y="490" font-size="31" class="pink">♥</text><text x="111" y="486" class="t s">좋아요! (4.0 ~ 5.0)</text>
+  <text x="69" y="531" font-size="31" class="t">♡</text><path d="M84 507v25" class="pinkline"/><text x="111" y="527" class="t s">보통이에요 (2.0 ~ 3.9)</text>
+  <text x="69" y="568" font-size="31" class="t">♡</text><path d="m82 542-9 13 13 3-8 12" class="line"/><text x="111" y="564" class="t s">아쉬워요 (0 ~ 1.9)</text>
+
+  <rect x="42" y="608" width="220" height="224" rx="12" class="panel"/>
+  <text x="68" y="641" class="t m h">최근 방문 장소</text>
+  <g class="t s"><circle cx="78" cy="680" r="20" class="soft"/><text x="109" y="675" class="h">디어 모먼트</text><text x="109" y="694">카페 / 강남구</text><text x="221" y="686" class="pink">♥ 4.5</text>
+  <circle cx="78" cy="734" r="20" class="soft"/><text x="109" y="729" class="h">로맨틱 가든</text><text x="109" y="748">레스토랑 / 서초구</text><text x="221" y="740">♡ 3.2</text>
+  <circle cx="78" cy="788" r="20" class="soft"/><text x="109" y="783" class="h">달빛 라멘</text><text x="109" y="802">일식 / 마포구</text><text x="221" y="794">♡ 1.8</text></g>
+
+  <!-- Map -->
+  <rect x="282" y="144" width="1114" height="688" rx="14" fill="url(#grid)" stroke="#71717a" stroke-width="2"/>
+  <path d="M650 144c30 160 58 241 173 345s173 207 211 343" stroke="#d4d4d8" stroke-width="54" fill="none" opacity=".9"/>
+  <path d="M650 144c30 160 58 241 173 345s173 207 211 343" stroke="#fff" stroke-width="32" fill="none" opacity=".9"/>
+  <text x="311" y="177" class="t s h">데이트 지도 · 서울</text>
+  <rect x="1210" y="163" width="156" height="38" rx="19" class="panel"/><text x="1235" y="187" class="t s">현재 위치로 이동</text>
+
+  <!-- Pins -->
+  <g transform="translate(520 250)"><path d="M0 0c-36-34-77 18 0 80 77-62 36-114 0-80z" fill="#f4728a" stroke="#fff" stroke-width="8"/><rect x="-24" y="84" width="48" height="25" rx="12" class="panel"/><text x="-14" y="102" class="t s h pink">4.8</text></g>
+  <g transform="translate(930 288)"><path d="M0 0c-36-34-77 18 0 80 77-62 36-114 0-80z" fill="#fff" stroke="#f4728a" stroke-width="5"/><path d="M0 0c-36-34-77 18 0 80z" fill="#f4a0b0"/><rect x="-24" y="84" width="48" height="25" rx="12" class="panel"/><text x="-14" y="102" class="t s h">3.2</text></g>
+  <g transform="translate(780 448)"><path d="M0 0c-36-34-77 18 0 80 77-62 36-114 0-80z" fill="#f4728a" stroke="#fff" stroke-width="8"/><rect x="-24" y="84" width="48" height="25" rx="12" class="panel"/><text x="-14" y="102" class="t s h pink">5.0</text></g>
+  <g transform="translate(550 566)"><path d="M0 0c-36-34-77 18 0 80 77-62 36-114 0-80z" fill="#fff" stroke="#71717a" stroke-width="4"/><path d="m-2 8-12 18 17 13-16 17 13 24" class="line"/><rect x="-24" y="84" width="48" height="25" rx="12" class="panel"/><text x="-14" y="102" class="t s h">1.5</text></g>
+  <g transform="translate(1020 610)"><path d="M0 0c-36-34-77 18 0 80 77-62 36-114 0-80z" fill="#fff" stroke="#f4728a" stroke-width="5"/><path d="M0 0c-36-34-77 18 0 80z" fill="#f4a0b0"/><rect x="-24" y="84" width="48" height="25" rx="12" class="panel"/><text x="-14" y="102" class="t s h">2.6</text></g>
+
+  <!-- Filter bar -->
+  <rect x="430" y="762" width="600" height="70" rx="18" class="panel"/>
+  <g class="t s" text-anchor="middle"><text x="490" y="797" class="h pink">◎</text><text x="490" y="817" class="pink">전체</text><text x="615" y="797">♨</text><text x="615" y="817">맛집</text><text x="740" y="797">☕</text><text x="740" y="817">카페</text><text x="865" y="797">♡</text><text x="865" y="817">데이트 코스</text><text x="970" y="797">☆</text><text x="970" y="817">기타</text></g>
+
+  <!-- Chatbot -->
+  <path d="M1176 668h172a12 12 0 0 1 12 12v86a12 12 0 0 1-12 12h-80l-20 21v-21h-72a12 12 0 0 1-12-12v-86a12 12 0 0 1 12-12z" class="panel"/>
+  <text x="1185" y="700" class="t s h pink">안녕! 나는 러비야!</text><text x="1185" y="726" class="t s">궁금한 게 있으면</text><text x="1185" y="747" class="t s">무엇이든 물어봐 ♡</text>
+  <circle cx="1345" cy="801" r="40" fill="#fff" stroke="#71717a" stroke-width="2"/><circle cx="1332" cy="791" r="5" fill="#3f3f46"/><circle cx="1358" cy="791" r="5" fill="#3f3f46"/><path d="M1333 812q12 11 24 0" class="line"/><path d="m1312 774 10-18 12 19m22 0 13-19 9 22" class="line"/>
+  <circle cx="1380" cy="840" r="25" class="pink"/><text x="1380" y="847" fill="#fff" font-size="20" text-anchor="middle">⋯</text>
+</svg>

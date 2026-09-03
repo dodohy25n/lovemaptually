@@ -6,10 +6,14 @@
  *  2.0 ~ 3.9 : normal (보통이에요)
  *  0   ~ 1.9 : bad    (아쉬워요)
  */
+import heartGood from '@/assets/icons/heart-good.svg'
+import heartNormal from '@/assets/icons/heart-normal.svg'
+import heartBad from '@/assets/icons/heart-bad.svg'
+
 export const HEART_GRADES = {
-  good: { key: 'good', label: '좋아요', min: 4, asset: '/assets/heart-good.svg', color: 'var(--lm-grade-good)' },
-  normal: { key: 'normal', label: '보통이에요', min: 2, asset: '/assets/heart-normal.svg', color: 'var(--lm-grade-normal)' },
-  bad: { key: 'bad', label: '아쉬워요', min: 0, asset: '/assets/heart-bad.svg', color: 'var(--lm-grade-bad)' },
+  good: { key: 'good', label: '좋아요', min: 4, asset: heartGood, color: 'var(--lm-grade-good)' },
+  normal: { key: 'normal', label: '보통이에요', min: 2, asset: heartNormal, color: 'var(--lm-grade-normal)' },
+  bad: { key: 'bad', label: '아쉬워요', min: 0, asset: heartBad, color: 'var(--lm-grade-bad)' },
 }
 
 export const HEART_GRADE_LEGEND = [HEART_GRADES.good, HEART_GRADES.normal, HEART_GRADES.bad]

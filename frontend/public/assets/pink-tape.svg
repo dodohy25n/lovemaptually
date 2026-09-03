@@ -1,7 +1,0 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 40" width="120" height="40" aria-hidden="true">
-  <path d="M4 8h112l-4 24H8z" fill="#ffb3c9" fill-opacity="0.72"/>
-  <path d="M4 8h112" stroke="#ff96b6" stroke-opacity="0.5" stroke-width="2"/>
-  <g stroke="#ffffff" stroke-opacity="0.45" stroke-width="2">
-    <path d="M20 10v28"/><path d="M50 10v28"/><path d="M80 10v28"/><path d="M104 10v28"/>
-  </g>
-</svg>

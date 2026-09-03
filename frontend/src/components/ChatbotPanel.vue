@@ -1,6 +1,7 @@
 <script setup>
 import { ref, watch, nextTick } from 'vue'
 import BaseIcon from './BaseIcon.vue'
+import raccoonLovey from '@/assets/characters/raccoon-lovey.png'
 
 /**
  * 챗봇 대화 패널.
@@ -58,7 +59,7 @@ watch(
     @keydown.esc="emit('close')"
   >
     <header class="chat__head">
-      <img src="/assets/raccoon-lovey.svg" alt="" width="34" height="31" />
+      <img :src="raccoonLovey" alt="" width="34" height="28" />
       <h2 id="chatbot-title" class="chat__title">러비에게 물어보기</h2>
       <button
         type="button"

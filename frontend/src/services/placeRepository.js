@@ -241,9 +241,10 @@ export class LocalPlaceRepository extends PlaceRepository {
  * 반환 형식은 normalizePlace()가 만드는 객체와 동일해야 합니다.
  */
 export class ApiPlaceRepository extends PlaceRepository {
-  constructor({ baseUrl = '' } = {}) {
+  constructor({ baseUrl = '', fetchImpl = globalThis.fetch } = {}) {
     super()
     this.baseUrl = baseUrl
+    this.fetchImpl = fetchImpl
   }
 
   #notReady(method) {
@@ -255,7 +256,62 @@ export class ApiPlaceRepository extends PlaceRepository {
   }
 
   async list() { return this.#notReady('list') }        // GET    /places
-  async get() { return this.#notReady('get') }          // GET    /places/:id
+
+  async get(id) {
+    if (!this.baseUrl) {
+      throw new PlaceRepositoryError('API 기본 주소가 설정되지 않았습니다.', 'missing_base_url')
+    }
+    if (typeof this.fetchImpl !== 'function') {
+      throw new PlaceRepositoryError('이 환경에서는 장소 상세 요청을 보낼 수 없습니다.', 'fetch_unavailable')
+    }
+
+    const url = new URL(`/api/places/${encodeURIComponent(String(id))}`, this.baseUrl)
+    const headers = { Accept: 'application/json' }
+    if (url.hostname.endsWith('.mock.pstmn.io')) headers.Authorization = 'Bearer mock-token'
+
+    let response
+    try {
+      response = await this.fetchImpl(url, { method: 'GET', headers })
+    } catch (error) {
+      throw new PlaceRepositoryError(
+        error?.name === 'AbortError'
+          ? '장소 상세 조회가 취소되었습니다.'
+          : '장소 상세 정보를 불러오지 못했습니다.',
+        error?.name === 'AbortError' ? 'request_aborted' : 'network_error',
+      )
+    }
+
+    if (!response.ok) {
+      throw new PlaceRepositoryError(
+        response.status === 404
+          ? '장소를 찾을 수 없습니다.'
+          : `장소 상세 정보를 불러오지 못했습니다. (${response.status})`,
+        response.status === 404 ? 'not_found' : 'http_error',
+      )
+    }
+
+    const payload = await response.json()
+    const place = payload?.data
+    if (!place || place.placeId == null) {
+      throw new PlaceRepositoryError('장소 상세 응답 형식이 올바르지 않습니다.', 'invalid_response')
+    }
+
+    return normalizePlace({
+      id: String(place.placeId),
+      provider: place.provider,
+      providerPlaceId: place.providerPlaceId,
+      name: place.name,
+      address: place.address,
+      category: place.category,
+      latitude: place.latitude,
+      longitude: place.longitude,
+      tags: Array.isArray(place.tags)
+        ? place.tags.map((item) => typeof item === 'string' ? item : item?.tag).filter(Boolean)
+        : [],
+      images: [],
+      reviews: [],
+    }, { id: String(place.placeId) })
+  }                                               // GET    /api/places/:id
   async create() { return this.#notReady('create') }    // POST   /places
   async update() { return this.#notReady('update') }    // PATCH  /places/:id
   async remove() { return this.#notReady('remove') }    // DELETE /places/:id

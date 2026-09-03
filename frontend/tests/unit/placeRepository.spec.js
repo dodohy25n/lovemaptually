@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from 'vitest'
+import { describe, it, expect, beforeEach, vi } from 'vitest'
 import {
   LocalPlaceRepository,
   ApiPlaceRepository,
@@ -239,8 +239,73 @@ describe('Repository 인터페이스', () => {
     await expect(base.list()).rejects.toMatchObject({ code: 'not_implemented' })
   })
 
-  it('API 구현은 아직 준비되지 않았음을 명시적으로 알린다', async () => {
+  it('아직 연동하지 않은 API 메서드는 준비되지 않았음을 명시적으로 알린다', async () => {
     const api = new ApiPlaceRepository({ baseUrl: 'https://example.test' })
     await expect(api.list()).rejects.toMatchObject({ code: 'backend_not_ready' })
+  })
+})
+
+describe('장소 상세 API', () => {
+  it('GET /api/places/{id} 응답을 화면의 장소 모델로 변환한다', async () => {
+    const fetchImpl = vi.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: async () => ({
+        status: 200,
+        message: '조회했습니다',
+        data: {
+          placeId: 412,
+          provider: 'KAKAO',
+          providerPlaceId: 'DEMO-412',
+          name: '○○찻집',
+          address: '서울 종로구 인사동길',
+          category: '카페',
+          latitude: 37.5741,
+          longitude: 126.9853,
+          tags: [{ tag: '조용함', fact: 'HIGH', count: 2 }],
+        },
+      }),
+    })
+    const api = new ApiPlaceRepository({
+      baseUrl: 'https://demo.mock.pstmn.io',
+      fetchImpl,
+    })
+
+    await expect(api.get(412)).resolves.toMatchObject({
+      id: '412',
+      provider: 'kakao',
+      providerPlaceId: 'DEMO-412',
+      name: '○○찻집',
+      tags: ['조용함'],
+      reviews: [],
+    })
+    const [url, request] = fetchImpl.mock.calls[0]
+    expect(String(url)).toBe('https://demo.mock.pstmn.io/api/places/412')
+    expect(request).toMatchObject({
+      method: 'GET',
+      headers: { Accept: 'application/json', Authorization: 'Bearer mock-token' },
+    })
+  })
+
+  it('404 응답을 not_found 오류로 변환한다', async () => {
+    const api = new ApiPlaceRepository({
+      baseUrl: 'https://example.test',
+      fetchImpl: vi.fn().mockResolvedValue({ ok: false, status: 404 }),
+    })
+
+    await expect(api.get('missing')).rejects.toMatchObject({ code: 'not_found' })
+  })
+
+  it('data가 없는 성공 응답을 거부한다', async () => {
+    const api = new ApiPlaceRepository({
+      baseUrl: 'https://example.test',
+      fetchImpl: vi.fn().mockResolvedValue({
+        ok: true,
+        status: 200,
+        json: async () => ({ status: 200, data: null }),
+      }),
+    })
+
+    await expect(api.get(412)).rejects.toMatchObject({ code: 'invalid_response' })
   })
 })

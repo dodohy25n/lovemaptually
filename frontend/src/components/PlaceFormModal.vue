@@ -4,6 +4,7 @@ import BaseIcon from './BaseIcon.vue'
 import HeartRating from './HeartRating.vue'
 import { CATEGORIES } from '@/stores/places.js'
 import { isValidLatitude, isValidLongitude } from '@/utils/coords.js'
+import { isSearchAvailable, searchPlaces } from '@/services/placeSearchApi.js'
 
 /**
  * 장소 등록 / 수정 모달.
@@ -14,6 +15,8 @@ import { isValidLatitude, isValidLongitude } from '@/utils/coords.js'
 const props = defineProps({
   open: { type: Boolean, default: false },
   place: { type: Object, default: null },
+  /** 값이 바뀌면 '새로 연 것'으로 보고 폼을 비웁니다. 위치 찍기 중에는 바뀌지 않습니다. */
+  formSession: { type: Number, default: 0 },
   pickedCoordinate: { type: Object, default: null },
   saving: { type: Boolean, default: false },
   errorMessage: { type: String, default: null },
@@ -33,12 +36,83 @@ function blankForm() {
     longitude: '',
     coupleScore: 4,
     tagText: '',
+    // 검색으로 고른 가게의 식별자. 직접 입력하면 비어 있고, 저장 시 manual 이 됩니다.
+    provider: 'manual',
+    providerPlaceId: '',
   }
 }
 
 const form = ref(blankForm())
 const touched = ref(false)
-const firstFieldRef = ref(null)
+
+// ── 가게 검색 ──────────────────────────────────────────────
+// 이름을 타이핑하는 대신 검색으로 고르면 공급자 장소 ID가 함께 저장돼,
+// 두 사람이 같은 가게를 각각 등록해도 하나로 합쳐집니다.
+const searchKeyword = ref('')
+const searchResults = ref([])
+const searching = ref(false)
+const searchNotice = ref('')
+const searchDone = ref(false)
+
+/** 검색으로 고른 가게인지. 그렇다면 이름·좌표를 사용자가 손대지 못하게 합니다. */
+const pickedFromSearch = computed(() => Boolean(form.value.providerPlaceId))
+
+const SEARCH_NOTICES = {
+  no_key: '장소 검색이 설정되지 않았어요. 아래에 직접 입력해주세요.',
+  sdk_unavailable: '장소 검색을 불러오지 못했어요. 아래에 직접 입력해주세요.',
+  search_failed: '검색에 실패했어요. 잠시 후 다시 시도하거나 직접 입력해주세요.',
+}
+
+async function runSearch() {
+  const keyword = searchKeyword.value.trim()
+  if (!keyword || searching.value) return
+
+  searching.value = true
+  searchNotice.value = ''
+  searchDone.value = false
+  try {
+    searchResults.value = await searchPlaces(keyword)
+    if (searchResults.value.length === 0) {
+      searchNotice.value = '검색 결과가 없어요. 아래에 직접 입력해주세요.'
+    }
+  } catch (error) {
+    searchResults.value = []
+    searchNotice.value = SEARCH_NOTICES[error?.code] ?? SEARCH_NOTICES.search_failed
+  } finally {
+    searching.value = false
+    searchDone.value = true
+  }
+}
+
+/** 검색 결과를 고르면 폼을 채웁니다. 방문일·점수·태그는 사용자의 값이라 건드리지 않습니다. */
+function selectResult(result) {
+  form.value.name = result.name
+  form.value.address = result.address
+  form.value.category = result.category
+  form.value.latitude = String(result.latitude)
+  form.value.longitude = String(result.longitude)
+  form.value.provider = result.provider
+  form.value.providerPlaceId = result.providerPlaceId
+  searchResults.value = []
+  searchNotice.value = ''
+  searchDone.value = false
+}
+
+/** 검색으로 고른 연결을 끊고 직접 입력으로 돌아갑니다. */
+function clearPickedPlace() {
+  form.value.provider = 'manual'
+  form.value.providerPlaceId = ''
+}
+
+function resetSearch() {
+  searchKeyword.value = ''
+  searchResults.value = []
+  searchNotice.value = ''
+  searchDone.value = false
+  searching.value = false
+}
+const searchInputRef = ref(null)
+const nameInputRef = ref(null)
 const dialogRef = ref(null)
 
 const isEditing = computed(() => Boolean(props.place))
@@ -55,12 +129,17 @@ const errors = computed(() => ({
 
 const isValid = computed(() => Object.values(errors.value).every((message) => message === null))
 
-/** 열릴 때 폼을 채웁니다 — 수정이면 기존 값, 신규면 빈 값 + 찍은 좌표. */
+/**
+ * 폼을 새로 채웁니다 — 수정이면 기존 값, 신규면 빈 값.
+ *
+ * '지도에서 위치 찍기'는 모달을 잠시 접었다 다시 펴므로 open 만 보고 초기화하면
+ * 입력하던 내용이 사라집니다. 그래서 세션이 바뀔 때만 비웁니다.
+ */
 watch(
-  () => [props.open, props.place?.id],
-  async ([open]) => {
-    if (!open) return
+  () => props.formSession,
+  () => {
     touched.value = false
+    resetSearch()
     form.value = props.place
       ? {
           name: props.place.name,
@@ -71,10 +150,21 @@ watch(
           longitude: String(props.place.longitude),
           coupleScore: props.place.coupleScore,
           tagText: props.place.tags.join(', '),
+          provider: props.place.provider ?? 'manual',
+          providerPlaceId: props.place.providerPlaceId ?? '',
         }
       : blankForm()
+  },
+  { immediate: true },
+)
+
+/** 열릴 때마다 첫 입력란으로 포커스를 옮깁니다 (신규는 검색창, 수정은 장소명). */
+watch(
+  () => props.open,
+  async (open) => {
+    if (!open) return
     await nextTick()
-    firstFieldRef.value?.focus()
+    ;(searchInputRef.value ?? nameInputRef.value)?.focus()
   },
   { immediate: true },
 )
@@ -86,6 +176,8 @@ watch(
     if (!coordinate || props.place) return
     form.value.latitude = coordinate.latitude.toFixed(6)
     form.value.longitude = coordinate.longitude.toFixed(6)
+    // 좌표를 직접 찍었다면 더 이상 검색으로 고른 그 가게가 아닙니다.
+    clearPickedPlace()
   },
 )
 
@@ -100,6 +192,8 @@ function submit() {
     latitude: Number(form.value.latitude),
     longitude: Number(form.value.longitude),
     coupleScore: Number(form.value.coupleScore),
+    provider: form.value.provider,
+    providerPlaceId: form.value.providerPlaceId,
     tags: form.value.tagText
       .split(',')
       .map((tag) => tag.trim())
@@ -163,11 +257,68 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKeydown))
       </header>
 
       <form class="modal__form" @submit.prevent="submit">
+        <!-- 가게 검색: 여기서 고르면 공급자 장소 ID가 함께 저장돼 같은 가게가 갈라지지 않습니다.
+             검색을 못 쓰는 상황(키 없음·오프라인)에서도 아래 직접 입력은 그대로 동작합니다. -->
+        <div v-if="!isEditing" class="search" data-testid="place-search">
+          <label for="place-search-input">가게 검색</label>
+          <div class="search__row">
+            <input
+              id="place-search-input"
+              ref="searchInputRef"
+              v-model="searchKeyword"
+              type="text"
+              autocomplete="off"
+              data-testid="field-search"
+              placeholder="예) 연남동 오후 세시"
+              @keydown.enter.prevent="runSearch"
+            />
+            <button
+              type="button"
+              class="lm-btn search__submit"
+              :disabled="searching || !searchKeyword.trim()"
+              data-testid="place-search-submit"
+              @click="runSearch"
+            >
+              {{ searching ? '검색 중…' : '검색' }}
+            </button>
+          </div>
+
+          <ul v-if="searchResults.length" class="search__list" data-testid="place-search-results">
+            <li v-for="result in searchResults" :key="result.providerPlaceId">
+              <button
+                type="button"
+                class="search__item"
+                :data-testid="`place-search-result-${result.providerPlaceId}`"
+                @click="selectResult(result)"
+              >
+                <span class="search__name">{{ result.name }}</span>
+                <span class="search__meta">{{ result.categoryName || result.category }}</span>
+                <span v-if="result.address" class="search__addr">{{ result.address }}</span>
+              </button>
+            </li>
+          </ul>
+
+          <p v-if="searchNotice" class="search__notice" role="status" data-testid="place-search-notice">
+            {{ searchNotice }}
+          </p>
+          <p v-else-if="!searchDone" class="search__help">
+            검색해서 고르면 두 사람이 같은 가게를 각각 기록해도 하나로 합쳐져요.
+          </p>
+        </div>
+
+        <p v-if="pickedFromSearch" class="picked" data-testid="place-picked-provider">
+          <span class="picked__badge">카카오</span>
+          검색으로 고른 가게예요.
+          <button type="button" class="picked__clear" data-testid="place-picked-clear" @click="clearPickedPlace">
+            연결 끊고 직접 입력
+          </button>
+        </p>
+
         <div class="lm-field">
           <label for="place-name">장소명</label>
           <input
             id="place-name"
-            ref="firstFieldRef"
+            ref="nameInputRef"
             v-model="form.name"
             type="text"
             required
@@ -302,6 +453,87 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKeydown))
 </template>
 
 <style scoped>
+.search {
+  display: flex;
+  flex-direction: column;
+  gap: var(--lm-space-2);
+  padding: var(--lm-space-3);
+  border: 1px dashed var(--lm-pink-line);
+  border-radius: var(--lm-radius-sm);
+  background: var(--lm-pink-soft, rgba(242, 111, 138, 0.05));
+}
+.search > label {
+  font-size: var(--lm-text-sm);
+  color: var(--lm-ink-soft);
+}
+.search__row { display: flex; gap: var(--lm-space-2); }
+.search__row input {
+  flex: 1;
+  font-size: var(--lm-text-sm);
+  color: var(--lm-ink);
+  padding: 9px 11px;
+  border: 1px solid var(--lm-card-edge);
+  border-radius: var(--lm-radius-sm);
+  background: #fff;
+  min-width: 0;
+}
+.search__submit { white-space: nowrap; }
+.search__submit:disabled { opacity: 0.5; cursor: default; }
+
+.search__list {
+  display: flex;
+  flex-direction: column;
+  max-height: 210px;
+  overflow-y: auto;
+  border: 1px solid var(--lm-card-edge);
+  border-radius: var(--lm-radius-sm);
+  background: #fff;
+}
+.search__item {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 2px var(--lm-space-2);
+  width: 100%;
+  padding: var(--lm-space-2) var(--lm-space-3);
+  text-align: left;
+  border-bottom: 1px solid var(--lm-card-edge);
+}
+.search__list li:last-child .search__item { border-bottom: none; }
+.search__item:hover { background: var(--lm-pink-soft, rgba(242, 111, 138, 0.07)); }
+.search__name { font-size: var(--lm-text-sm); color: var(--lm-ink); }
+.search__meta { font-size: var(--lm-text-xs); color: var(--lm-ink-soft); text-align: right; }
+.search__addr {
+  grid-column: 1 / -1;
+  font-size: var(--lm-text-xs);
+  color: var(--lm-ink-soft);
+}
+.search__notice,
+.search__help {
+  font-size: var(--lm-text-xs);
+  color: var(--lm-ink-soft);
+  line-height: 1.5;
+}
+
+.picked {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--lm-space-2);
+  font-size: var(--lm-text-xs);
+  color: var(--lm-ink-soft);
+}
+.picked__badge {
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--lm-pink-btn);
+  color: #fff;
+}
+.picked__clear {
+  font-size: var(--lm-text-xs);
+  color: var(--lm-pink);
+  text-decoration: underline;
+}
+
 .modal {
   position: fixed;
   inset: 0;

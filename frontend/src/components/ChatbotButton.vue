@@ -48,29 +48,32 @@ defineEmits(['toggle'])
 
 .chatbtn__bubble {
   position: relative;
-  max-width: 190px;
-  padding: var(--lm-space-3) var(--lm-space-4);
+  width: 300px;
+  max-width: none;
+  margin-right: 24px;
+  padding: 20px 24px;
   background: var(--lm-card);
   border: 1px solid var(--lm-pink-line);
-  border-radius: var(--lm-radius);
+  border-radius: 22px;
   box-shadow: var(--lm-shadow-card);
-  font-size: var(--lm-text-sm);
+  font-size: 17px;
   color: var(--lm-ink);
-  line-height: 1.55;
+  line-height: 1.65;
 }
 .chatbtn__bubble strong {
   display: block;
-  margin-bottom: 2px;
+  margin-bottom: 5px;
   font-weight: 400;
+  font-size: 18px;
   color: var(--lm-pink);
 }
 .chatbtn__bubble::after {
   content: '';
   position: absolute;
-  right: 34px;
-  bottom: -8px;
-  width: 14px;
-  height: 14px;
+  right: 46px;
+  bottom: -12px;
+  width: 22px;
+  height: 22px;
   background: var(--lm-card);
   border-right: 1px solid var(--lm-pink-line);
   border-bottom: 1px solid var(--lm-pink-line);
@@ -85,23 +88,30 @@ defineEmits(['toggle'])
   transition: transform 0.16s ease;
 }
 .chatbtn__mascot:hover { transform: translateY(-3px); }
+.chatbtn__mascot img {
+  width: 208px;
+  height: 172px;
+}
 
 .chatbtn__badge {
   position: absolute;
-  right: -6px;
-  bottom: 2px;
+  right: -8px;
+  bottom: 4px;
   display: grid;
   place-items: center;
-  width: 38px;
-  height: 38px;
+  width: 68px;
+  height: 68px;
   border-radius: 50%;
   background: var(--lm-pink-btn);
   color: #fff;
   box-shadow: 0 4px 12px rgba(242, 111, 138, 0.4);
 }
+.chatbtn__badge :deep(.lm-icon) { width:30px;height:30px; }
 
 @media (max-width: 700px) {
   .chatbtn__bubble { display: none; }
-  .chatbtn__mascot img { width: 76px; height: 63px; }
+  .chatbtn__mascot img { width: 130px; height: 108px; }
+  .chatbtn__badge { width:48px;height:48px; }
+  .chatbtn__badge :deep(.lm-icon) { width:22px;height:22px; }
 }
 </style>

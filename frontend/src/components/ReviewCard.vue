@@ -1,6 +1,7 @@
 <script setup>
 import { computed } from 'vue'
 import HeartRating from './HeartRating.vue'
+import ProfilePlaceholder from './ProfilePlaceholder.vue'
 import { reviewAverage, formatScore } from '@/utils/heartGrade.js'
 import { memberOf } from '@/utils/users.js'
 import photoPlaceholder from '@/assets/photo-placeholder.svg'
@@ -48,7 +49,11 @@ const photos = computed(() => {
     <span class="lm-tape lm-tape--tl"></span>
 
     <header class="review__head">
-      <span class="review__avatar" aria-hidden="true">{{ member.emoji }}</span>
+      <ProfilePlaceholder
+        class="review__avatar"
+        :size="42"
+        :label="`${member.userName} 프로필 사진 없음`"
+      />
       <div class="review__who">
         <h3 class="review__name">{{ member.label }}</h3>
         <p class="review__author">{{ member.userName }}</p>
@@ -128,14 +133,6 @@ const photos = computed(() => {
   gap: var(--lm-space-3);
 }
 .review__avatar {
-  display: grid;
-  place-items: center;
-  width: 42px;
-  height: 42px;
-  border-radius: 50%;
-  background: var(--accent-bg);
-  border: 1px solid var(--accent-line);
-  font-size: 20px;
   flex: none;
 }
 .review__who { flex: 1; min-width: 0; }

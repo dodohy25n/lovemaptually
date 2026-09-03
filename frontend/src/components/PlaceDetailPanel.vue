@@ -174,6 +174,23 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKeydown))
             {{ entry.review?.content || '아직 리뷰를 작성하지 않았어요.' }}
           </p>
 
+          <div v-if="editingRole !== entry.member.role && entry.review" class="detail__ai" :data-testid="`review-tags-${entry.member.role}`">
+            <p v-if="entry.review.tagStatus === 'PENDING'" class="detail__ai-pending">리뷰에서 취향을 읽는 중이에요…</p>
+            <p v-else-if="entry.review.tagStatus === 'FAILED'" class="detail__ai-failed">리뷰는 저장됐지만 태그는 읽지 못했어요.</p>
+            <template v-else>
+              <p class="detail__ai-title">AI가 읽은 내용</p>
+              <ul v-if="entry.review.extractedTags?.length" class="detail__ai-tags">
+                <li v-for="tag in entry.review.extractedTags" :key="tag.tag">
+                  <strong>{{ tag.tag }}</strong>
+                  <span>가게: {{ tag.fact ?? '판단 없음' }}</span>
+                  <span>원하는 것: {{ tag.want ?? '판단 없음' }}</span>
+                  <q v-if="tag.evidence">{{ tag.evidence }}</q>
+                </li>
+              </ul>
+              <p v-else class="detail__ai-empty">문장에서 확실한 취향 표현을 찾지 못했어요.</p>
+            </template>
+          </div>
+
           <form
             v-else
             class="detail__form"
@@ -279,6 +296,9 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKeydown))
   flex-direction: column;
   gap: var(--lm-space-4);
 }
+.detail__ai{padding:11px;border:1px dashed var(--lm-pink-line);border-radius:12px;background:var(--lm-pink-bg)}
+.detail__ai-title{margin-bottom:7px;font-size:12px;font-weight:700;color:var(--lm-pink)}
+.detail__ai-tags{display:flex;flex-direction:column;gap:7px}.detail__ai-tags li{display:grid;grid-template-columns:auto 1fr;gap:2px 8px;font-size:10px}.detail__ai-tags strong{grid-row:1/4;color:var(--lm-pink)}.detail__ai-tags span,.detail__ai-tags q{color:var(--lm-ink-soft)}.detail__ai-pending,.detail__ai-failed,.detail__ai-empty{font-size:11px;color:var(--lm-ink-soft)}
 
 .detail__meta { display: flex; flex-direction: column; gap: var(--lm-space-2); }
 .detail__row { display: flex; gap: var(--lm-space-3); font-size: var(--lm-text-sm); }

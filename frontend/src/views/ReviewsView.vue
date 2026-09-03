@@ -49,7 +49,7 @@ onMounted(() => {
       title="아직 기록한 장소가 없어요"
       description="지도에서 첫 장소를 기록하면 여기에 리뷰 카드가 쌓여요."
       action-label="지도로 가기"
-      @action="router.push('/')"
+      @action="router.push('/map')"
     />
 
     <ul v-else class="reviews__grid">

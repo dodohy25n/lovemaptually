@@ -1,5 +1,6 @@
 <script setup>
-import coupleAvatar from '@/assets/couple-avatar.svg'
+import ProfilePlaceholder from './ProfilePlaceholder.vue'
+import coupleProfile from '@/assets/couple-profile.jpeg'
 
 /** '우리의 러브맵' 요약 카드 — 커플 일러스트와 함께한 장소 수. */
 defineProps({
@@ -9,18 +10,15 @@ defineProps({
 
 <template>
   <section class="summary lm-card" aria-labelledby="summary-title">
-    <span class="lm-tape lm-tape--tl"></span>
-
     <h2 id="summary-title" class="summary__title">
       <span aria-hidden="true">♡</span> 우리의 러브맵 <span aria-hidden="true">♡</span>
     </h2>
 
-    <img
+    <ProfilePlaceholder
       class="summary__avatar"
-      :src="coupleAvatar"
-      alt="커플 프로필 일러스트"
-      width="110"
-      height="110"
+      :size="110"
+      :src="coupleProfile"
+      label="우리 커플 프로필 사진"
     />
 
     <p class="summary__label">우리가 함께한 장소</p>
@@ -33,12 +31,43 @@ defineProps({
 
 <style scoped>
 .summary {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: var(--lm-space-2);
-  padding: var(--lm-space-5) var(--lm-space-4) var(--lm-space-4);
+  padding: 40px var(--lm-space-4) var(--lm-space-4);
   text-align: center;
+  border-color: rgba(224, 185, 176, .86);
+  border-radius: 16px 16px 20px 20px;
+  background:
+    linear-gradient(rgba(255, 251, 246, .91), rgba(255, 251, 246, .91)),
+    url('../../frontend-assets/decorations/love_maptually_paper_texture.png') center / 420px;
+}
+.summary::before {
+  content: '';
+  position: absolute;
+  z-index: 2;
+  top: -8px;
+  left: 12px;
+  right: 12px;
+  height: 28px;
+  background:
+    radial-gradient(circle at 12px 18px, #9f6d65 0 4px, #f9e6dd 4.5px 6px, transparent 6.5px),
+    linear-gradient(90deg, transparent 9px, #bd7e74 9px 12px, transparent 12px) 0 0 / 30px 22px;
+  background-size: 30px 26px;
+  background-repeat: repeat-x;
+}
+.summary::after {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  inset: 8px;
+  border: 1px dashed rgba(237, 126, 145, .2);
+  border-radius: 11px;
+  pointer-events: none;
 }
 .summary__title {
   font-size: var(--lm-text-md);
@@ -46,9 +75,6 @@ defineProps({
 }
 .summary__avatar {
   margin-top: var(--lm-space-2);
-  border-radius: 50%;
-  border: 2px solid var(--lm-pink-line);
-  background: var(--lm-pink-bg);
 }
 .summary__label {
   margin-top: var(--lm-space-2);

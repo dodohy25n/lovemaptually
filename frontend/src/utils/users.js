@@ -1,7 +1,7 @@
 /** 커플 프로필. 백엔드 연동 시 인증 정보로 대체될 자리입니다. */
 export const COUPLE = {
-  him: { userId: 'him', userName: '도현', role: 'him', label: '그의 리뷰', emoji: '🧢' },
-  her: { userId: 'her', userName: '지우', role: 'her', label: '그녀의 리뷰', emoji: '🎀' },
+  him: { userId: 'him', userName: '도현', role: 'him', label: '그의 기억' },
+  her: { userId: 'her', userName: '지우', role: 'her', label: '그녀의 기억' },
 }
 
 export const COUPLE_MEMBERS = [COUPLE.him, COUPLE.her]

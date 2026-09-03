@@ -1,15 +1,15 @@
 import { test, expect } from '@playwright/test'
 import { openApp } from './helpers.js'
 
-test.describe('6. 리뷰 화면', () => {
-  test('그의 리뷰와 그녀의 리뷰가 각각 표시된다', async ({ page }) => {
+test.describe('6. 기억 화면', () => {
+  test('그의 기억과 그녀의 기억이 각각 표시된다', async ({ page }) => {
     await openApp(page, { path: '/reviews/him' })
-    await expect(page.getByRole('heading', { name: '그의 리뷰', level: 1 })).toBeVisible()
+    await expect(page.getByRole('heading', { name: '그의 기억', level: 1 })).toBeVisible()
     const dearMoment = page.getByTestId('review-card-him').filter({ hasText: '디어 모먼트' })
     await expect(dearMoment).toContainText('창가 자리에서')
 
-    await page.getByRole('link', { name: '그녀의 리뷰' }).click()
-    await expect(page.getByRole('heading', { name: '그녀의 리뷰', level: 1 })).toBeVisible()
+    await page.getByRole('link', { name: '그녀의 기억' }).click()
+    await expect(page.getByRole('heading', { name: '그녀의 기억', level: 1 })).toBeVisible()
     await expect(
       page.getByTestId('review-card-her').filter({ hasText: '디어 모먼트' }),
     ).toContainText('햇빛 들어오는 자리')
@@ -61,25 +61,27 @@ test.describe('6. 리뷰 화면', () => {
   test('우리의 기억 화면이 정상 표시된다', async ({ page }) => {
     await openApp(page, { path: '/memories' })
 
-    await expect(page.getByRole('heading', { name: '우리의 기억', level: 1 })).toBeVisible()
-    await expect(page.getByTestId('memory-card-place_seed_dear_moment')).toBeVisible()
-    await expect(page.getByTestId('memories-average')).toHaveText('3.2')
-
-    const card = page.getByTestId('memory-card-place_seed_dear_moment')
-    await expect(card).toContainText('디어 모먼트')
-    await expect(card).toContainText('재방문 의사')
-    await expect(card).toContainText('둘 다 또 가고 싶어요')
+    await expect(page.getByRole('heading', { name: '추억 저장소', level: 1 })).toBeVisible()
+    await expect(page.getByTestId('memory-bookshelf')).toBeVisible()
+    await expect(page.getByTestId('memory-bookshelf').locator('.diary')).toHaveCount(2)
+    await expect(page.getByTestId('memory-diary-2026-02')).toContainText('2026.02')
+    await page.getByTestId('memory-diary-2026-02').click()
+    await expect(page.getByTestId('memory-detail-modal')).toBeVisible()
+    await expect(page.getByLabel('추억 게시물 위치').locator('button')).toHaveCount(5)
+    await expect(page.getByTestId('couple-report-card')).toContainText('우리의 맛집 리포트')
+    await page.getByLabel('3번째 리포트 보기').click()
+    await expect(page.getByTestId('couple-report-card')).toContainText('사진과 점수로 다시 보는 맛집')
+    await expect(page.getByTestId('couple-report-card')).toContainText('디어 모먼트')
   })
 
-  test('기억 카드에서 지도로 이동할 수 있다', async ({ page }) => {
+  test('리포트에서 방문 기록과 AI 추천 판단을 볼 수 있다', async ({ page }) => {
     await openApp(page, { path: '/memories' })
 
-    await page
-      .getByTestId('memory-card-place_seed_dear_moment')
-      .getByRole('button', { name: '지도에서 보기' })
-      .click()
-
-    await expect(page.getByTestId('map-canvas')).toBeVisible()
-    await expect(page).toHaveURL(/\/$/)
+    await page.getByTestId('memory-diary-2026-02').click()
+    await page.getByLabel('5번째 리포트 보기').click()
+    const report = page.getByTestId('couple-report-card')
+    await expect(report).toContainText('방문 기록과 다시 갈 이유')
+    await expect(report).toContainText('1회 방문')
+    await expect(report).toContainText('추천')
   })
 })

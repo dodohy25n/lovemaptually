@@ -7,10 +7,11 @@ import BaseIcon from './BaseIcon.vue'
  */
 const NAV_ITEMS = [
   { label: '홈', to: '/' },
-  { label: '그의 리뷰', to: '/reviews/him' },
-  { label: '그녀의 리뷰', to: '/reviews/her' },
-  { label: '우리의 기억', to: '/memories' },
+  { label: '그의 기억', review: 'him' },
+  { label: '그녀의 기억', review: 'her' },
+  { label: '추억 저장소', to: '/memories' },
 ]
+const emit = defineEmits(['open-review'])
 </script>
 
 <template>
@@ -19,20 +20,23 @@ const NAV_ITEMS = [
     <div class="header__spring" aria-hidden="true"></div>
 
     <div class="header__inner">
-      <RouterLink to="/" class="brand" aria-label="Love Maptually 홈으로">
+      <RouterLink to="/map" class="brand" aria-label="Love Maptually 홈으로">
         <span class="brand__name">Love Maptually</span>
         <span class="brand__sub">러브 맵츄얼리</span>
       </RouterLink>
 
       <nav class="nav" aria-label="주요 메뉴">
-        <RouterLink
+        <component
           v-for="item in NAV_ITEMS"
-          :key="item.to"
+          :is="item.to ? 'RouterLink' : 'button'"
+          :key="item.to || item.review"
           :to="item.to"
+          type="button"
           class="nav__link"
+          @click="item.review && emit('open-review', item.review)"
         >
           {{ item.label }}
-        </RouterLink>
+        </component>
       </nav>
 
       <div class="actions">
@@ -42,9 +46,9 @@ const NAV_ITEMS = [
         <button type="button" class="actions__icon" aria-label="알림 보기">
           <BaseIcon name="bell" :size="21" />
         </button>
-        <button type="button" class="actions__avatar" aria-label="내 프로필">
+        <RouterLink to="/login" class="actions__avatar" aria-label="로그인">
           <BaseIcon name="user" :size="20" />
-        </button>
+        </RouterLink>
       </div>
     </div>
   </header>

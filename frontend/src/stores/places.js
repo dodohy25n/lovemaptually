@@ -36,6 +36,14 @@ export const usePlacesStore = defineStore('places', () => {
 
   const visiblePlaces = computed(() => {
     if (activeCategory.value === 'all') return places.value
+    if (activeCategory.value === 'route') {
+      return places.value
+        .filter((place) => ['맛집', '카페'].includes(place.category))
+        .sort((a, b) => String(a.visitedAt || '').localeCompare(String(b.visitedAt || '')))
+    }
+    if (activeCategory.value === 'favorites') {
+      return places.value.filter((place) => place.favorite === true)
+    }
     return places.value.filter((place) => place.category === activeCategory.value)
   })
 

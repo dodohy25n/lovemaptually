@@ -29,7 +29,7 @@ export async function stubExternalRequests(page, { failTiles = false } = {}) {
 }
 
 /** 저장소를 비운 상태로 앱을 엽니다. 기본은 seed 데이터가 채워진 상태. */
-export async function openApp(page, { storage = null, failTiles = false, path = '/' } = {}) {
+export async function openApp(page, { storage = null, failTiles = false, path = '/map' } = {}) {
   await stubExternalRequests(page, { failTiles })
 
   if (storage !== null) {
@@ -43,7 +43,7 @@ export async function openApp(page, { storage = null, failTiles = false, path = 
 
   await page.goto(path)
   // 지도 화면일 때만 지도가 뜰 때까지 기다립니다 (리뷰·기억 화면에는 지도가 없습니다).
-  if (path === '/') {
+  if (path === '/map') {
     await expect(page.getByTestId('map-canvas')).toBeVisible()
   } else {
     await expect(page.getByRole('heading', { level: 1 })).toBeVisible()

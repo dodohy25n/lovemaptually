@@ -1,16 +1,20 @@
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, nextTick, onMounted } from 'vue'
 import { storeToRefs } from 'pinia'
 import CoupleSummary from '@/components/CoupleSummary.vue'
-import HeartGradeLegend from '@/components/HeartGradeLegend.vue'
 import RecentPlaces from '@/components/RecentPlaces.vue'
 import MapCanvas from '@/components/MapCanvas.vue'
 import CategoryFilter from '@/components/CategoryFilter.vue'
-import PlaceDetailPanel from '@/components/PlaceDetailPanel.vue'
+import MapSearchBar from '@/components/MapSearchBar.vue'
 import PlaceFormModal from '@/components/PlaceFormModal.vue'
 import EmptyState from '@/components/EmptyState.vue'
-import BaseIcon from '@/components/BaseIcon.vue'
+import CoupleTasteModal from '@/components/CoupleTasteModal.vue'
+import RecommendationModal from '@/components/RecommendationModal.vue'
+import ReviewCarouselModal from '@/components/ReviewCarouselModal.vue'
+import FloatingNotebookMenu from '@/components/FloatingNotebookMenu.vue'
 import { usePlacesStore } from '@/stores/places.js'
+import heartFlourish from '../../frontend-assets/decorations/love_maptually_heart_flourish.png'
+import pinkTape from '../../frontend-assets/decorations/love_maptually_pink_tape.png'
 
 /** 메인 지도 화면. 데이터 처리는 전부 스토어가 맡고 이 화면은 조립만 합니다. */
 const store = usePlacesStore()
@@ -18,7 +22,6 @@ const {
   places,
   visiblePlaces,
   recentPlaces,
-  selectedPlace,
   selectedId,
   activeCategory,
   totalCount,
@@ -29,7 +32,6 @@ const {
 } = storeToRefs(store)
 
 const mapRef = ref(null)
-const detailOpen = ref(false)
 const formOpen = ref(false)
 const picking = ref(false)
 const pickedCoordinate = ref(null)
@@ -39,6 +41,11 @@ const formSession = ref(0)
 const editingPlace = ref(null)
 const saving = ref(false)
 const formError = ref(null)
+const tasteOpen = ref(false)
+const recommendationOpen = ref(false)
+const reviewOpen = ref(false)
+const reviewRole = ref('him')
+const searchedPlace = ref(null)
 
 const hasFilteredResult = computed(() => visiblePlaces.value.length > 0)
 
@@ -46,25 +53,26 @@ onMounted(() => store.load())
 
 function selectPlace(id) {
   store.select(id)
-  detailOpen.value = true
+  reviewRole.value = 'him'
+  reviewOpen.value = true
   mapRef.value?.focusPlace(id)
 }
 
-function closeDetail() {
-  detailOpen.value = false
-  store.clearSelection()
+async function selectSearchResult(place) {
+  if (!place.saved) {
+    searchedPlace.value = place
+    await nextTick()
+    mapRef.value?.focusSearchPlace(place)
+    return
+  }
+  store.setCategory('all')
+  await nextTick()
+  selectPlace(place.id)
 }
 
 function openCreateForm() {
   editingPlace.value = null
   pickedCoordinate.value = null
-  formError.value = null
-  formSession.value += 1
-  formOpen.value = true
-}
-
-function openEditForm(placeId) {
-  editingPlace.value = places.value.find((place) => place.id === placeId) ?? null
   formError.value = null
   formSession.value += 1
   formOpen.value = true
@@ -96,7 +104,6 @@ async function submitForm(draft) {
       await store.edit(editingPlace.value.id, draft)
     } else {
       const created = await store.add(draft)
-      detailOpen.value = true
       mapRef.value?.focusPlace(created.id)
     }
     closeForm()
@@ -107,57 +114,53 @@ async function submitForm(draft) {
   }
 }
 
-async function saveReview({ placeId, review }) {
-  saving.value = true
-  try {
-    await store.saveReview(placeId, review)
-  } finally {
-    saving.value = false
-  }
-}
 </script>
 
 <template>
   <div class="mapview">
+    <img class="mapview__decor mapview__decor--heart" :src="heartFlourish" alt="" aria-hidden="true" />
+    <img class="mapview__decor mapview__decor--tape" :src="pinkTape" alt="" aria-hidden="true" />
     <p v-if="storageWarning" class="mapview__warning" role="status" data-testid="storage-warning">
       {{ storageWarning }}
     </p>
     <p v-if="error" class="mapview__warning mapview__warning--error" role="alert">{{ error }}</p>
 
     <div class="mapview__layout">
-      <aside class="mapview__side">
+      <MapCanvas
+        ref="mapRef"
+        :places="visiblePlaces"
+        :selected-id="selectedId"
+        :picking="picking"
+        :searched-place="searchedPlace"
+        :show-route="activeCategory === 'route'"
+        @select="selectPlace"
+        @pick="onMapPick"
+      >
+        <aside class="mapview__side" aria-label="러브맵 정보">
         <CoupleSummary :count="totalCount" />
-        <HeartGradeLegend />
         <RecentPlaces
           :places="recentPlaces"
           :selected-id="selectedId"
           @select="selectPlace"
           @add="openCreateForm"
         />
-      </aside>
+          <FloatingNotebookMenu
+            class="mapview__notebook"
+            @taste="tasteOpen = true"
+            @add-place="openCreateForm"
+            @recommend="recommendationOpen = true"
+          />
+        </aside>
 
-      <div class="mapview__main">
-        <MapCanvas
-          ref="mapRef"
-          :places="visiblePlaces"
-          :selected-id="selectedId"
-          :picking="picking"
-          @select="selectPlace"
-          @pick="onMapPick"
-        >
           <div class="mapview__map-ui">
             <CategoryFilter :active="activeCategory" @change="store.setCategory" />
           </div>
 
-          <button
-            type="button"
-            class="lm-btn lm-btn--primary mapview__add"
-            data-testid="add-place"
-            @click="openCreateForm"
-          >
-            <BaseIcon name="plus" :size="16" />
-            장소 기록하기
-          </button>
+          <MapSearchBar
+            class="mapview__search"
+            :places="places"
+            @select="selectSearchResult"
+          />
 
           <div v-if="isEmpty" class="mapview__empty">
             <EmptyState
@@ -176,19 +179,8 @@ async function saveReview({ placeId, review }) {
           >
             이 카테고리에는 아직 기록한 장소가 없어요.
           </p>
-        </MapCanvas>
+      </MapCanvas>
 
-        <PlaceDetailPanel
-          class="mapview__detail"
-          :place="selectedPlace"
-          :open="detailOpen"
-          :saving="saving"
-          @close="closeDetail"
-          @edit="openEditForm"
-          @save-review="saveReview"
-          @add="openCreateForm"
-        />
-      </div>
     </div>
 
     <PlaceFormModal
@@ -202,13 +194,53 @@ async function saveReview({ placeId, review }) {
       @close="closeForm"
       @pick-request="requestPick"
     />
+    <CoupleTasteModal :open="tasteOpen" @close="tasteOpen = false" @recommend="tasteOpen = false; recommendationOpen = true" />
+    <RecommendationModal :open="recommendationOpen" @close="recommendationOpen = false" />
+    <ReviewCarouselModal
+      :open="reviewOpen"
+      :initial-role="reviewRole"
+      :place-id="selectedId"
+      @close="reviewOpen = false"
+    />
   </div>
 </template>
 
 <style scoped>
-.mapview { display: flex; flex-direction: column; gap: var(--lm-space-3); }
+.mapview {
+  position: relative;
+  isolation: isolate;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: var(--lm-map-bg);
+}
+.mapview__decor {
+  position: absolute;
+  z-index: 2;
+  pointer-events: none;
+  user-select: none;
+}
+.mapview__decor--heart {
+  left: -55px;
+  bottom: -75px;
+  width: 220px;
+  opacity: 0.08;
+  transform: rotate(-11deg);
+}
+.mapview__decor--tape {
+  top: -70px;
+  left: 305px;
+  width: 190px;
+  opacity: 0.22;
+  transform: rotate(8deg);
+}
 
 .mapview__warning {
+  position: absolute;
+  z-index: calc(var(--lm-z-map-ui) + 3);
+  top: 18px;
+  left: 50%;
+  transform: translateX(-50%);
   padding: var(--lm-space-2) var(--lm-space-4);
   border-radius: var(--lm-radius-sm);
   background: var(--lm-pink-bg);
@@ -219,42 +251,49 @@ async function saveReview({ placeId, review }) {
 .mapview__warning--error { background: #fbe9e5; border-color: #e8bdb2; color: var(--lm-danger); }
 
 .mapview__layout {
-  display: grid;
-  grid-template-columns: var(--lm-sidebar-w) minmax(0, 1fr);
-  gap: var(--lm-gutter);
-  align-items: start;
+  position: absolute;
+  inset: 0;
 }
+.mapview__layout > :first-child { width:100%;height:100%;min-height:0;border:0;border-radius:0;box-shadow:none; }
 
 .mapview__side {
+  position: absolute;
+  z-index: calc(var(--lm-z-map-ui) + 1);
+  top: 22px;
+  left: 22px;
   display: flex;
   flex-direction: column;
-  gap: var(--lm-space-4);
+  gap: 14px;
+  width: 320px;
+  height: calc(100% - 44px);
+  overflow-y: auto;
+  scrollbar-width: none;
 }
+.mapview__side::-webkit-scrollbar { display:none; }
+.mapview__side :deep(.summary),.mapview__side :deep(.recent){flex:1 1 0;min-height:210px;background:rgba(255,251,246,.94);backdrop-filter:blur(12px);box-shadow:0 10px 30px rgba(86,57,49,.16)}
+.mapview__side :deep(.summary__title),.mapview__side :deep(.lm-card__title){font-size:18px}
+.mapview__side :deep(.summary__avatar){width:136px!important;height:136px!important}
+.mapview__side :deep(.summary__label),.mapview__side :deep(.recent__name){font-size:15px}
+.mapview__side :deep(.recent__thumb){width:54px;height:54px}
 
-.mapview__main {
-  position: relative;
-  display: flex;
-  gap: var(--lm-space-4);
-  align-items: stretch;
-  /* 와이어프레임의 지도 비율(프레임 1112 중 약 740)에 맞춘 높이 */
-  min-height: 680px;
-}
-.mapview__main > :first-child { flex: 1; min-width: 0; }
-
-/* 지도 위에 겹치는 UI. 지도 자체의 드래그를 막지 않도록 필요한 곳만 클릭을 받습니다. */
 .mapview__map-ui {
   position: absolute;
   left: 50%;
-  bottom: var(--lm-space-4);
+  bottom: 24px;
   transform: translateX(-50%);
-  z-index: var(--lm-z-map-ui);
+  z-index: calc(var(--lm-z-map-ui) + 1);
 }
-.mapview__add {
-  position: absolute;
-  top: var(--lm-space-4);
-  right: var(--lm-space-4);
-  z-index: var(--lm-z-map-ui);
-}
+.mapview__search{position:absolute;z-index:calc(var(--lm-z-map-ui) + 3);top:24px;left:50%;transform:translateX(-50%)}
+.mapview__map-ui :deep(.filter){gap:16px;padding:20px 28px;border-radius:28px;background:rgba(255,251,246,.95);backdrop-filter:blur(12px);box-shadow:0 10px 30px rgba(86,57,49,.18)}
+.mapview__map-ui :deep(.filter__item){gap:8px;min-width:104px;padding:10px 14px;border-radius:16px}
+.mapview__map-ui :deep(.filter__item .lm-icon){width:40px;height:40px}
+.mapview__map-ui :deep(.filter__label){font-size:18px}
+.mapview__notebook{position:relative;display:flex;flex:1.45 1 0;flex-direction:column;width:100%;min-height:300px;z-index:calc(var(--lm-z-map-ui) + 2)}
+.mapview__notebook :deep(.notebook__grid){flex:1}
+.mapview__notebook :deep(.notebook__item){min-height:0}
+.mapview__notebook :deep(.notebook__title){font-size:26px}
+.mapview__notebook :deep(.notebook__icon){width:48px;height:48px}
+.mapview__notebook :deep(.notebook__item){font-size:14px}
 .mapview__empty,
 .mapview__no-result {
   position: absolute;
@@ -273,17 +312,23 @@ async function saveReview({ placeId, review }) {
   color: var(--lm-ink-soft);
 }
 
-.mapview__detail { flex: none; }
-
-@media (max-width: 1100px) {
-  .mapview__layout { grid-template-columns: 1fr; }
-  .mapview__side {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-  }
-}
 @media (max-width: 900px) {
-  .mapview__main { flex-direction: column; }
-  .mapview__detail { max-height: 60vh; }
+  .mapview__side{top:14px;left:14px;width:280px;height:calc(100% - 28px)}
+  .mapview__map-ui{bottom:14px;max-width:calc(100% - 28px);overflow-x:auto}
+  .mapview__map-ui :deep(.filter){gap:8px;padding:14px 18px}
+  .mapview__map-ui :deep(.filter__item){min-width:78px;padding:7px 10px}
+  .mapview__map-ui :deep(.filter__item .lm-icon){width:32px;height:32px}
+  .mapview__map-ui :deep(.filter__label){font-size:14px}
+  .mapview__search{top:14px;left:auto;right:14px;transform:none;width:min(410px,calc(100% - 322px))}
+}
+@media (max-width: 560px) {
+  .mapview__side{top:12px;left:12px;width:220px;height:calc(100% - 100px)}
+  .mapview__search{top:12px;right:12px;width:calc(100% - 256px);min-width:180px}
+  .mapview__side :deep(.summary),.mapview__side :deep(.recent){min-height:190px}
+  .mapview__notebook{min-height:300px}
+  .mapview__map-ui :deep(.filter){gap:4px;padding:10px}
+  .mapview__map-ui :deep(.filter__item){min-width:62px;padding:5px 7px}
+  .mapview__map-ui :deep(.filter__item .lm-icon){width:27px;height:27px}
+  .mapview__map-ui :deep(.filter__label){font-size:12px}
 }
 </style>

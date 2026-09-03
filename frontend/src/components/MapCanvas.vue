@@ -19,6 +19,8 @@ const props = defineProps({
   places: { type: Array, default: () => [] },
   selectedId: { type: String, default: null },
   picking: { type: Boolean, default: false },
+  searchedPlace: { type: Object, default: null },
+  showRoute: { type: Boolean, default: false },
 })
 
 const emit = defineEmits(['select', 'pick'])
@@ -26,6 +28,7 @@ const emit = defineEmits(['select', 'pick'])
 const containerRef = ref(null)
 const engine = shallowRef(null)
 const positions = ref({})
+const searchedPosition = ref(null)
 // 카카오 지도를 못 불러와 대체 지도로 물러난 상태. 핀은 그대로 동작합니다.
 const mapImageMissing = ref(false)
 const ready = ref(false)
@@ -64,6 +67,9 @@ function syncPositions() {
     next[place.id] = engine.value.containerPointOf(place)
   }
   positions.value = next
+  searchedPosition.value = props.searchedPlace
+    ? engine.value.containerPointOf(props.searchedPlace)
+    : null
   // 내 위치 표시도 지도와 함께 따라 움직여야 합니다.
   myLocationPoint.value = myLocation.value
     ? engine.value.containerPointOf(myLocation.value)
@@ -147,6 +153,21 @@ watch(
   },
 )
 
+watch(
+  [() => props.showRoute, () => props.places.map((place) => place.id).join('|')],
+  () => {
+    if (!engine.value) return
+    const routePlaces = props.showRoute ? positionable(props.places) : []
+    engine.value.drawRoute(routePlaces)
+    if (routePlaces.length) {
+      const wide = (containerRef.value?.clientWidth ?? 0) > 900
+      engine.value.fitBounds(routePlaces, wide
+        ? { top: 100, right: 250, bottom: 180, left: 380 }
+        : { top: 80, right: 35, bottom: 150, left: 240 })
+    }
+  },
+)
+
 /** 특정 장소로 지도를 이동시킵니다. 부모(상세 패널 열기 등)에서 호출합니다. */
 function focusPlace(placeId) {
   const place = props.places.find((item) => item.id === placeId)
@@ -154,7 +175,15 @@ function focusPlace(placeId) {
   engine.value.panTo(place)
 }
 
-defineExpose({ focusPlace, fitToPlaces })
+function focusSearchPlace(place) {
+  if (!place || !engine.value) return
+  engine.value.panTo(place)
+  nextTick(syncPositions)
+}
+
+watch(() => props.searchedPlace, async () => { await nextTick(); syncPositions() })
+
+defineExpose({ focusPlace, focusSearchPlace, fitToPlaces })
 </script>
 
 <template>
@@ -182,6 +211,16 @@ defineExpose({ focusPlace, fitToPlaces })
           @select="emit('select', $event)"
         />
       </div>
+    </div>
+
+    <div
+      v-if="ready && searchedPlace && searchedPosition"
+      class="map__searched-place"
+      :style="{ left: `${searchedPosition.x}px`, top: `${searchedPosition.y}px` }"
+      data-testid="map-searched-place"
+    >
+      <span><BaseIcon name="pin" :size="24" /></span>
+      <strong>{{ searchedPlace.name }}</strong>
     </div>
 
     <!-- 내 위치 표시. 지도와 함께 움직이도록 핀과 같은 방식으로 좌표를 계산합니다. -->
@@ -270,6 +309,25 @@ defineExpose({ focusPlace, fitToPlaces })
   transform: translate(-50%, -100%);
   pointer-events: auto;
 }
+.map__searched-place {
+  position: absolute;
+  z-index: calc(var(--lm-z-map-ui) + 2);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transform: translate(-22px, -100%);
+  padding: 7px 12px 7px 7px;
+  border: 2px solid var(--lm-pink);
+  border-radius: 999px;
+  background: #fff;
+  color: var(--lm-ink);
+  box-shadow: var(--lm-shadow-pin);
+  white-space: nowrap;
+  pointer-events: none;
+}
+.map__searched-place span { display:grid;place-items:center;width:34px;height:34px;border-radius:50%;background:var(--lm-pink);color:#fff; }
+.map__searched-place strong { font-size:12px; }
+:global(.lm-route-marker){display:grid;place-items:center;width:28px;height:28px;border:3px solid #ec7489;border-radius:50%;background:#fff;color:#d75e77;font:800 12px/1 sans-serif;box-shadow:0 3px 9px rgba(98,54,62,.25)}
 
 .map__hint,
 .map__notice {

@@ -10,6 +10,6 @@ const router = useRouter()
     title="길을 잃었어요"
     description="찾으시는 페이지가 없어요. 러브맵으로 돌아갈까요?"
     action-label="지도로 가기"
-    @action="router.push('/')"
+    @action="router.push('/map')"
   />
 </template>

@@ -1,4 +1,5 @@
 <script setup>
+import { computed } from 'vue'
 import BaseIcon from './BaseIcon.vue'
 import { CATEGORIES } from '@/stores/places.js'
 
@@ -8,12 +9,20 @@ defineProps({
 })
 
 defineEmits(['change'])
+
+const filterCategories = computed(() => CATEGORIES.map((category) =>
+  category.key === '데이트 코스'
+    ? { ...category, key: 'route', label: '맛집 탐방기', icon: 'pin' }
+    : category.key === '기타'
+      ? { ...category, key: 'favorites', label: '즐겨찾기', icon: 'star' }
+    : category,
+))
 </script>
 
 <template>
   <div class="filter" role="group" aria-label="카테고리 필터">
     <button
-      v-for="category in CATEGORIES"
+      v-for="category in filterCategories"
       :key="category.key"
       type="button"
       class="filter__item"

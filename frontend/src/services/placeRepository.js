@@ -62,6 +62,17 @@ function normalizeReview(review) {
     service: clampScore(review?.service),
     revisitIntent: Boolean(review?.revisitIntent),
     images: Array.isArray(review?.images) ? review.images.filter((src) => typeof src === 'string') : [],
+    tagStatus: ['PENDING', 'COMPLETED', 'FAILED'].includes(review?.tagStatus)
+      ? review.tagStatus
+      : 'COMPLETED',
+    extractedTags: Array.isArray(review?.extractedTags)
+      ? review.extractedTags.slice(0, 5).map((item) => ({
+          tag: String(item?.tag ?? ''),
+          fact: item?.fact == null ? null : String(item.fact),
+          want: item?.want == null ? null : String(item.want),
+          evidence: item?.evidence == null ? null : String(item.evidence),
+        })).filter((item) => item.tag)
+      : [],
   }
 }
 

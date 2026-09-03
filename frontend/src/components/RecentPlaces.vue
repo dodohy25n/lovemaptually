@@ -83,10 +83,41 @@ function subtitleOf(place) {
 
 <style scoped>
 .recent {
-  padding: var(--lm-space-4);
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  padding: 39px var(--lm-space-4) var(--lm-space-4);
   display: flex;
   flex-direction: column;
   gap: var(--lm-space-3);
+  border-color: rgba(224, 185, 176, .86);
+  border-radius: 16px 16px 20px 20px;
+  background:
+    linear-gradient(rgba(255, 251, 246, .91), rgba(255, 251, 246, .91)),
+    url('../../frontend-assets/decorations/love_maptually_paper_texture.png') center / 420px;
+}
+.recent::before {
+  content: '';
+  position: absolute;
+  z-index: 2;
+  top: -8px;
+  left: 12px;
+  right: 12px;
+  height: 28px;
+  background:
+    radial-gradient(circle at 12px 18px, #9f6d65 0 4px, #f9e6dd 4.5px 6px, transparent 6.5px),
+    linear-gradient(90deg, transparent 9px, #bd7e74 9px 12px, transparent 12px) 0 0 / 30px 22px;
+  background-size: 30px 26px;
+  background-repeat: repeat-x;
+}
+.recent::after {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  inset: 8px;
+  border: 1px dashed rgba(237, 126, 145, .2);
+  border-radius: 11px;
+  pointer-events: none;
 }
 .recent__list {
   display: flex;

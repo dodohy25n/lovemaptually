@@ -10,10 +10,10 @@ function rangeText(grade) {
 </script>
 
 <template>
-  <section class="legend lm-card" aria-labelledby="legend-title">
+  <RouterLink to="/memories" class="legend lm-card" aria-labelledby="legend-title">
     <span class="lm-tape lm-tape--br"></span>
 
-    <h2 id="legend-title" class="lm-card__title">점수에 따른 하트 등급</h2>
+    <h2 id="legend-title" class="lm-card__title">추억 저장소</h2>
 
     <ul class="legend__list">
       <li v-for="grade in HEART_GRADE_LEGEND" :key="grade.key" class="legend__item">
@@ -23,7 +23,8 @@ function rangeText(grade) {
         </span>
       </li>
     </ul>
-  </section>
+    <span class="legend__link">우리의 기록 모아보기 <span aria-hidden="true">→</span></span>
+  </RouterLink>
 </template>
 
 <style scoped>
@@ -32,7 +33,10 @@ function rangeText(grade) {
   display: flex;
   flex-direction: column;
   gap: var(--lm-space-3);
+  text-decoration: none;
+  transition: transform .16s ease, box-shadow .16s ease;
 }
+.legend:hover { transform:translateY(-2px);box-shadow:var(--lm-shadow-lift); }
 .legend__list {
   display: flex;
   flex-direction: column;
@@ -47,4 +51,5 @@ function rangeText(grade) {
   font-size: var(--lm-text-sm);
   color: var(--lm-ink);
 }
+.legend__link { color:var(--lm-pink);font-size:var(--lm-text-xs);font-weight:700;text-align:right; }
 </style>

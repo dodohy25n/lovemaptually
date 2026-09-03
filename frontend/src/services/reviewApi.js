@@ -1,6 +1,7 @@
 import { fetchPlace, updatePlace } from './placeApi.js'
 import { COUPLE_MEMBERS, memberOf } from '@/utils/users.js'
 import { reviewAverage } from '@/utils/heartGrade.js'
+import { extractReviewTags } from './aiReadyMock.js'
 
 /**
  * 리뷰 API 어댑터.
@@ -48,9 +49,12 @@ export async function saveReview(placeId, review) {
     throw new Error('리뷰를 저장할 장소를 찾을 수 없습니다.')
   }
   const member = memberOf(review.userId)
+  const extraction = await extractReviewTags(review.content)
   const next = {
     ...review,
     userName: review.userName || member?.userName || '',
+    tagStatus: extraction.tagStatus,
+    extractedTags: extraction.tags,
   }
   const reviews = place.reviews.filter((r) => r.userId !== next.userId)
   return updatePlace(placeId, { reviews: [...reviews, next] })

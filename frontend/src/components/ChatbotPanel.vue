@@ -59,7 +59,7 @@ watch(
     @keydown.esc="emit('close')"
   >
     <header class="chat__head">
-      <img :src="raccoonLovey" alt="" width="34" height="28" />
+      <img :src="raccoonLovey" alt="" width="44" height="36" />
       <h2 id="chatbot-title" class="chat__title">러비에게 물어보기</h2>
       <button
         type="button"
@@ -104,7 +104,7 @@ watch(
         aria-label="메시지 보내기"
         data-testid="chatbot-send"
       >
-        <BaseIcon name="send" :size="18" />
+        <BaseIcon name="send" :size="21" />
       </button>
     </form>
   </section>
@@ -114,8 +114,10 @@ watch(
 .chat {
   display: flex;
   flex-direction: column;
-  width: 320px;
-  max-height: 460px;
+  width: 520px;
+  height: min(700px, calc(100vh - 170px));
+  min-height: 520px;
+  max-height: 700px;
   background: var(--lm-card);
   border: 1px solid var(--lm-card-edge);
   border-radius: var(--lm-radius-lg);
@@ -127,20 +129,20 @@ watch(
   display: flex;
   align-items: center;
   gap: var(--lm-space-2);
-  padding: var(--lm-space-3) var(--lm-space-4);
+  padding: 18px 22px;
   background: var(--lm-pink-bg);
   border-bottom: 1px solid var(--lm-card-edge);
 }
 .chat__title {
   flex: 1;
-  font-size: var(--lm-text-md);
+  font-size: 20px;
   color: var(--lm-pink);
 }
 .chat__close {
   display: grid;
   place-items: center;
-  width: 28px;
-  height: 28px;
+  width: 34px;
+  height: 34px;
   border-radius: 50%;
   color: var(--lm-ink-soft);
 }
@@ -152,15 +154,16 @@ watch(
   display: flex;
   flex-direction: column;
   gap: var(--lm-space-2);
-  padding: var(--lm-space-4);
-  min-height: 180px;
+  gap: 13px;
+  padding: 24px;
+  min-height: 380px;
 }
 .chat__msg {
-  max-width: 84%;
-  padding: 9px 13px;
+  max-width: 82%;
+  padding: 13px 17px;
   border-radius: var(--lm-radius);
-  font-size: var(--lm-text-sm);
-  line-height: 1.6;
+  font-size: 15px;
+  line-height: 1.7;
 }
 .chat__msg--bot {
   align-self: flex-start;
@@ -176,22 +179,22 @@ watch(
 }
 .chat__msg--pending { opacity: 0.7; }
 .chat__error {
-  font-size: var(--lm-text-xs);
+  font-size: 13px;
   color: var(--lm-danger);
 }
 
 .chat__form {
   display: flex;
   gap: var(--lm-space-2);
-  padding: var(--lm-space-3);
+  padding: 18px;
   border-top: 1px solid var(--lm-card-edge);
   background: var(--lm-header-bg);
 }
 .chat__form input {
   flex: 1;
   font: inherit;
-  font-size: var(--lm-text-sm);
-  padding: 9px 12px;
+  font-size: 15px;
+  padding: 14px 17px;
   border: 1px solid var(--lm-card-edge);
   border-radius: 999px;
   background: #fff;
@@ -200,8 +203,8 @@ watch(
 .chat__send {
   display: grid;
   place-items: center;
-  width: 38px;
-  height: 38px;
+  width: 48px;
+  height: 48px;
   border-radius: 50%;
   background: var(--lm-pink-btn);
   color: #fff;
@@ -210,6 +213,11 @@ watch(
 .chat__send:disabled { opacity: 0.45; cursor: not-allowed; }
 
 @media (max-width: 700px) {
-  .chat { width: min(320px, calc(100vw - 32px)); }
+  .chat {
+    width: min(460px, calc(100vw - 24px));
+    height: min(620px, calc(100vh - 125px));
+    min-height: 400px;
+  }
+  .chat__log { min-height: 220px; padding: 16px; }
 }
 </style>

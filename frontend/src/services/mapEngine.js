@@ -51,6 +51,7 @@ function createKakaoEngine(maps, container) {
   map.addControl(new maps.ZoomControl(), maps.ControlPosition.TOPLEFT)
 
   const listeners = []
+  const routeOverlays = []
   function on(target, type, handler) {
     maps.event.addListener(target, type, handler)
     listeners.push([target, type, handler])
@@ -75,7 +76,7 @@ function createKakaoEngine(maps, container) {
       map.panTo(new maps.LatLng(place.latitude, place.longitude))
     },
 
-    fitBounds(places) {
+    fitBounds(places, padding = FIT_PADDING) {
       if (places.length === 0) {
         map.setCenter(new maps.LatLng(DEFAULT_CENTER.latitude, DEFAULT_CENTER.longitude))
         map.setLevel(DEFAULT_LEVEL)
@@ -85,9 +86,28 @@ function createKakaoEngine(maps, container) {
       for (const place of places) {
         bounds.extend(new maps.LatLng(place.latitude, place.longitude))
       }
-      map.setBounds(bounds, FIT_PADDING.top, FIT_PADDING.right, FIT_PADDING.bottom, FIT_PADDING.left)
+      map.setBounds(bounds, padding.top, padding.right, padding.bottom, padding.left)
       // 한 곳뿐이면 setBounds가 최대 배율까지 당겨버려 주변이 안 보입니다.
       if (places.length === 1) map.setLevel(Math.max(map.getLevel(), 4))
+    },
+
+    drawRoute(places) {
+      routeOverlays.splice(0).forEach((overlay) => overlay.setMap(null))
+      const path = places.map((place) => new maps.LatLng(place.latitude, place.longitude))
+      if (path.length > 1) {
+        const line = new maps.Polyline({ map, path, strokeWeight: 5, strokeColor: '#ec7489', strokeOpacity: 0.9, strokeStyle: 'shortdash' })
+        routeOverlays.push(line)
+      }
+      path.forEach((position, index) => {
+        const marker = new maps.CustomOverlay({
+          map,
+          position,
+          content: `<span class="lm-route-marker">${index + 1}</span>`,
+          yAnchor: 0.5,
+          xAnchor: 0.5,
+        })
+        routeOverlays.push(marker)
+      })
     },
 
     relayout() {
@@ -108,6 +128,7 @@ function createKakaoEngine(maps, container) {
     },
 
     destroy() {
+      routeOverlays.splice(0).forEach((overlay) => overlay.setMap(null))
       for (const [target, type, handler] of listeners) {
         maps.event.removeListener(target, type, handler)
       }
@@ -133,6 +154,7 @@ async function createFallbackEngine(container) {
     zoomControl: true,
     attributionControl: false, // 표시할 지도 출처가 없습니다.
   })
+  let routeLayer = null
 
   return {
     kind: 'fallback',
@@ -151,7 +173,7 @@ async function createFallbackEngine(container) {
       map.panTo([place.latitude, place.longitude])
     },
 
-    fitBounds(places) {
+    fitBounds(places, padding = FIT_PADDING) {
       if (places.length === 0) {
         map.setView([DEFAULT_CENTER.latitude, DEFAULT_CENTER.longitude], DEFAULT_ZOOM)
         return
@@ -159,11 +181,22 @@ async function createFallbackEngine(container) {
       map.fitBounds(
         L.latLngBounds(places.map((place) => [place.latitude, place.longitude])),
         {
-          paddingTopLeft: [FIT_PADDING.left, FIT_PADDING.top],
-          paddingBottomRight: [FIT_PADDING.right, FIT_PADDING.bottom],
+          paddingTopLeft: [padding.left, padding.top],
+          paddingBottomRight: [padding.right, padding.bottom],
           maxZoom: 15,
         },
       )
+    },
+
+    drawRoute(places) {
+      if (routeLayer) map.removeLayer(routeLayer)
+      const layers = []
+      const coords = places.map((place) => [place.latitude, place.longitude])
+      if (coords.length > 1) layers.push(L.polyline(coords, { color: '#ec7489', weight: 5, opacity: 0.9, dashArray: '8 7' }))
+      coords.forEach((coordinate, index) => layers.push(L.marker(coordinate, {
+        icon: L.divIcon({ className: '', html: `<span class="lm-route-marker">${index + 1}</span>`, iconSize: [28, 28], iconAnchor: [14, 14] }),
+      })))
+      routeLayer = L.layerGroup(layers).addTo(map)
     },
 
     relayout() {
@@ -181,6 +214,7 @@ async function createFallbackEngine(container) {
     },
 
     destroy() {
+      routeLayer = null
       map.remove()
     },
   }

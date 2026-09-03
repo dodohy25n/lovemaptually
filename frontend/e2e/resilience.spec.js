@@ -63,7 +63,7 @@ test.describe('8. 오류 및 빈 상태', () => {
   test('카테고리 필터 결과가 없으면 안내가 나온다', async ({ page }) => {
     await openApp(page)
 
-    await page.getByTestId('category-데이트 코스').click()
+    await page.getByTestId('category-route').click()
     await expect(page.getByTestId('no-filter-result')).toBeVisible()
   })
 

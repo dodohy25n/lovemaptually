@@ -104,6 +104,85 @@ describe('저장 전 검증', () => {
     await expect(repository.list()).resolves.toHaveLength(2)
   })
 
+  it('공급자 필드가 없던 기존 저장 데이터도 그대로 살아난다', () => {
+    // 이 필드가 생기기 전에 저장된 레코드. 마이그레이션 없이 manual로 읽혀야 합니다.
+    const legacy = { ...DRAFT, id: 'place_old', createdAt: '2026-01-01T00:00:00.000Z' }
+    expect(normalizePlace(legacy, { id: legacy.id, createdAt: legacy.createdAt })).toMatchObject({
+      id: 'place_old',
+      provider: 'manual',
+      providerPlaceId: '',
+      createdAt: '2026-01-01T00:00:00.000Z',
+    })
+  })
+
+  it('공급자 장소 ID가 같으면 이름과 좌표가 달라도 같은 가게로 본다', async () => {
+    const repository = repo()
+    await repository.create({ ...DRAFT, provider: 'kakao', providerPlaceId: '1234567' })
+
+    // 한 사람은 '디어 모먼트', 다른 사람은 '디어모먼트'로 검색해도 같은 가게를 고른 상황
+    await expect(
+      repository.create({
+        ...DRAFT,
+        name: '디어모먼트',
+        latitude: 37.6,
+        longitude: 127.1,
+        provider: 'kakao',
+        providerPlaceId: '1234567',
+      }),
+    ).rejects.toMatchObject({ code: 'duplicate_place' })
+  })
+
+  it('공급자 장소 ID가 다르면 같은 좌표여도 각각 등록된다 (같은 건물 다른 층)', async () => {
+    const repository = repo()
+    await repository.create({ ...DRAFT, name: '2층 카페', provider: 'kakao', providerPlaceId: '111' })
+    await repository.create({ ...DRAFT, name: '3층 술집', provider: 'kakao', providerPlaceId: '222' })
+    await expect(repository.list()).resolves.toHaveLength(2)
+  })
+
+  it('공급자가 다르면 장소 ID가 같아도 다른 가게로 본다', async () => {
+    const repository = repo()
+    await repository.create({ ...DRAFT, provider: 'kakao', providerPlaceId: '1' })
+    await repository.create({ ...DRAFT, provider: 'google', providerPlaceId: '1' })
+    await expect(repository.list()).resolves.toHaveLength(2)
+  })
+
+  it('공급자 장소 ID가 없으면 provider는 manual로 되돌아간다', () => {
+    expect(normalizePlace({ ...DRAFT, provider: 'kakao' })).toMatchObject({
+      provider: 'manual',
+      providerPlaceId: '',
+    })
+  })
+
+  it('숫자로 들어온 공급자 장소 ID도 문자열로 저장된다', () => {
+    expect(normalizePlace({ ...DRAFT, provider: 'kakao', providerPlaceId: 1234567 })).toMatchObject({
+      provider: 'kakao',
+      providerPlaceId: '1234567',
+    })
+  })
+
+  it('공급자로 등록된 가게를 수기로 또 등록하면 이름 + 좌표로 잡는다', async () => {
+    const repository = repo()
+    await repository.create({ ...DRAFT, provider: 'kakao', providerPlaceId: '1234567' })
+    await expect(repository.create(DRAFT)).rejects.toMatchObject({ code: 'duplicate_place' })
+  })
+
+  it('수정 결과가 다른 장소와 같은 가게가 되면 막는다', async () => {
+    const repository = repo()
+    await repository.create({ ...DRAFT, provider: 'kakao', providerPlaceId: '111' })
+    const second = await repository.create({
+      ...DRAFT,
+      name: '다른 가게',
+      latitude: 37.6,
+      longitude: 127.1,
+      provider: 'kakao',
+      providerPlaceId: '222',
+    })
+
+    await expect(repository.update(second.id, { providerPlaceId: '111' })).rejects.toMatchObject({
+      code: 'duplicate_place',
+    })
+  })
+
   it('커플 점수와 하트 등급은 리뷰로부터 다시 계산된다', () => {
     const place = normalizePlace({
       ...DRAFT,

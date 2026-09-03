@@ -1,6 +1,11 @@
 import { STORAGE_KEYS, readJson, writeJson, removeKey } from './storageService.js'
 import { createSeedPlaces } from './seedPlaces.js'
-import { normalizeCoordinate, isSameSpot } from '@/utils/coords.js'
+import { normalizeCoordinate } from '@/utils/coords.js'
+import {
+  isSamePlace,
+  normalizeProvider,
+  normalizeProviderPlaceId,
+} from '@/utils/placeIdentity.js'
 import { coupleScoreFromReviews, toHeartGrade, clampScore, round1 } from '@/utils/heartGrade.js'
 import { createId } from '@/utils/id.js'
 
@@ -78,6 +83,10 @@ export function normalizePlace(draft, { id, createdAt } = {}) {
     throw new PlaceRepositoryError('위도·경도가 올바르지 않습니다.', 'invalid_coordinate')
   }
 
+  // 리뷰가 붙을 대상을 정하는 값이므로 좌표와 같은 급으로 정규화합니다.
+  const providerPlaceId = normalizeProviderPlaceId(draft?.providerPlaceId)
+  const provider = normalizeProvider(draft?.provider, providerPlaceId)
+
   const reviews = Array.isArray(draft?.reviews) ? draft.reviews.map(normalizeReview) : []
   const coupleScore =
     reviews.length > 0 ? coupleScoreFromReviews(reviews) : round1(clampScore(draft?.coupleScore))
@@ -86,6 +95,8 @@ export function normalizePlace(draft, { id, createdAt } = {}) {
   return {
     id: id ?? draft?.id ?? createId('place'),
     name,
+    provider,
+    providerPlaceId,
     address: String(draft?.address ?? '').trim(),
     category: String(draft?.category ?? '기타').trim() || '기타',
     latitude: coordinate.latitude,
@@ -156,10 +167,8 @@ export class LocalPlaceRepository extends PlaceRepository {
     const places = this.#load()
     const place = normalizePlace(draft)
 
-    // 같은 이름 + 거의 같은 좌표(약 11m 이내)면 중복 등록으로 봅니다.
-    const duplicate = places.find(
-      (existing) => existing.name === place.name && isSameSpot(existing, place),
-    )
+    // 공급자 장소 ID가 있으면 그것으로, 없으면 이름 + 좌표로 판정합니다 (placeIdentity.js).
+    const duplicate = places.find((existing) => isSamePlace(existing, place))
     if (duplicate) {
       throw new PlaceRepositoryError('이미 같은 위치에 등록된 장소입니다.', 'duplicate_place')
     }
@@ -178,6 +187,15 @@ export class LocalPlaceRepository extends PlaceRepository {
       { ...places[index], ...patch },
       { id, createdAt: places[index].createdAt },
     )
+
+    // 수정 결과가 다른 장소와 같은 가게가 되면 리뷰가 두 갈래로 남으므로 막습니다.
+    const collides = places.some(
+      (existing) => existing.id !== id && isSamePlace(existing, merged),
+    )
+    if (collides) {
+      throw new PlaceRepositoryError('이미 같은 위치에 등록된 장소입니다.', 'duplicate_place')
+    }
+
     const next = [...places]
     next[index] = merged
     this.#save(next)

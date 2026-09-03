@@ -1,6 +1,6 @@
 # Love Map-tually Backend
 
-Love Map-tually의 Spring Boot REST API입니다. 현재 브랜치는 백엔드 실행 기반만 제공합니다.
+Love Map-tually의 Spring Boot REST API입니다.
 
 ## 기술 기준
 
@@ -9,6 +9,7 @@ Love Map-tually의 Spring Boot REST API입니다. 현재 브랜치는 백엔드 
 - Gradle 8.14.3 Wrapper
 - PostgreSQL, Spring Data JPA, Flyway
 - Spring Security
+- BCrypt 비밀번호 해시, HMAC-SHA256 JWT access token
 - Springdoc OpenAPI
 - JUnit 5, Testcontainers
 
@@ -25,3 +26,15 @@ docker compose up -d postgres
 - OpenAPI JSON: `http://localhost:8080/v3/api-docs`
 
 환경변수 이름은 `.env.example`을 참고하세요. 실제 비밀값이 들어간 `.env` 파일은 커밋하지 않습니다.
+
+## 인증 API
+
+- `POST /api/auth/signup`: 실제 PostgreSQL에 사용자를 저장하고 JWT를 발급합니다.
+- `POST /api/auth/login`: BCrypt 비밀번호를 검증하고 JWT를 발급합니다.
+- 이외의 API는 기본적으로 `Authorization: Bearer <token>`이 필요합니다.
+- API 명세에 없는 refresh token과 logout은 현재 범위에서 추가하지 않았습니다. 운영 단계에서는 토큰 폐기·재발급 정책과 함께 설계해야 합니다.
+
+## 데이터베이스
+
+Flyway의 `V1__create_initial_schema.sql`이 ERD v3.1의 15개 테이블과 제약을 생성합니다.
+API v3.2의 `tagStatus`를 영속화하기 위해 승인된 `reviews.tag_status` 컬럼도 포함합니다.

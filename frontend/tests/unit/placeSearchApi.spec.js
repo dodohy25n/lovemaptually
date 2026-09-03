@@ -102,16 +102,20 @@ describe('검색 결과 → 장소 draft', () => {
 
 describe('장소 검색', () => {
   const originalKey = config.kakaoJsKey
+  const originalApiBaseUrl = config.apiBaseUrl
 
   beforeEach(() => {
     config.kakaoJsKey = 'x'.repeat(32)
+    config.apiBaseUrl = ''
     resetSdkForTests()
   })
 
   afterEach(() => {
     config.kakaoJsKey = originalKey
+    config.apiBaseUrl = originalApiBaseUrl
     delete window.kakao
     resetSdkForTests()
+    vi.unstubAllGlobals()
     vi.restoreAllMocks()
   })
 
@@ -171,5 +175,48 @@ describe('장소 검색', () => {
   it('좌표가 깨진 결과는 조용히 걸러낸다', async () => {
     stubKakaoSdk({ data: [KAKAO_ITEM, { ...KAKAO_ITEM, id: '999', x: 'abc', y: 'abc' }] })
     await expect(searchPlaces('디어 모먼트')).resolves.toHaveLength(1)
+  })
+
+  it('API 주소가 있으면 백엔드 장소 검색을 우선 사용한다', async () => {
+    config.apiBaseUrl = 'https://example.test'
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        data: {
+          content: [{
+            placeId: 412,
+            provider: 'KAKAO',
+            providerPlaceId: 'DEMO-412',
+            name: '○○찻집',
+            region: '인사동',
+            address: '서울 종로구 인사동길',
+            category: '카페',
+            priceBand: 2,
+            latitude: 37.5741,
+            longitude: 126.9853,
+          }],
+        },
+      }),
+    }))
+
+    await expect(searchPlaces('찻집', { size: 5 })).resolves.toEqual([
+      expect.objectContaining({ id: 412, provider: 'kakao', name: '○○찻집', latitude: 37.5741 }),
+    ])
+    const [url, request] = fetch.mock.calls[0]
+    expect(String(url)).toContain('/api/places?query=%EC%B0%BB%EC%A7%91&page=0&size=5')
+    expect(request.headers.Authorization).toBeUndefined()
+  })
+
+  it('Postman Mock 검색에는 Mock 인증 헤더를 보낸다', async () => {
+    config.apiBaseUrl = 'https://demo.mock.pstmn.io'
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: true, json: async () => ({ data: { content: [] } }) }))
+    await searchPlaces('카페')
+    expect(fetch.mock.calls[0][1].headers.Authorization).toBe('Bearer mock-token')
+  })
+
+  it('API 응답 형식이 잘못되면 search_failed 오류를 반환한다', async () => {
+    config.apiBaseUrl = 'https://example.test'
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: true, json: async () => ({ data: {} }) }))
+    await expect(searchPlaces('카페')).rejects.toMatchObject({ code: 'search_failed' })
   })
 })

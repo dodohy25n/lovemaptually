@@ -13,6 +13,7 @@
  * 사용자는 기존처럼 직접 입력할 수 있습니다 (그 경우 provider 는 'manual').
  */
 import { loadKakaoMaps, isKakaoConfigured, resetKakaoSdkForTests } from './kakaoSdk.js'
+import { config } from './config.js'
 import { normalizeCoordinate } from '@/utils/coords.js'
 
 export class PlaceSearchError extends Error {
@@ -25,7 +26,59 @@ export class PlaceSearchError extends Error {
 
 /** 검색 UI를 띄울 수 있는 상태인지. 키가 없으면 직접 입력만 제공합니다. */
 export function isSearchAvailable() {
-  return isKakaoConfigured()
+  return Boolean(config.apiBaseUrl) || isKakaoConfigured()
+}
+
+function toApiPlaceDraft(item) {
+  const coordinate = normalizeCoordinate(item?.latitude, item?.longitude)
+  const placeId = Number(item?.placeId)
+  if (!coordinate || !Number.isInteger(placeId)) return null
+
+  return {
+    id: placeId,
+    placeId,
+    provider: String(item?.provider ?? '').toLocaleLowerCase('en-US'),
+    providerPlaceId: String(item?.providerPlaceId ?? '').trim(),
+    name: String(item?.name ?? '').trim(),
+    region: String(item?.region ?? '').trim(),
+    address: String(item?.address ?? '').trim(),
+    category: String(item?.category ?? '').trim() || '기타',
+    categoryName: String(item?.category ?? '').trim(),
+    priceBand: item?.priceBand ?? null,
+    latitude: coordinate.latitude,
+    longitude: coordinate.longitude,
+  }
+}
+
+function apiAuthorization(url) {
+  if (url.hostname.endsWith('.mock.pstmn.io')) return 'Bearer mock-token'
+  const token = typeof window !== 'undefined' ? window.localStorage.getItem('love-maptually:access-token') : ''
+  return token ? `Bearer ${token}` : ''
+}
+
+async function searchPlacesFromApi(query, { region, page = 0, size = 10, signal } = {}) {
+  const url = new URL('/api/places', config.apiBaseUrl)
+  url.searchParams.set('query', query)
+  if (region) url.searchParams.set('region', region)
+  url.searchParams.set('page', String(page))
+  url.searchParams.set('size', String(size))
+  const authorization = apiAuthorization(url)
+
+  let response
+  try {
+    response = await fetch(url, {
+      headers: { Accept: 'application/json', ...(authorization && { Authorization: authorization }) },
+      signal,
+    })
+  } catch (error) {
+    if (error?.name === 'AbortError') throw error
+    throw new PlaceSearchError('장소 검색에 실패했습니다.', 'search_failed')
+  }
+  const body = await response.json().catch(() => null)
+  if (!response.ok || !Array.isArray(body?.data?.content)) {
+    throw new PlaceSearchError(body?.message || '장소 검색 응답이 올바르지 않습니다.', 'search_failed')
+  }
+  return body.data.content.map(toApiPlaceDraft).filter(Boolean)
 }
 
 /**
@@ -86,9 +139,11 @@ async function loadSearchServices() {
  * @returns {Promise<Array>} toPlaceDraft() 형태의 결과 목록 (없으면 빈 배열)
  * @throws {PlaceSearchError} no_key | sdk_unavailable | search_failed
  */
-export async function searchPlaces(keyword, { size = 10 } = {}) {
+export async function searchPlaces(keyword, options = {}) {
   const query = String(keyword ?? '').trim()
   if (!query) return []
+
+  if (config.apiBaseUrl) return searchPlacesFromApi(query, options)
 
   const services = await loadSearchServices()
 
@@ -108,7 +163,7 @@ export async function searchPlaces(keyword, { size = 10 } = {}) {
         // 좌표가 깨진 결과는 지도에 찍을 수 없으므로 조용히 버립니다.
         resolve(data.map(toPlaceDraft).filter(Boolean))
       },
-      { size },
+      { size: options.size ?? 10 },
     )
   })
 }

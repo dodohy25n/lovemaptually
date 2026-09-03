@@ -241,9 +241,10 @@ export class LocalPlaceRepository extends PlaceRepository {
  * 반환 형식은 normalizePlace()가 만드는 객체와 동일해야 합니다.
  */
 export class ApiPlaceRepository extends PlaceRepository {
-  constructor({ baseUrl = '' } = {}) {
+  constructor({ baseUrl = '', fetchImpl = globalThis.fetch } = {}) {
     super()
     this.baseUrl = baseUrl
+    this.fetchImpl = fetchImpl
   }
 
   #notReady(method) {
@@ -254,7 +255,58 @@ export class ApiPlaceRepository extends PlaceRepository {
     )
   }
 
-  async list() { return this.#notReady('list') }        // GET    /places
+  async list() {
+    if (!this.baseUrl) {
+      throw new PlaceRepositoryError('API 기본 주소가 설정되지 않았습니다.', 'missing_base_url')
+    }
+    if (typeof this.fetchImpl !== 'function') {
+      throw new PlaceRepositoryError('이 환경에서는 장소 목록 요청을 보낼 수 없습니다.', 'fetch_unavailable')
+    }
+
+    const url = new URL('/api/places', this.baseUrl)
+    const headers = { Accept: 'application/json' }
+    if (url.hostname.endsWith('.mock.pstmn.io')) headers.Authorization = 'Bearer mock-token'
+
+    let response
+    try {
+      response = await this.fetchImpl(url, { method: 'GET', headers })
+    } catch (error) {
+      throw new PlaceRepositoryError(
+        error?.name === 'AbortError'
+          ? '장소 목록 조회가 취소되었습니다.'
+          : '장소 목록을 불러오지 못했습니다.',
+        error?.name === 'AbortError' ? 'request_aborted' : 'network_error',
+      )
+    }
+
+    const payload = await response.json().catch(() => null)
+    if (!response.ok || !Array.isArray(payload?.data?.content)) {
+      throw new PlaceRepositoryError(
+        payload?.message || `장소 목록 응답이 올바르지 않습니다. (${response.status})`,
+        response.ok ? 'invalid_response' : 'http_error',
+      )
+    }
+
+    return payload.data.content.flatMap((place) => {
+      try {
+        return [normalizePlace({
+          id: String(place.placeId),
+          provider: place.provider,
+          providerPlaceId: place.providerPlaceId,
+          name: place.name,
+          address: place.address,
+          category: place.category,
+          latitude: place.latitude,
+          longitude: place.longitude,
+          images: [],
+          tags: [],
+          reviews: [],
+        }, { id: String(place.placeId) })]
+      } catch {
+        return []
+      }
+    })
+  }                                                     // GET    /api/places
   async get() { return this.#notReady('get') }          // GET    /places/:id
   async create() { return this.#notReady('create') }    // POST   /places
   async update() { return this.#notReady('update') }    // PATCH  /places/:id

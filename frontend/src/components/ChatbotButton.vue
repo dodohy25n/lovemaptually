@@ -1,5 +1,6 @@
 <script setup>
 import BaseIcon from './BaseIcon.vue'
+import raccoonLovey from '@/assets/characters/raccoon-lovey.png'
 
 /**
  * 우하단 고정 챗봇 버튼 — 마스코트 '러비'와 말풍선.
@@ -29,7 +30,7 @@ defineEmits(['toggle'])
       data-testid="chatbot-button"
       @click="$emit('toggle')"
     >
-      <img src="/assets/raccoon-lovey.svg" alt="" width="104" height="96" />
+      <img :src="raccoonLovey" alt="" width="104" height="86" />
       <span class="chatbtn__badge">
         <BaseIcon :name="open ? 'close' : 'chat'" :size="18" />
       </span>
@@ -101,6 +102,6 @@ defineEmits(['toggle'])
 
 @media (max-width: 700px) {
   .chatbtn__bubble { display: none; }
-  .chatbtn__mascot img { width: 76px; height: 70px; }
+  .chatbtn__mascot img { width: 76px; height: 63px; }
 }
 </style>

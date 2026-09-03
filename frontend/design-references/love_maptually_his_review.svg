@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="480" height="1420" viewBox="0 0 480 1420">
+  <rect width="480" height="1420" rx="18" fill="#FFF9F1" stroke="#E5D5C8" stroke-width="2"/>
+  <g fill="#B97568"><circle cx="46" cy="18" r="7"/><circle cx="82" cy="18" r="7"/><circle cx="118" cy="18" r="7"/><circle cx="154" cy="18" r="7"/><circle cx="190" cy="18" r="7"/><circle cx="226" cy="18" r="7"/><circle cx="262" cy="18" r="7"/><circle cx="298" cy="18" r="7"/><circle cx="334" cy="18" r="7"/><circle cx="370" cy="18" r="7"/><circle cx="406" cy="18" r="7"/><circle cx="442" cy="18" r="7"/></g>
+  <text x="28" y="62" font-family="Georgia,serif" font-size="21" font-weight="700" fill="#EC7489">Love Maptually</text>
+  <text x="28" y="80" font-family="Arial,sans-serif" font-size="8" fill="#EC7489">러브 맵츄얼리</text>
+  <g font-family="Arial,sans-serif" font-size="9" fill="#6F544B"><text x="35" y="116">홈</text><text x="88" y="116">지도</text><text x="144" y="116">추천 맛집</text><text x="217" y="116">데이트 코스</text><text x="302" y="116">커뮤니티</text><text x="367" y="116">마이페이지</text><text x="429" y="116" fill="#EC7489">우리의 이야기</text></g>
+  <text x="240" y="180" text-anchor="middle" font-family="cursive" font-size="33" font-weight="700" fill="#EC7489">그의 리뷰 ♡</text>
+  <text x="240" y="210" text-anchor="middle" font-family="Arial,sans-serif" font-size="12" fill="#6F544B">그의 시선으로 바라본 우리의 데이트</text>
+
+  <rect x="20" y="238" width="440" height="1130" rx="16" fill="#FFFCF8" stroke="#E7D7CB"/>
+  <circle cx="74" cy="300" r="37" fill="#DDE8F4" stroke="#B5CBE1"/>
+  <circle cx="74" cy="288" r="13" fill="#B07A54"/><path d="M51 322C54 300 63 296 74 296C85 296 94 300 97 322Z" fill="#6E91B3"/>
+  <text x="125" y="285" font-family="Arial,sans-serif" font-size="18" font-weight="700" fill="#4F3C36">그의 리뷰</text>
+  <text x="125" y="309" font-family="Arial,sans-serif" font-size="11" fill="#7B635A">서울 강남구 · 디어 모먼트</text>
+  <text x="125" y="331" font-family="Arial,sans-serif" font-size="10" fill="#8F776E">▣ 2024.05.20 방문</text>
+  <text x="333" y="288" font-family="Arial,sans-serif" font-size="21" fill="#7199C3">♥ ♥ ♥ ♥ ◐</text><text x="426" y="288" font-family="Arial,sans-serif" font-size="16" font-weight="700" fill="#7199C3">4.6</text>
+  <g font-family="Arial,sans-serif" font-size="9" fill="#5E7390"><rect x="125" y="343" width="65" height="23" rx="11" fill="#E7EFF7"/><text x="157" y="358" text-anchor="middle">#데이트코스</text><rect x="198" y="343" width="46" height="23" rx="11" fill="#E7EFF7"/><text x="221" y="358" text-anchor="middle">#맛집</text><rect x="252" y="343" width="65" height="23" rx="11" fill="#E7EFF7"/><text x="284" y="358" text-anchor="middle">#사진맛집</text></g>
+
+  <!-- six editable photo slots -->
+  <g stroke="#FFFFFF" stroke-width="3">
+    <rect x="38" y="390" width="128" height="145" rx="10" fill="#E7C9A4"/><rect x="176" y="390" width="128" height="145" rx="10" fill="#D8AA85"/><rect x="314" y="390" width="128" height="145" rx="10" fill="#DCC7A8"/>
+    <rect x="38" y="545" width="128" height="145" rx="10" fill="#CFA984"/><rect x="176" y="545" width="128" height="145" rx="10" fill="#B98462"/><rect x="314" y="545" width="128" height="145" rx="10" fill="#C59B72"/>
+  </g>
+  <g fill="#FFF8ED" opacity=".75"><circle cx="102" cy="462" r="27"/><circle cx="240" cy="462" r="27"/><circle cx="378" cy="462" r="27"/><circle cx="102" cy="617" r="27"/><circle cx="240" cy="617" r="27"/><circle cx="378" cy="617" r="27"/></g>
+  <g font-family="Arial,sans-serif" font-size="10" fill="#8A6655" text-anchor="middle"><text x="102" y="466">사진 1</text><text x="240" y="466">사진 2</text><text x="378" y="466">사진 3</text><text x="102" y="621">사진 4</text><text x="240" y="621">사진 5</text><text x="378" y="621">사진 6</text></g>
+
+  <text x="40" y="738" font-family="cursive" font-size="17" font-weight="700" fill="#7199C3">“ 음식 퀄리티가 기대 이상이었어요 ”</text>
+  <g font-family="Arial,sans-serif" font-size="12" fill="#665149"><text x="48" y="774">파스타 면이 정말 쫄깃하고 소스도 진해서 맛있었어요.</text><text x="48" y="797">스테이크도 부드럽고 굽기 딱 좋게 잘해주셨어요.</text><text x="48" y="820">다음엔 다른 메뉴도 도전해보고 싶어요!</text></g>
+  <line x1="38" y1="846" x2="442" y2="846" stroke="#E7D7CB"/>
+
+  <g font-family="Arial,sans-serif" text-anchor="middle"><text x="83" y="882" font-size="18" fill="#7199C3">♡</text><text x="83" y="902" font-size="11" fill="#6F544B">분위기</text><text x="83" y="923" font-size="15" font-weight="700" fill="#7199C3">4.4</text><text x="183" y="882" font-size="18" fill="#7199C3">♨</text><text x="183" y="902" font-size="11" fill="#6F544B">맛</text><text x="183" y="923" font-size="15" font-weight="700" fill="#7199C3">4.7</text><text x="283" y="882" font-size="18" fill="#7199C3">◎</text><text x="283" y="902" font-size="11" fill="#6F544B">가성비</text><text x="283" y="923" font-size="15" font-weight="700" fill="#7199C3">4.5</text><text x="383" y="882" font-size="18" fill="#7199C3">☆</text><text x="383" y="902" font-size="11" fill="#6F544B">서비스</text><text x="383" y="923" font-size="15" font-weight="700" fill="#7199C3">4.4</text></g>
+
+  <rect x="38" y="954" width="404" height="246" rx="13" fill="#F2F7FB" stroke="#D3E0EC"/>
+  <text x="56" y="987" font-family="Arial,sans-serif" font-size="16" font-weight="700" fill="#4F6179">AI 리뷰 요약 ✧</text>
+  <text x="56" y="1011" font-family="Arial,sans-serif" font-size="11" fill="#718196">여러 커플들이 남긴 리뷰를 요약해드려요!</text>
+  <g font-family="Arial,sans-serif" font-size="11" fill="#596A7D"><text x="57" y="1051">☕  분위기</text><text x="142" y="1051">조용하고 아늑해 대화하기 좋은 공간이에요.</text><text x="408" y="1051" fill="#7199C3">96%</text><text x="57" y="1094">♨  맛</text><text x="142" y="1094">음식이 전체적으로 맛있고 플레이팅도 만족스러워요.</text><text x="408" y="1094" fill="#7199C3">94%</text><text x="57" y="1137">▣  사진</text><text x="142" y="1137">조명과 인테리어 덕분에 사진이 정말 잘 나와요.</text><text x="408" y="1137" fill="#7199C3">93%</text><text x="57" y="1180">☆  재방문 의사</text><text x="166" y="1180">데이트 코스로 추천하고 싶은 곳이에요.</text><text x="408" y="1180" fill="#7199C3">92%</text></g>
+
+  <rect x="38" y="1220" width="404" height="82" rx="13" fill="#F7F3EE" stroke="#E2D6CC"/>
+  <circle cx="74" cy="1261" r="25" fill="#F3D8D5"/><text x="112" y="1252" font-family="Arial,sans-serif" font-size="12" font-weight="700" fill="#7199C3">함께한 그녀의 한줄평</text><text x="112" y="1277" font-family="Arial,sans-serif" font-size="12" fill="#69534B">디저트는 꼭 먹어야 해요! 케이크 진짜 맛있어요 ♡</text>
+  <line x1="38" y1="1323" x2="442" y2="1323" stroke="#E7D7CB"/>
+  <text x="50" y="1352" font-family="Arial,sans-serif" font-size="11" fill="#6F544B">♥ 좋아요 64</text><text x="180" y="1352" font-family="Arial,sans-serif" font-size="11" fill="#6F544B">☵ 댓글 9</text><text x="356" y="1352" font-family="Arial,sans-serif" font-size="11" fill="#6F544B">▯ 저장하기</text>
+</svg>

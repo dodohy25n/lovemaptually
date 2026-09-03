@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="240" height="174" viewBox="0 0 240 174">
+  <rect x="1" y="1" width="238" height="172" rx="10" fill="#FFF9F1" stroke="#E6D6C7" stroke-width="2"/>
+  <text x="20" y="31" font-family="Arial,sans-serif" font-size="14" font-weight="700" fill="#705149">점수에 따른 하트 등급</text>
+
+  <!-- good: 4.0 - 5.0 -->
+  <path d="M29 54C22 46 8 50 8 61C8 72 29 84 29 84C29 84 50 72 50 61C50 50 36 46 29 54Z" fill="#EF6F88"/>
+  <text x="64" y="69" font-family="Arial,sans-serif" font-size="13" fill="#705149">좋아요! (4.0 ~ 5.0)</text>
+
+  <!-- normal: 2.0 - 3.9 -->
+  <path d="M29 97C22 89 8 93 8 104C8 115 29 127 29 127C29 127 50 115 50 104C50 93 36 89 29 97Z" fill="#FFF9F1" stroke="#EF8B9C" stroke-width="2"/>
+  <path d="M29 97C22 89 8 93 8 104C8 115 29 127 29 127Z" fill="#F08A9D"/>
+  <text x="64" y="112" font-family="Arial,sans-serif" font-size="13" fill="#705149">보통이에요 (2.0 ~ 3.9)</text>
+
+  <!-- bad: 0 - 1.9 -->
+  <path d="M29 134C22 126 8 130 8 141C8 152 29 164 29 164C29 164 50 152 50 141C50 130 36 126 29 134Z" fill="#FFF9F1" stroke="#B77D73" stroke-width="2"/>
+  <path d="M31 132L25 141L31 147L25 156" fill="none" stroke="#B77D73" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+  <text x="64" y="149" font-family="Arial,sans-serif" font-size="13" fill="#705149">아쉬워요 (0 ~ 1.9)</text>
+</svg>

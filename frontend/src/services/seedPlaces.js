@@ -1,6 +1,17 @@
 import { COUPLE } from '@/utils/users.js'
 
 /**
+ * 시연용 사진 (public/samples). 번들 해시가 붙는 @/assets 대신 고정 경로를 쓰는 이유는,
+ * seed 데이터가 localStorage에 그대로 저장돼 다시 빌드해도 같은 URL이어야 하기 때문입니다.
+ * 실제 사진 업로드가 붙으면 사용자 데이터로 교체됩니다.
+ */
+const SAMPLE = {
+  cafe: ['/samples/cake.jpg', '/samples/ade.jpg', '/samples/window.jpg'],
+  garden: ['/samples/salad.jpg', '/samples/pudding.jpg'],
+  ramen: ['/samples/pasta.jpg'],
+}
+
+/**
  * 저장된 데이터가 하나도 없을 때 사용하는 seed 데이터.
  *
  * 장소명·카테고리·지역·점수는 Figma 와이어프레임의 '최근 방문 장소' 예시를 그대로 따랐습니다.
@@ -20,7 +31,7 @@ export function createSeedPlaces() {
       latitude: 37.4979,
       longitude: 127.0276,
       visitedAt: '2026-02-14',
-      images: [],
+      images: [...SAMPLE.cafe],
       tags: ['첫 데이트', '창가석'],
       reviews: [
         {
@@ -55,7 +66,7 @@ export function createSeedPlaces() {
       latitude: 37.4837,
       longitude: 127.0324,
       visitedAt: '2026-01-20',
-      images: [],
+      images: [...SAMPLE.garden],
       tags: ['기념일', '파스타'],
       reviews: [
         {
@@ -90,7 +101,7 @@ export function createSeedPlaces() {
       latitude: 37.5563,
       longitude: 126.9236,
       visitedAt: '2026-02-28',
-      images: [],
+      images: [...SAMPLE.ramen],
       tags: ['야식', '웨이팅'],
       reviews: [
         {

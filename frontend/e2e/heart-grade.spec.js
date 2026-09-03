@@ -1,6 +1,14 @@
 import { test, expect } from '@playwright/test'
 import { openApp, createPlace, readStoredPlaces } from './helpers.js'
 
+/** '점수에 따른 하트 등급' 안내 카드에 실린 등급별 하트 이미지의 src. */
+function legendHeartSrc(page, label) {
+  return page
+    .getByLabel('점수에 따른 하트 등급')
+    .getByRole('img', { name: `${label} 하트` })
+    .getAttribute('src')
+}
+
 test.describe('4. 점수별 하트 변경', () => {
   const CASES = [
     { score: 4.8, grade: 'good', asset: 'heart-good', label: '좋아요' },
@@ -27,7 +35,11 @@ test.describe('4. 점수별 하트 변경', () => {
 
       const pin = page.getByTestId(`map-pin-${created.id}`)
       await expect(pin).toHaveAttribute('data-grade', testCase.grade)
-      await expect(pin.locator('img')).toHaveAttribute('src', `/assets/${testCase.asset}.svg`)
+      // 빌드 산출물의 경로는 번들러가 정하므로(해시·data URI) 파일명을 직접 비교하지 않고,
+      // 같은 등급을 쓰는 '하트 등급 안내'의 이미지와 같은 src인지 확인합니다.
+      const legendSrc = await legendHeartSrc(page, testCase.label)
+      expect(legendSrc).toBeTruthy()
+      await expect(pin.locator('img')).toHaveAttribute('src', legendSrc)
 
       // 숫자 점수는 이미지가 아니라 텍스트 노드로 렌더링된다
       const scoreChip = pin.getByTestId('pin-score')
@@ -61,7 +73,8 @@ test.describe('4. 점수별 하트 변경', () => {
 
     await expect(pin).toHaveAttribute('data-grade', 'bad')
     await expect(pin.getByTestId('pin-score')).toHaveText('1.5')
-    await expect(pin.locator('img')).toHaveAttribute('src', '/assets/heart-bad.svg')
+    const badLegendSrc = await legendHeartSrc(page, '아쉬워요')
+    await expect(pin.locator('img')).toHaveAttribute('src', badLegendSrc)
   })
 
   test('리뷰의 세부 점수가 커플 통합 점수를 다시 계산한다', async ({ page }) => {

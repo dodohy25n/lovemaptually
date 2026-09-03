@@ -3,6 +3,7 @@ import { computed } from 'vue'
 import HeartRating from './HeartRating.vue'
 import { COUPLE_MEMBERS } from '@/utils/users.js'
 import { reviewAverage } from '@/utils/heartGrade.js'
+import photoPlaceholder from '@/assets/photo-placeholder.svg'
 
 /**
  * '우리의 기억' 카드 — 두 사람의 방문 기록을 한 장으로 합친 것.
@@ -66,7 +67,7 @@ const oneLiner = computed(() => {
       <li v-for="(photo, index) in photos" :key="index" class="memory__photo">
         <img v-if="photo" :src="photo" :alt="`${place.name} 사진 ${index + 1}`" loading="lazy" />
         <span v-else class="memory__photo-empty">
-          <img src="/assets/photo-placeholder.svg" alt="" width="30" height="30" />
+          <img :src="photoPlaceholder" alt="" width="30" height="30" />
           <span class="lm-sr-only">사진 없음</span>
         </span>
       </li>

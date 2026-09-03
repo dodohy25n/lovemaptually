@@ -26,6 +26,7 @@ const PATHS = {
   camera: 'M4 8h3l1.5-2h7L17 8h3v11H4V8zm8 3a3.5 3.5 0 1 0 0 7 3.5 3.5 0 0 0 0-7z',
   edit: 'M4 20h4L19 9l-4-4L4 16v4zM15 5l4 4',
   trash: 'M5 7h14M10 7V5h4v2m-6 0v12h8V7',
+  locate: 'M12 8.5a3.5 3.5 0 1 0 0 7 3.5 3.5 0 0 0 0-7zM12 2v3m0 14v3M2 12h3m14 0h3',
 }
 </script>
 

@@ -12,8 +12,11 @@ body {
   font-size: var(--lm-text-md);
   color: var(--lm-ink);
   background-color: var(--lm-bg);
-  background-image: url('/assets/paper-texture.svg');
-  background-repeat: repeat;
+  /* 종이 질감은 이음매가 없는 타일이 아니라 사진 텍스처라, 반복 대신 화면 전체를 덮습니다. */
+  background-image: url('../assets/decorations/paper-texture.jpg');
+  background-size: cover;
+  background-position: center;
+  background-attachment: fixed;
   -webkit-font-smoothing: antialiased;
 }
 
@@ -123,7 +126,7 @@ a { color: inherit; }
   position: absolute;
   width: 74px;
   height: 24px;
-  background: url('/assets/pink-tape.svg') center/contain no-repeat;
+  background: url('../assets/decorations/pink-tape.svg') center/contain no-repeat;
   pointer-events: none;
   opacity: 0.9;
 }

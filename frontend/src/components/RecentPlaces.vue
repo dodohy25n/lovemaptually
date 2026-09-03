@@ -3,6 +3,7 @@ import { computed, ref } from 'vue'
 import HeartRating from './HeartRating.vue'
 import EmptyState from './EmptyState.vue'
 import BaseIcon from './BaseIcon.vue'
+import photoPlaceholder from '@/assets/photo-placeholder.svg'
 
 /** '최근 방문 장소' 목록 카드. 기본 3개만 보여주고 '더 보기'로 펼칩니다. */
 const props = defineProps({
@@ -52,7 +53,7 @@ function subtitleOf(place) {
           >
             <img
               class="recent__thumb"
-              :src="place.images[0] || '/assets/photo-placeholder.svg'"
+              :src="place.images[0] || photoPlaceholder"
               :alt="place.images.length ? `${place.name} 사진` : ''"
               width="42"
               height="42"

@@ -1,4 +1,6 @@
 <script setup>
+import coupleAvatar from '@/assets/couple-avatar.svg'
+
 /** '우리의 러브맵' 요약 카드 — 커플 일러스트와 함께한 장소 수. */
 defineProps({
   count: { type: Number, default: 0 },
@@ -15,7 +17,7 @@ defineProps({
 
     <img
       class="summary__avatar"
-      src="/assets/couple-avatar.svg"
+      :src="coupleAvatar"
       alt="커플 프로필 일러스트"
       width="110"
       height="110"

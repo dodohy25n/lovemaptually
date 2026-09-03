@@ -3,6 +3,7 @@ import { computed } from 'vue'
 import HeartRating from './HeartRating.vue'
 import { reviewAverage, formatScore } from '@/utils/heartGrade.js'
 import { memberOf } from '@/utils/users.js'
+import photoPlaceholder from '@/assets/photo-placeholder.svg'
 
 /**
  * '그의 리뷰' / '그녀의 리뷰' 종이 카드.
@@ -76,7 +77,7 @@ const photos = computed(() => {
           loading="lazy"
         />
         <span v-else class="review__photo-empty">
-          <img src="/assets/photo-placeholder.svg" alt="" width="34" height="34" />
+          <img :src="photoPlaceholder" alt="" width="34" height="34" />
           <span class="lm-sr-only">사진 없음</span>
         </span>
       </li>

@@ -1,18 +1,19 @@
 <script setup>
 import { ref, shallowRef, onMounted, onBeforeUnmount, watch, nextTick } from 'vue'
-import L from 'leaflet'
-import 'leaflet/dist/leaflet.css'
 import HeartMarker from './HeartMarker.vue'
-import { getTileProvider, DEFAULT_CENTER, DEFAULT_ZOOM } from '@/services/mapProvider.js'
+import BaseIcon from './BaseIcon.vue'
+import { createMapEngine } from '@/services/mapEngine.js'
+import { getCurrentPosition } from '@/services/geolocation.js'
 
 /**
- * 실제 지도(Leaflet + OSM 타일).
+ * 실제 지도(카카오 지도).
  *
- * 핀은 Leaflet 마커 대신 지도 위에 겹쳐 놓은 Vue 컴포넌트로 그립니다.
- * 이렇게 하면 점수 텍스트가 평범한 HTML로 남고, props/emit도 그대로 쓸 수 있습니다.
+ * 핀은 지도 마커가 아니라 지도 위에 겹쳐 놓은 Vue 컴포넌트로 그립니다.
+ * 점수 텍스트가 평범한 HTML로 남고 props/emit도 그대로 쓸 수 있어,
+ * 지도 엔진이 바뀌어도 핀 디자인은 영향을 받지 않습니다.
  *
- * 타일 요청이 실패해도(오프라인, 차단, 테스트 환경) 지도 컨테이너와 핀은
- * 그대로 동작하며 fallback 배경과 안내만 추가로 보여줍니다.
+ * 카카오 SDK를 못 불러와도(키 없음, 도메인 미등록, 오프라인, 테스트 환경)
+ * 타일 없는 대체 지도로 물러나 핀은 그대로 동작합니다 (services/mapEngine.js).
  */
 const props = defineProps({
   places: { type: Array, default: () => [] },
@@ -23,12 +24,26 @@ const props = defineProps({
 const emit = defineEmits(['select', 'pick'])
 
 const containerRef = ref(null)
-const map = shallowRef(null)
+const engine = shallowRef(null)
 const positions = ref({})
-const tileFailed = ref(false)
+// 카카오 지도를 못 불러와 대체 지도로 물러난 상태. 핀은 그대로 동작합니다.
+const mapImageMissing = ref(false)
 const ready = ref(false)
 
-let tileErrorCount = 0
+// ── 내 위치 ──────────────────────────────────────────────
+const myLocation = ref(null)
+const myLocationPoint = ref(null)
+const locating = ref(false)
+const locateError = ref('')
+
+const LOCATE_ERRORS = {
+  denied: '위치 권한이 거부되어 있어요. 브라우저 주소창의 자물쇠에서 허용해주세요.',
+  insecure: 'https 연결에서만 현재 위치를 쓸 수 있어요.',
+  unsupported: '이 브라우저에서는 현재 위치를 쓸 수 없어요.',
+  timeout: '위치를 찾는 데 너무 오래 걸려요. 잠시 후 다시 시도해주세요.',
+  unavailable: '현재 위치를 가져오지 못했어요.',
+}
+
 let resizeObserver = null
 // 장소는 마운트 직후가 아니라 스토어 로딩이 끝난 뒤 도착합니다.
 // 목록이 처음 채워지는 순간 한 번만 지도 범위를 맞춥니다.
@@ -43,69 +58,64 @@ function positionable(list) {
 
 /** 각 장소의 화면 좌표(px)를 다시 계산합니다. */
 function syncPositions() {
-  if (!map.value) return
+  if (!engine.value) return
   const next = {}
   for (const place of positionable(props.places)) {
-    const point = map.value.latLngToContainerPoint([place.latitude, place.longitude])
-    next[place.id] = { x: point.x, y: point.y }
+    next[place.id] = engine.value.containerPointOf(place)
   }
   positions.value = next
+  // 내 위치 표시도 지도와 함께 따라 움직여야 합니다.
+  myLocationPoint.value = myLocation.value
+    ? engine.value.containerPointOf(myLocation.value)
+    : null
+}
+
+/** '내 위치' — 현재 위치로 지도를 옮기고 그 자리에 표시를 남깁니다. */
+async function locateMe() {
+  if (locating.value) return
+  locating.value = true
+  locateError.value = ''
+  try {
+    const coordinate = await getCurrentPosition()
+    myLocation.value = coordinate
+    engine.value?.panTo(coordinate)
+    await nextTick()
+    syncPositions()
+  } catch (error) {
+    locateError.value = LOCATE_ERRORS[error?.code] ?? LOCATE_ERRORS.unavailable
+  } finally {
+    locating.value = false
+  }
 }
 
 /** 저장된 장소가 모두 보이도록 지도 범위를 맞춥니다. */
 function fitToPlaces() {
-  if (!map.value) return
-  const list = positionable(props.places)
-  if (list.length === 0) {
-    map.value.setView([DEFAULT_CENTER.latitude, DEFAULT_CENTER.longitude], DEFAULT_ZOOM)
-    return
-  }
-  const bounds = L.latLngBounds(list.map((place) => [place.latitude, place.longitude]))
-  // 지도 위에 겹쳐 놓은 UI(상단 기록 버튼, 하단 카테고리 필터) 뒤로 핀이 숨지 않도록
-  // 위아래 여백을 다르게 줍니다.
-  map.value.fitBounds(bounds, {
-    paddingTopLeft: [70, 90],
-    paddingBottomRight: [70, 150],
-    maxZoom: 15,
-  })
+  if (!engine.value) return
+  engine.value.fitBounds(positionable(props.places))
 }
 
-onMounted(() => {
-  const provider = getTileProvider()
+onMounted(async () => {
+  // SDK를 받아오는 동안이라 await 합니다. 실패하면 대체 지도가 돌아옵니다.
+  const created = await createMapEngine(containerRef.value)
+  // 기다리는 사이에 화면을 벗어났다면 정리만 하고 끝냅니다.
+  if (!containerRef.value) {
+    created.destroy()
+    return
+  }
 
-  map.value = L.map(containerRef.value, {
-    center: [DEFAULT_CENTER.latitude, DEFAULT_CENTER.longitude],
-    zoom: DEFAULT_ZOOM,
-    zoomControl: true,
-    attributionControl: true,
-  })
+  engine.value = created
+  mapImageMissing.value = created.kind !== 'kakao'
 
-  const tiles = L.tileLayer(provider.url, {
-    attribution: provider.attribution,
-    maxZoom: provider.maxZoom,
-  })
-
-  // 타일이 몇 장 연속으로 실패하면 지도 서비스 장애로 보고 fallback을 켭니다.
-  tiles.on('tileerror', () => {
-    tileErrorCount += 1
-    if (tileErrorCount >= 3) tileFailed.value = true
-  })
-  tiles.on('tileload', () => {
-    tileErrorCount = 0
-    tileFailed.value = false
-  })
-  tiles.addTo(map.value)
-
-  map.value.on('move zoom resize zoomend moveend', syncPositions)
-  map.value.on('click', (event) => {
+  created.onViewChange(syncPositions)
+  created.onClick((coordinate) => {
     if (!props.picking) return
-    emit('pick', { latitude: event.latlng.lat, longitude: event.latlng.lng })
+    emit('pick', coordinate)
   })
 
-  // 컨테이너 크기가 바뀌면 Leaflet에 알려야 타일과 핀 위치가 어긋나지 않습니다.
+  // 컨테이너 크기가 바뀌면 지도에 알려야 타일과 핀 위치가 어긋나지 않습니다.
   if (typeof ResizeObserver !== 'undefined') {
     resizeObserver = new ResizeObserver(() => {
-      map.value?.invalidateSize()
+      engine.value?.relayout()
       syncPositions()
     })
     resizeObserver.observe(containerRef.value)
@@ -113,16 +123,16 @@ onMounted(() => {
 
   if (positionable(props.places).length > 0) hasFitted = true
   fitToPlaces()
-  nextTick(() => {
-    syncPositions()
-    ready.value = true
-  })
+  await nextTick()
+  syncPositions()
+  ready.value = true
 })
 
 onBeforeUnmount(() => {
   resizeObserver?.disconnect()
-  map.value?.remove()
-  map.value = null
+  resizeObserver = null
+  engine.value?.destroy()
+  engine.value = null
 })
 
 watch(
@@ -140,8 +150,8 @@ watch(
 /** 특정 장소로 지도를 이동시킵니다. 부모(상세 패널 열기 등)에서 호출합니다. */
 function focusPlace(placeId) {
   const place = props.places.find((item) => item.id === placeId)
-  if (!place || !map.value) return
-  map.value.panTo([place.latitude, place.longitude])
+  if (!place || !engine.value) return
+  engine.value.panTo(place)
 }
 
 defineExpose({ focusPlace, fitToPlaces })
@@ -152,11 +162,7 @@ defineExpose({ focusPlace, fitToPlaces })
     <!-- 타일이 안 뜰 때 보이는 종이 지도 느낌의 배경 -->
     <div class="map__fallback-bg" aria-hidden="true"></div>
 
-    <div ref="containerRef" class="map__leaflet" data-testid="map-canvas"></div>
-
-    <!-- 실제 지도 타일을 디자인의 아이보리·핑크 톤으로 덮는 보정 레이어.
-         클릭을 가로채지 않고, 핀 레이어보다 아래에 놓입니다. -->
-    <div class="map__tint" aria-hidden="true"></div>
+    <div ref="containerRef" class="map__surface" data-testid="map-canvas"></div>
 
     <!-- 핀 레이어: 지도 위에 겹쳐 그리고, 핀 자체만 클릭을 받습니다. -->
     <div class="map__pins" data-testid="map-pins">
@@ -178,11 +184,38 @@ defineExpose({ focusPlace, fitToPlaces })
       </div>
     </div>
 
+    <!-- 내 위치 표시. 지도와 함께 움직이도록 핀과 같은 방식으로 좌표를 계산합니다. -->
+    <div
+      v-if="ready && myLocationPoint"
+      class="map__me"
+      data-testid="map-my-location"
+      aria-hidden="true"
+      :style="{ left: `${myLocationPoint.x}px`, top: `${myLocationPoint.y}px` }"
+    >
+      <span class="map__me-dot"></span>
+    </div>
+
+    <button
+      type="button"
+      class="map__locate"
+      :aria-label="locating ? '현재 위치를 찾는 중' : '내 위치로 이동'"
+      :aria-busy="locating"
+      :disabled="locating"
+      data-testid="map-locate"
+      @click="locateMe"
+    >
+      <BaseIcon name="locate" :size="20" />
+    </button>
+
+    <p v-if="locateError" class="map__notice map__notice--error" role="status" data-testid="map-locate-error">
+      {{ locateError }}
+    </p>
+
     <p v-if="picking" class="map__hint" role="status">
       지도를 클릭해 장소의 위치를 찍어주세요.
     </p>
 
-    <p v-if="tileFailed" class="map__notice" role="status" data-testid="map-fallback">
+    <p v-if="mapImageMissing" class="map__notice" role="status" data-testid="map-fallback">
       지도 이미지를 불러오지 못했어요. 기록한 장소와 핀은 그대로 사용할 수 있어요.
     </p>
 
@@ -217,22 +250,12 @@ defineExpose({ focusPlace, fitToPlaces })
   background-size: 160px 160px, 160px 160px, 40px 40px, 40px 40px;
 }
 
-.map__leaflet {
+ /* 지도 이미지에는 어떤 보정도 걸지 않습니다.
+    카카오 지도는 약관상 지도 이미지 변형과 로고·저작권 표시 가림이 금지됩니다.
+    (예전 OSM 타일에 걸어 두었던 sepia/핑크 보정은 그래서 제거했습니다.) */
+.map__surface {
   position: absolute;
   inset: 0;
-  /* 1단계: 채도를 낮추고 종이 느낌으로 밝힙니다. */
-  filter: sepia(0.5) saturate(0.55) hue-rotate(-8deg) brightness(1.14) contrast(0.86);
-}
-
-/* 2단계: 남은 초록·파랑 기운을 핑크 계열로 물들입니다. */
-.map__tint {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  z-index: 1;
-  background: var(--lm-pink-bg);
-  mix-blend-mode: color;
-  opacity: 0.5;
 }
 
 .map__pins {
@@ -271,12 +294,50 @@ defineExpose({ focusPlace, fitToPlaces })
   color: var(--lm-ink);
 }
 
-/* Leaflet 기본 UI를 디자인 톤에 맞춤 */
-.map :deep(.leaflet-control-attribution) {
-  background: rgba(255, 249, 241, 0.86);
-  font-size: 10px;
-  color: var(--lm-ink-faint);
+/* 내 위치 버튼 — 카카오 로고(좌하단)와 카테고리 필터(하단 중앙)를 피해 놓습니다. */
+.map__locate {
+  position: absolute;
+  left: var(--lm-space-3);
+  bottom: 44px;
+  z-index: var(--lm-z-map-ui);
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: var(--lm-card);
+  border: 1px solid var(--lm-card-edge);
+  color: var(--lm-ink);
+  box-shadow: var(--lm-shadow-card);
+  transition: color 0.16s ease, transform 0.16s ease;
 }
+.map__locate:hover { color: var(--lm-pink); transform: translateY(-1px); }
+.map__locate:disabled { opacity: 0.6; cursor: progress; transform: none; }
+
+.map__me {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  z-index: var(--lm-z-map-ui);
+}
+.map__me-dot {
+  display: block;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--lm-pink-btn);
+  border: 3px solid #fff;
+  box-shadow: 0 0 0 4px rgba(242, 111, 138, 0.28);
+}
+
+.map__notice--error {
+  max-width: min(88%, 460px);
+  text-align: center;
+  line-height: 1.5;
+}
+
+/* 대체 지도(Leaflet)의 기본 UI만 디자인 톤에 맞춥니다.
+   카카오 지도의 로고·저작권은 가리면 안 되므로 손대지 않습니다. */
 .map :deep(.leaflet-bar a) {
   background: var(--lm-card);
   color: var(--lm-ink);

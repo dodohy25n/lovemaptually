@@ -1,4 +1,6 @@
 <script setup>
+import raccoonLovey from '@/assets/characters/raccoon-lovey.png'
+
 defineProps({
   title: { type: String, required: true },
   description: { type: String, default: '' },
@@ -13,10 +15,10 @@ defineEmits(['action'])
   <div class="empty" :class="{ 'empty--compact': compact }" data-testid="empty-state">
     <img
       class="empty__mascot"
-      src="/assets/raccoon-lovey.svg"
+      :src="raccoonLovey"
       alt=""
       width="72"
-      height="66"
+      height="59"
     />
     <p class="empty__title">{{ title }}</p>
     <p v-if="description" class="empty__desc">{{ description }}</p>
@@ -42,7 +44,7 @@ defineEmits(['action'])
 }
 .empty--compact { padding: var(--lm-space-4) var(--lm-space-3); }
 .empty__mascot { opacity: 0.8; }
-.empty--compact .empty__mascot { width: 48px; height: 44px; }
+.empty--compact .empty__mascot { width: 48px; height: 40px; }
 .empty__title {
   font-size: var(--lm-text-md);
   color: var(--lm-ink);

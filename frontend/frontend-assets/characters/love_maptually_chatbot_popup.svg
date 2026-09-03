@@ -1,0 +1,49 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="420" height="600" viewBox="0 0 420 600">
+  <rect x="8" y="8" width="404" height="584" rx="22" fill="#FFFDFC" stroke="#E8D5CA" stroke-width="2"/>
+
+  <!-- header -->
+  <path d="M30 8H390C402 8 412 18 412 30V92H8V30C8 18 18 8 30 8Z" fill="#FFF3F3"/>
+  <circle cx="52" cy="49" r="25" fill="#A77B64" stroke="#6A4B3E" stroke-width="2"/>
+  <path d="M35 39L28 26L44 34M69 39L76 26L60 34" fill="#8A6655" stroke="#6A4B3E" stroke-width="2"/>
+  <path d="M33 48C39 37 47 38 52 47C45 56 38 56 33 48ZM71 48C65 37 57 38 52 47C59 56 66 56 71 48Z" fill="#4D3A35"/>
+  <circle cx="43" cy="47" r="2.5" fill="#FFFFFF"/><circle cx="61" cy="47" r="2.5" fill="#FFFFFF"/>
+  <path d="M48 57Q52 53 56 57Q54 63 52 63Q50 63 48 57Z" fill="#382923"/>
+  <text x="88" y="43" font-family="Arial,sans-serif" font-size="17" font-weight="700" fill="#5A4138">러비에게 물어보기</text>
+  <circle cx="96" cy="66" r="4" fill="#67C58A"/>
+  <text x="107" y="70" font-family="Arial,sans-serif" font-size="11" fill="#8A7068">데이트 도우미 · 온라인</text>
+  <circle cx="378" cy="46" r="15" fill="#FFFDFC" stroke="#E8D5CA"/>
+  <path d="M372 40L384 52M384 40L372 52" stroke="#8A7068" stroke-width="2" stroke-linecap="round"/>
+
+  <!-- intro message -->
+  <text x="24" y="124" font-family="Arial,sans-serif" font-size="11" fill="#AD9991">오늘</text>
+  <rect x="24" y="140" width="292" height="82" rx="16" fill="#FFF2F1"/>
+  <text x="40" y="166" font-family="Arial,sans-serif" font-size="13" fill="#5A4138">안녕! 나는 러비야 ♡</text>
+  <text x="40" y="188" font-family="Arial,sans-serif" font-size="13" fill="#5A4138">둘만의 데이트 장소나 코스를</text>
+  <text x="40" y="208" font-family="Arial,sans-serif" font-size="13" fill="#5A4138">함께 찾아볼까?</text>
+
+  <!-- suggestions -->
+  <text x="24" y="254" font-family="Arial,sans-serif" font-size="12" font-weight="700" fill="#7E6259">이렇게 물어보세요</text>
+  <rect x="24" y="270" width="174" height="42" rx="20" fill="#FFFFFF" stroke="#F0C7CD"/>
+  <text x="111" y="296" text-anchor="middle" font-family="Arial,sans-serif" font-size="12" fill="#D76378">근처 분위기 좋은 카페</text>
+  <rect x="207" y="270" width="189" height="42" rx="20" fill="#FFFFFF" stroke="#F0C7CD"/>
+  <text x="302" y="296" text-anchor="middle" font-family="Arial,sans-serif" font-size="12" fill="#D76378">비 오는 날 데이트 코스</text>
+  <rect x="24" y="320" width="174" height="42" rx="20" fill="#FFFFFF" stroke="#F0C7CD"/>
+  <text x="111" y="346" text-anchor="middle" font-family="Arial,sans-serif" font-size="12" fill="#D76378">기념일 맛집 추천</text>
+  <rect x="207" y="320" width="189" height="42" rx="20" fill="#FFFFFF" stroke="#F0C7CD"/>
+  <text x="302" y="346" text-anchor="middle" font-family="Arial,sans-serif" font-size="12" fill="#D76378">우리 취향으로 추천해줘</text>
+
+  <!-- example response card -->
+  <rect x="92" y="392" width="304" height="94" rx="16" fill="#F9F4EF"/>
+  <text x="109" y="417" font-family="Arial,sans-serif" font-size="12" fill="#5A4138">성수동 카페 데이트는 어때요?</text>
+  <text x="109" y="440" font-family="Arial,sans-serif" font-size="11" fill="#8D756C">카페 온화 · 서울숲 산책 · 저녁 파스타</text>
+  <rect x="109" y="455" width="89" height="20" rx="10" fill="#F4DDE0"/>
+  <text x="154" y="469" text-anchor="middle" font-family="Arial,sans-serif" font-size="10" fill="#C65F73">지도에서 보기</text>
+  <text x="378" y="501" text-anchor="end" font-family="Arial,sans-serif" font-size="10" fill="#B2A09A">오후 4:10</text>
+
+  <!-- composer -->
+  <line x1="8" y1="520" x2="412" y2="520" stroke="#EEE1D8"/>
+  <rect x="22" y="540" width="318" height="42" rx="21" fill="#F7F1ED"/>
+  <text x="43" y="566" font-family="Arial,sans-serif" font-size="12" fill="#B3A19A">러비에게 메시지를 입력하세요</text>
+  <circle cx="370" cy="561" r="21" fill="#EC7489"/>
+  <path d="M361 561L377 553L374 569L369 564L365 570Z" fill="#FFFFFF"/>
+</svg>

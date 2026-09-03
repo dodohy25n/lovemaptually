@@ -33,6 +33,9 @@ const detailOpen = ref(false)
 const formOpen = ref(false)
 const picking = ref(false)
 const pickedCoordinate = ref(null)
+// 폼을 '새로 여는' 순간에만 증가합니다. 위치 찍기로 잠시 접었다 펴는 것은 같은 세션이라
+// 이 값이 그대로여서, 사용자가 입력하던 내용이 지워지지 않습니다.
+const formSession = ref(0)
 const editingPlace = ref(null)
 const saving = ref(false)
 const formError = ref(null)
@@ -56,12 +59,14 @@ function openCreateForm() {
   editingPlace.value = null
   pickedCoordinate.value = null
   formError.value = null
+  formSession.value += 1
   formOpen.value = true
 }
 
 function openEditForm(placeId) {
   editingPlace.value = places.value.find((place) => place.id === placeId) ?? null
   formError.value = null
+  formSession.value += 1
   formOpen.value = true
 }
 
@@ -189,6 +194,7 @@ async function saveReview({ placeId, review }) {
     <PlaceFormModal
       :open="formOpen"
       :place="editingPlace"
+      :form-session="formSession"
       :picked-coordinate="pickedCoordinate"
       :saving="saving"
       :error-message="formError"

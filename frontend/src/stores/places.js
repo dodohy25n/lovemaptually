@@ -77,10 +77,10 @@ export const usePlacesStore = defineStore('places', () => {
     }
   }
 
-  async function add(draft) {
+  async function add(draft, options) {
     error.value = null
     try {
-      const place = await createPlace(draft)
+      const place = await createPlace(draft, options)
       places.value = [...places.value, place]
       selectedId.value = place.id
       return place

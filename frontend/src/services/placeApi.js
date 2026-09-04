@@ -44,8 +44,8 @@ export function fetchPlace(id) {
   return getPlaceRepository().get(id)
 }
 
-export function createPlace(draft) {
-  return getPlaceRepository().create(draft)
+export function createPlace(draft, options) {
+  return getPlaceRepository().create(draft, options)
 }
 
 export function updatePlace(id, patch) {

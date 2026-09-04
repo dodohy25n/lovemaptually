@@ -241,7 +241,66 @@ describe('Repository 인터페이스', () => {
 
   it('아직 연동하지 않은 API 메서드는 준비되지 않았음을 명시적으로 알린다', async () => {
     const api = new ApiPlaceRepository({ baseUrl: 'https://example.test' })
-    await expect(api.create({})).rejects.toMatchObject({ code: 'backend_not_ready' })
+    await expect(api.update('1', {})).rejects.toMatchObject({ code: 'backend_not_ready' })
+  })
+})
+
+describe('그룹 장소 저장 API', () => {
+  it('POST /api/groups/{groupId}/places로 장소를 저장하고 화면 모델을 반환한다', async () => {
+    const fetchImpl = vi.fn().mockResolvedValue({
+      ok: true,
+      status: 201,
+      json: async () => ({
+        status: 201,
+        data: {
+          groupPlaceId: 9001,
+          groupId: 7001,
+          placeId: 412,
+          label: null,
+          createdAt: '2026-09-04T02:00:00Z',
+        },
+      }),
+    })
+    const api = new ApiPlaceRepository({ baseUrl: 'https://demo.mock.pstmn.io', fetchImpl })
+
+    await expect(api.create(DRAFT, { groupId: 7001 })).resolves.toMatchObject({
+      id: '412',
+      groupPlaceId: '9001',
+      name: DRAFT.name,
+    })
+    const [url, request] = fetchImpl.mock.calls[0]
+    expect(String(url)).toBe('https://demo.mock.pstmn.io/api/groups/7001/places')
+    expect(request).toMatchObject({
+      method: 'POST',
+      headers: expect.objectContaining({
+        Authorization: 'Bearer mock-token',
+        'Content-Type': 'application/json',
+      }),
+    })
+    expect(JSON.parse(request.body)).toMatchObject({
+      place: {
+        name: DRAFT.name,
+        provider: 'MANUAL',
+        latitude: Number(DRAFT.latitude),
+        longitude: Number(DRAFT.longitude),
+      },
+    })
+  })
+
+  it('중복 응답을 duplicate_place 오류로 변환한다', async () => {
+    const api = new ApiPlaceRepository({
+      baseUrl: 'https://example.test',
+      fetchImpl: vi.fn().mockResolvedValue({
+        ok: false,
+        status: 409,
+        json: async () => ({ message: '이미 담은 장소입니다' }),
+      }),
+    })
+
+    await expect(api.create(DRAFT, { groupId: 7001 })).rejects.toMatchObject({
+      code: 'duplicate_place',
+      message: '이미 담은 장소입니다',
+    })
   })
 })
 

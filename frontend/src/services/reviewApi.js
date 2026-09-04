@@ -47,6 +47,15 @@ function toReviewModel(data, draft) {
   }
 }
 
+/** 화면의 네 가지 세부 점수 평균을 backend 계약인 1~5 정수 별점으로 변환합니다. */
+export function toApiRating(review) {
+  const rating = Math.round(reviewAverage(review))
+  if (rating < 1 || rating > 5) {
+    throw new ReviewApiError('리뷰 점수를 하나 이상 선택해주세요.', 'invalid_rating')
+  }
+  return rating
+}
+
 /** POST /api/reviews 호출. 화면 계약 유지를 위해 저장된 리뷰 한 건을 반환합니다. */
 export async function createReviewFromApi(
   placeId,
@@ -61,6 +70,7 @@ export async function createReviewFromApi(
   }
 
   const url = new URL('/api/reviews', config.apiBaseUrl)
+  const rating = toApiRating(review)
   const authorization = authorizationFor(url)
   const isPostmanMock = url.hostname.endsWith('.mock.pstmn.io')
   const headers = {
@@ -78,7 +88,7 @@ export async function createReviewFromApi(
       body: JSON.stringify({
         placeId: Number.isNaN(Number(placeId)) ? placeId : Number(placeId),
         visitedOn,
-        rating: reviewAverage(review),
+        rating,
         content: String(review?.content ?? '').trim(),
       }),
     })

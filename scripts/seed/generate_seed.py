@@ -94,6 +94,9 @@ SYNTH_NICKNAMES = [
 
 POSITIVE_TAILS = ["좋았어요", "만족했어요", "괜찮았어요", "마음에 들었어요"]
 NEGATIVE_TAILS = ["힘들었어요", "아쉬웠어요", "별로였어요", "불편했어요", "실망했어요"]
+# 맛 이야기에 "불편했어요/힘들었어요" 는 어색해서 뺍니다
+TASTE_TAGS = {"맵기", "단맛", "양", "재료", "음료", "플레이팅", "메뉴수"}
+TASTE_NEGATIVE_TAILS = ["아쉬웠어요", "별로였어요", "실망했어요"]
 
 # 표현 끝부분 -> (연결형, 과거 종결형). 끝부분을 통째로 바꿉니다. 긴 키가 앞에 와야 합니다.
 SUFFIX_RULES = [
@@ -256,7 +259,7 @@ def conjugate(expression):
     return None
 
 
-def build_clause(rng, expression, cue_side):
+def build_clause(rng, expression, cue_side, tag=None):
     """표현 하나로 절을 만듭니다. cue_side: 'POS' / 'NEG' / None. 종결형 문장을 돌려줍니다."""
     literal = expression
     if "[0-9]+" in expression:
@@ -268,7 +271,8 @@ def build_clause(rng, expression, cue_side):
     if cue_side == "POS":
         sentence = conn + " " + rng.choice(POSITIVE_TAILS)
     elif cue_side == "NEG":
-        sentence = conn + " " + rng.choice(NEGATIVE_TAILS)
+        tails = TASTE_NEGATIVE_TAILS if tag in TASTE_TAGS else NEGATIVE_TAILS
+        sentence = conn + " " + rng.choice(tails)
     else:
         # 과거형이 어간을 바꾸는 표현(돼 -> 됐)은 현재형으로 씁니다
         sentence = past if re.search(expression, past) else present_form(conn)
@@ -373,7 +377,7 @@ def make_review_text(rng, table, traits, wants, exact_tags=None, max_clauses=3):
         expression = rng.choice(table[tag][side])
         want = wants.get(tag)
         cue = None if want is None else ("POS" if want == side else "NEG")
-        sentences.append(build_clause(rng, expression, cue))
+        sentences.append(build_clause(rng, expression, cue, tag))
         used.append((tag, side, expression))
     return join_sentences(rng, sentences), used
 
@@ -395,18 +399,20 @@ def random_traits(rng, category):
     return result
 
 
-# 인사동 10곳은 데모 시나리오에 맞춰 성격을 손으로 정합니다
+# 데모 커플이 다녀간 6곳은 시나리오에 맞춰 성격을 손으로 정합니다.
+# 맵기가 세 곳에 걸려 있어야 두 사람 모두 맵기 want 를 3번씩 남길 수 있습니다 (SPLIT 조건).
 DEMO_PLACE_TRAITS = {
     "SEED-0001": [["조용함", "HIGH"], ["음료", "HIGH"], ["웨이팅", "LOW"]],
     "SEED-0002": [["조용함", "HIGH"], ["사진", "HIGH"], ["실내활동", "HIGH"]],
-    "SEED-0003": [["재료", "HIGH"], ["청결", "HIGH"], ["가성비", "HIGH"]],
+    "SEED-0003": [["맵기", "LOW"], ["재료", "HIGH"], ["청결", "HIGH"], ["가성비", "HIGH"]],
     "SEED-0004": [["맵기", "LOW"], ["양", "HIGH"], ["인테리어", "HIGH"]],
-    "SEED-0005": [["웨이팅", "HIGH"], ["혼잡도", "HIGH"], ["좌석", "LOW"]],
-    "SEED-0006": [["단맛", "HIGH"], ["플레이팅", "HIGH"], ["웨이팅", "LOW"]],
+    "SEED-0005": [["맵기", "HIGH"], ["웨이팅", "HIGH"], ["혼잡도", "HIGH"], ["좌석", "LOW"]],
+    "SEED-0006": [["조용함", "HIGH"], ["웨이팅", "LOW"], ["단맛", "HIGH"], ["플레이팅", "HIGH"]],
     "SEED-0007": [["조용함", "HIGH"], ["뷰", "HIGH"], ["웨이팅", "LOW"], ["음료", "HIGH"]],
     "SEED-0008": [["조용함", "LOW"], ["웨이팅", "HIGH"], ["가성비", "HIGH"]],
     "SEED-0009": [["산책", "HIGH"], ["혼잡도", "HIGH"], ["코스연계", "HIGH"]],
     "SEED-0010": [["산책", "HIGH"], ["조용함", "HIGH"], ["반려동물", "HIGH"]],
+    "SEED-0012": [["조용함", "HIGH"], ["음료", "HIGH"], ["웨이팅", "LOW"], ["대화", "HIGH"]],
 }
 
 # 데모 커플 취향: 맵기는 반대 (SPLIT), 조용함 HIGH 와 웨이팅 LOW 는 일치
@@ -419,7 +425,28 @@ DEMO_WANTS = {
 
 DEMO_ADDED_ONLY = ["SEED-0009", "SEED-0010"]
 DEMO_ONE_SIDE_ONLY = "SEED-0006"
-DEMO_CANDIDATES = ["SEED-0007", "SEED-0008"]
+# 데모 커플이 리뷰를 남기는 곳. 나머지 인사동 장소는 전부 추천 후보가 됩니다.
+DEMO_REVIEWED = ["SEED-0001", "SEED-0002", "SEED-0003", "SEED-0004", "SEED-0005", "SEED-0006"]
+
+# (장소, 날짜, 도현 별점, 도현이 쓸 태그, 지우 별점, 지우가 쓸 태그)
+DEMO_SHARED_PLAN = [
+    ("SEED-0001", "2026-07-18", 5, ["조용함", "웨이팅"], 5, ["조용함", "웨이팅", "음료"]),
+    ("SEED-0002", "2026-08-02", 4, ["조용함", "사진"], 4, ["조용함", "사진"]),
+    ("SEED-0003", "2026-08-09", 5, ["맵기", "재료"], 4, ["맵기", "청결"]),
+    ("SEED-0004", "2026-08-15", 5, ["맵기", "양"], 2, ["맵기", "양"]),
+    ("SEED-0005", "2026-08-23", 2, ["맵기", "웨이팅"], 3, ["맵기", "웨이팅"]),
+]
+# 한쪽만 쓴 리뷰. 도현은 달빛찻집 재방문, 지우는 도현이 안 가 본 떡집.
+DEMO_SOLO_PLAN = [
+    (DEMO_OWNER, "SEED-0001", "2026-08-29", 4, ["조용함", "웨이팅", "음료"]),
+    (DEMO_MEMBER, DEMO_ONE_SIDE_ONLY, "2026-08-30", 4, ["조용함", "웨이팅", "단맛"]),
+]
+# 취향 화면에서 확인할 결과. 두 사람 각각 이 태그의 want 가 최소 3번씩 나와야 합니다.
+DEMO_WANT_TARGETS = {
+    DEMO_OWNER: {"조용함": "HIGH", "웨이팅": "LOW", "맵기": "LOW"},
+    DEMO_MEMBER: {"조용함": "HIGH", "웨이팅": "LOW", "맵기": "HIGH"},
+}
+MIN_WANT_COUNT = 3
 
 
 def make_places(rng):
@@ -491,8 +518,9 @@ def random_date(rng, start=date(2026, 3, 1), end=date(2026, 8, 31)):
 def make_synthetic_reviews(rng, table, places, users, groups):
     by_email = {u["email"]: u for u in users}
     by_pid = {p["providerPlaceId"]: p for p in places}
-    insa = [p["providerPlaceId"] for p in places
-            if p["region"] == "인사동" and p["providerPlaceId"] not in DEMO_ADDED_ONLY]
+    insa = [p["providerPlaceId"] for p in places if p["region"] == "인사동"]
+    # 데모 커플이 안 가 본 인사동 장소가 곧 추천 후보라, 커플마다 돌아가며 한 곳씩 맡깁니다
+    candidates = [pid for pid in insa if pid not in DEMO_REVIEWED]
     others = [p["providerPlaceId"] for p in places if p["region"] != "인사동"]
     reviews = []
     seen = set()
@@ -509,18 +537,18 @@ def make_synthetic_reviews(rng, table, places, users, groups):
             "providerPlaceId": pid,
             "visitedOn": day.isoformat(),
             "rating": synth_rating(rng, place, user),
-            "content": make_review_text(rng, table, place["traits"], user["wants"]),
+            "content": make_review_text(rng, table, place["traits"], user["wants"])[0],
             "groupOwnerEmail": owner,
         })
 
     for idx, g in enumerate(groups[1:]):
         owner, member = g["owner"], g["member"]
-        shared_n = rng.randint(7, 9)
-        # 인사동을 2~3곳 섞어 추천 후보에 공동 평가자가 생기게 합니다
+        shared_n = rng.randint(8, 9)
+        # 후보 한 곳(순번)을 반드시 포함하고, 인사동을 2~3곳 섞습니다
         insa_pick = rng.sample(insa, rng.randint(2, 3))
-        candidate = DEMO_CANDIDATES[idx % 2]
-        if candidate not in insa_pick:
-            insa_pick[0] = candidate
+        assigned = candidates[idx % len(candidates)]
+        if assigned not in insa_pick:
+            insa_pick[0] = assigned
         shared = insa_pick + rng.sample(others, shared_n - len(insa_pick))
         rng.shuffle(shared)
         for pid in shared:
@@ -535,41 +563,51 @@ def make_synthetic_reviews(rng, table, places, users, groups):
     return reviews
 
 
-def make_demo_reviews(rng, table, places, users):
+def make_demo_reviews(rng, table, places, users, cues):
     by_email = {u["email"]: u for u in users}
     by_pid = {p["providerPlaceId"]: p for p in places}
+    derived = {DEMO_OWNER: {}, DEMO_MEMBER: {}}
 
-    def review(email, pid, day, rating, force):
+    def review(email, pid, day, rating, tags):
+        wants = by_email[email]["wants"]
+        content, used = make_review_text(rng, table, by_pid[pid]["traits"], wants, exact_tags=tags)
+        # 서버가 이 문장에서 어떤 want 를 뽑을지 그 자리에서 되짚어 확인합니다
+        for tag, side, expression in used:
+            got = derive_want(content, expression, side, cues)
+            intended = wants.get(tag)
+            if intended is not None and got != intended:
+                raise AssertionError(f"{email} {pid} {tag}: want {intended} 를 노렸는데 {got} 로 읽힙니다 -> {content}")
+            if got in ("HIGH", "LOW"):
+                derived[email].setdefault(tag, []).append(got)
         return {
             "userEmail": email,
             "providerPlaceId": pid,
             "visitedOn": day,
             "rating": rating,
-            "content": make_review_text(rng, table, by_pid[pid]["traits"], by_email[email]["wants"], force_tags=force),
+            "content": content,
             "groupOwnerEmail": DEMO_OWNER,
         }
 
-    plan = [
-        # (장소, 도현 별점, 지우 별점, 날짜, 반드시 언급할 태그)
-        ("SEED-0001", 5, 5, "2026-07-18", ["조용함"]),
-        ("SEED-0002", 4, 4, "2026-08-02", ["조용함", "사진"]),
-        ("SEED-0003", 5, 4, "2026-08-09", ["재료"]),
-        ("SEED-0004", 5, 2, "2026-08-15", ["맵기"]),
-        ("SEED-0005", 2, 3, "2026-08-23", ["웨이팅"]),
-    ]
     reviews = []
-    for pid, r1, r2, day, force in plan:
-        reviews.append(review(DEMO_OWNER, pid, day, r1, force))
-        reviews.append(review(DEMO_MEMBER, pid, day, r2, force))
-    # 도현의 달빛찻집 재방문
-    reviews.append(review(DEMO_OWNER, "SEED-0001", "2026-08-29", 4, ["음료"]))
-    # 지우만 간 곳 (otherReviewsLocked 데모)
-    reviews.append(review(DEMO_MEMBER, DEMO_ONE_SIDE_ONLY, "2026-08-30", 4, ["단맛"]))
-    return reviews
+    for pid, day, owner_rating, owner_tags, member_rating, member_tags in DEMO_SHARED_PLAN:
+        reviews.append(review(DEMO_OWNER, pid, day, owner_rating, owner_tags))
+        reviews.append(review(DEMO_MEMBER, pid, day, member_rating, member_tags))
+    for email, pid, day, rating, tags in DEMO_SOLO_PLAN:
+        reviews.append(review(email, pid, day, rating, tags))
+
+    for email, targets in DEMO_WANT_TARGETS.items():
+        for tag, side in targets.items():
+            got = derived[email].get(tag, [])
+            same = got.count(side)
+            assert same >= MIN_WANT_COUNT and same > len(got) - same, \
+                f"{email} {tag}: {side} {same}번, 반대쪽 {len(got) - same}번 (최소 {MIN_WANT_COUNT}번 필요)"
+    return reviews, derived
 
 
 def validate(places, users, groups, reviews):
-    assert len(places) == 40 and len(users) == 26 and len(groups) == 13
+    assert len(places) == 50 and len(users) == 26 and len(groups) == 13
+    insa_ids = [p["providerPlaceId"] for p in places if p["region"] == "인사동"]
+    assert len(insa_ids) == 20, len(insa_ids)
     keys = set()
     for r in reviews:
         key = (r["userEmail"], r["providerPlaceId"], r["visitedOn"])
@@ -579,15 +617,16 @@ def validate(places, users, groups, reviews):
     owner_places = {r["providerPlaceId"] for r in reviews if r["userEmail"] == DEMO_OWNER}
     member_places = {r["providerPlaceId"] for r in reviews if r["userEmail"] == DEMO_MEMBER}
     assert DEMO_ONE_SIDE_ONLY not in owner_places and DEMO_ONE_SIDE_ONLY in member_places
-    for pid in DEMO_ADDED_ONLY + DEMO_CANDIDATES:
+    assert owner_places | member_places == set(DEMO_REVIEWED), sorted(owner_places | member_places)
+    for pid in DEMO_ADDED_ONLY:
         assert pid not in owner_places and pid not in member_places, pid
 
     synth_emails = {u["email"] for u in users} - {DEMO_OWNER, DEMO_MEMBER}
-    insa_ids = {p["providerPlaceId"] for p in places if p["region"] == "인사동"}
     insa_with_synth = {r["providerPlaceId"] for r in reviews
                        if r["userEmail"] in synth_emails and r["providerPlaceId"] in insa_ids}
-    assert len(insa_with_synth) >= 6, sorted(insa_with_synth)
-    assert set(DEMO_CANDIDATES) <= insa_with_synth
+    # 추천 후보 = 인사동 + 합성 리뷰 있음(place_tags 생김) + 데모 커플이 안 가 본 곳
+    candidates = sorted(insa_with_synth - set(DEMO_REVIEWED))
+    assert len(candidates) >= 10, candidates
 
     by_user = {}
     for r in reviews:
@@ -597,18 +636,20 @@ def validate(places, users, groups, reviews):
         for mine, other in ((a, b), (b, a)):
             assert 8 <= len(mine) <= 12, (g["name"], len(mine))
             assert len(mine & other) / len(mine) >= 0.7, (g["name"], len(mine & other), len(mine))
-    return insa_with_synth
+    return candidates
 
 
 def main():
     rng = random.Random(SEED)
     table = load_table()
+    cues = load_cues()
     places = make_places(rng)
     users, groups = make_users(rng, list(table.keys()))
     reviews = make_synthetic_reviews(rng, table, places, users, groups)
-    reviews += make_demo_reviews(rng, table, places, users)
+    demo_reviews, derived = make_demo_reviews(rng, table, places, users, cues)
+    reviews += demo_reviews
     reviews.sort(key=lambda r: (r["visitedOn"], r["userEmail"], r["providerPlaceId"]))
-    insa_with_synth = validate(places, users, groups, reviews)
+    candidates = validate(places, users, groups, reviews)
 
     data = {
         "places": places,
@@ -620,16 +661,21 @@ def main():
             "memberEmail": DEMO_MEMBER,
             "addedOnly": DEMO_ADDED_ONLY,
             "oneSideOnly": DEMO_ONE_SIDE_ONLY,
-            "candidates": DEMO_CANDIDATES,
+            "candidates": candidates,
         },
     }
     OUTPUT.write_text(json.dumps(data, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
 
     demo_owner = sum(1 for r in reviews if r["userEmail"] == DEMO_OWNER)
     demo_member = sum(1 for r in reviews if r["userEmail"] == DEMO_MEMBER)
-    print(f"places={len(places)} users={len(users)} groups={len(groups)} reviews={len(reviews)}")
+    insa = sum(1 for p in places if p["region"] == "인사동")
+    print(f"places={len(places)} (인사동={insa}) users={len(users)} groups={len(groups)} reviews={len(reviews)}")
     print(f"demo reviews: 도현={demo_owner} 지우={demo_member}")
-    print(f"인사동 places with synthetic reviews: {len(insa_with_synth)}")
+    print(f"인사동 candidate places (합성 리뷰 있고 데모 커플이 안 가 본 곳): {len(candidates)}")
+    for email, nickname in ((DEMO_OWNER, "도현"), (DEMO_MEMBER, "지우")):
+        summary = ", ".join(f"{tag} {sides[0]} x{len(sides)}" for tag, sides in sorted(derived[email].items())
+                            if tag in DEMO_WANT_TARGETS[email])
+        print(f"demo want counts {nickname}: {summary}")
     print(f"written: {OUTPUT}")
 
 

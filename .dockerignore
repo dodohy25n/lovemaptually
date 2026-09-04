@@ -1,0 +1,23 @@
+# 루트를 컨텍스트로 쓰는 빌드(seed 서비스)에서 무거운 것들을 걸러냅니다.
+.git/
+.demo-logs/
+.vite/
+back/
+docs/
+postman/
+frontend/node_modules/
+frontend/dist/
+frontend/design/
+frontend/design-references/
+frontend/test-results/
+frontend/playwright-report/
+backend/build/
+backend/.gradle/
+recommender/.venv/
+**/__pycache__/
+*.pyc
+**/*.har
+**/*.webm
+.env
+.env.*
+.DS_Store

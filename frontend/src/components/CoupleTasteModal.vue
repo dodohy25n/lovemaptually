@@ -5,6 +5,7 @@ import { getCoupleTaste } from '@/services/aiReadyMock.js'
 import { fetchTags } from '@/services/tagApi.js'
 import { isLocalMode } from '@/services/config.js'
 import { fetchGroupPreferences } from '@/services/preferenceApi.js'
+import { fetchPlaces } from '@/services/placeApi.js'
 import { COUPLE } from '@/utils/users.js'
 const props = defineProps({
   open: { type: Boolean, default: false },
@@ -44,6 +45,18 @@ function localPreferences() {
 }
 
 const preferences = ref(localMode ? localPreferences() : [])
+const placeCount = ref(0)
+
+/** 판정이 난 태그 중 두 사람 방향이 같은 비율입니다. 화면의 일치도가 이 값입니다. */
+const compatibility = computed(() => {
+  const judged = preferences.value.filter((item) => item.judgedMemberCount >= 2)
+  if (!judged.length) return null
+  const same = judged.filter((item) => item.label === 'ALL_SAME').length
+  return Math.round((same / judged.length) * 100)
+})
+const judgedCount = computed(
+  () => preferences.value.filter((item) => item.judgedMemberCount >= 2).length,
+)
 const prefLoading = ref(false)
 const prefError = ref('')
 const loadedGroupId = ref(null)
@@ -63,6 +76,12 @@ async function loadPreferences() {
   try {
     preferences.value = await fetchGroupPreferences(props.groupId)
     loadedGroupId.value = props.groupId
+    try {
+      const places = await fetchPlaces()
+      placeCount.value = places.length
+    } catch {
+      placeCount.value = 0
+    }
   } catch (error) {
     prefError.value = error?.message || '우리 취향을 불러오지 못했습니다.'
   } finally {
@@ -94,9 +113,9 @@ watch(() => props.groupId, () => { if (props.open) loadPreferences() })
       <h2 id="taste-title">두 사람이 함께 만든 취향을 분석했어요</h2>
       <p class="subtitle">저장된 방문·평점·리뷰 데이터를 기준으로 정리한 결과예요.</p>
       <section class="match">
-        <span class="match__heart">💞</span><div><h3>우리 커플의 취향 일치도</h3><strong>{{taste.compatibility}}%</strong></div>
-        <div class="match__track"><span :style="{width:`${taste.compatibility}%`}"></span></div><p>서로 다른 취향도 데이트 선택의 폭을 넓혀줘요.</p>
-        <div class="match__count"><small>함께 기록한 장소</small><strong>{{taste.reviewedCount}}곳</strong></div>
+        <span class="match__heart">💞</span><div><h3>우리 커플의 취향 일치도</h3><strong>{{compatibility === null ? '판정 전' : compatibility + '%'}}</strong></div>
+        <div class="match__track"><span :style="{width:`${compatibility ?? 0}%`}"></span></div><p>서로 다른 취향도 데이트 선택의 폭을 넓혀줘요.</p>
+        <div class="match__count"><small>우리 지도에 담은 곳</small><strong>{{placeCount}}곳</strong></div>
       </section>
       <h3 class="section-title">♥ 태그별 취향</h3>
       <p v-if="prefLoading" class="pref-state" role="status">우리 취향을 불러오는 중이에요…</p>

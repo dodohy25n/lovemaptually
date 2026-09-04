@@ -122,3 +122,25 @@ createdb -O lovemaptually lovemaptually
 - 협업 필터링은 새벽 배치가 아니라 시드 스크립트가 채웁니다. 오늘 쓴 리뷰는 태그 점수에는 즉시, 협업 필터링에는 다음 배치부터 반영됩니다.
 - 결제는 Mock입니다. 실제 PG 연동은 `PaymentClient` 구현체 교체입니다.
 - 리뷰 수정과 삭제는 이번 범위 밖입니다.
+
+## Docker로 띄우기
+
+로컬에 JDK, Node, uv, PostgreSQL을 따로 깔지 않고 Docker만으로 전체 스택을 띄울 수 있습니다.
+저장소 루트에서 한 줄이면 DB, 백엔드, 추천 엔진, nginx가 서빙하는 프론트가 모두 올라옵니다.
+
+```bash
+docker compose up -d --build
+```
+
+포트는 로컬 개발 스택(`scripts/demo-up.sh`)과 겹치지 않게 밀어 두었습니다.
+프론트 http://localhost:5174, 백엔드 http://localhost:8081, 추천 엔진 http://localhost:8001,
+PostgreSQL 5433입니다. 그래서 두 스택을 동시에 띄워도 서로 방해하지 않습니다.
+
+컨테이너 DB는 처음에 비어 있으므로 데모 데이터는 다음으로 넣습니다.
+
+```bash
+docker compose --profile seed run --rm seed
+```
+
+서비스별 설명, 포트를 밀어 둔 이유, `OPENAI_API_KEY` 넘기는 법, `scripts/demo-up.sh`와의 차이는
+[docs/docker.md](docs/docker.md)에 정리해 두었습니다. 빠른 로컬 개발은 여전히 `scripts/demo-up.sh`가 편합니다.

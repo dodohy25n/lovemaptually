@@ -1,0 +1,114 @@
+# Love Maptually 전체 스택을 컨테이너로 띄웁니다.
+#
+#   docker compose up -d --build
+#
+# 공개 포트는 로컬 개발 스택(scripts/demo-up.sh)과 겹치지 않게 전부 한 칸씩 밀어 두었습니다.
+# 자세한 설명은 docs/docker.md 를 보십시오.
+
+name: lovemaptually
+
+services:
+  db:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: lovemaptually
+      POSTGRES_USER: lovemaptually
+      POSTGRES_PASSWORD: lovemaptually
+    ports:
+      - "5433:5432"
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U lovemaptually -d lovemaptually"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    restart: unless-stopped
+
+  backend:
+    build:
+      context: ./backend
+    ports:
+      - "8081:8080"
+    environment:
+      DB_URL: jdbc:postgresql://db:5432/lovemaptually
+      DB_USERNAME: lovemaptually
+      DB_PASSWORD: lovemaptually
+      SERVER_PORT: 8080
+      JWT_SECRET: ${JWT_SECRET:-docker-compose-secret-change-me-32bytes}
+      # 컨테이너 프론트가 5174 로 열리므로 허용 출처도 그 포트여야 합니다.
+      CORS_ALLOWED_ORIGINS: http://localhost:5174
+      RECOMMENDER_BASE_URL: http://recommender:8000
+      # 키 없이 띄워도 돌아가는 조합을 기본값으로 둡니다.
+      AI_CLIENT: ${AI_CLIENT:-matching}
+      REPORT_WRITER: ${REPORT_WRITER:-template}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O /dev/null http://localhost:8080/v3/api-docs || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+      start_period: 40s
+    restart: unless-stopped
+
+  recommender:
+    build:
+      context: ./recommender
+    ports:
+      - "8001:8000"
+    environment:
+      PG_URL: postgresql://lovemaptually:lovemaptually@db:5432/lovemaptually
+      CF_RAMP_FULL: ${CF_RAMP_FULL:-}
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - python -c "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        # Vite 가 빌드 시점에 값을 박아 넣기 때문에 런타임 환경변수로는 바꿀 수 없습니다.
+        VITE_DATA_MODE: api
+        VITE_API_BASE_URL: http://localhost:8081
+        VITE_KAKAO_JS_KEY: ${VITE_KAKAO_JS_KEY:-}
+    ports:
+      - "5174:80"
+    depends_on:
+      - backend
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O /dev/null http://localhost:80/ || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+
+  # 기본 실행에는 끼지 않습니다. 데모 데이터를 넣을 때만 명시적으로 부릅니다.
+  #   docker compose --profile seed run --rm seed
+  seed:
+    profiles: ["seed"]
+    build:
+      context: .
+      dockerfile: scripts/seed/Dockerfile
+    environment:
+      API_BASE_URL: http://backend:8080
+      PG_URL: postgresql://lovemaptually:lovemaptually@db:5432/lovemaptually
+    depends_on:
+      db:
+        condition: service_healthy
+      backend:
+        condition: service_healthy
+
+volumes:
+  db-data:

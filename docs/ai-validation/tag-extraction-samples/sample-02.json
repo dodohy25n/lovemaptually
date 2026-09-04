@@ -1,0 +1,33 @@
+{
+  "case": "매칭표 0개, LLM 단독, 사전에 없는 축",
+  "aiClient": "hybrid",
+  "model": "gpt-4o-mini",
+  "request": {
+    "placeId": 23,
+    "withGroupId": 1,
+    "visitedOn": "2026-09-02",
+    "rating": 5,
+    "content": "직원분이 메뉴를 하나하나 설명해 주셔서 편했어요"
+  },
+  "matchingTableOnly": [],
+  "addedByLlm": [
+    "좌석"
+  ],
+  "response": {
+    "reviewId": 270,
+    "tagStatus": "COMPLETED",
+    "tags": [
+      {
+        "tag": "좌석",
+        "fact": "편함",
+        "want": null,
+        "evidence": "편했어요"
+      }
+    ]
+  },
+  "usage": {
+    "promptTokens": 1133,
+    "completionTokens": 26,
+    "costUsd": 0.00018555
+  }
+}

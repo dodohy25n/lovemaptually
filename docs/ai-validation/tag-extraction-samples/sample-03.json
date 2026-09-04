@@ -1,0 +1,48 @@
+{
+  "case": "매칭표 2개 + LLM 1개 병합",
+  "aiClient": "hybrid",
+  "model": "gpt-4o-mini",
+  "request": {
+    "placeId": 23,
+    "withGroupId": 1,
+    "visitedOn": "2026-09-03",
+    "rating": 5,
+    "content": "한산해서 도란도란 얘기 나누기 좋았고 가게 앞에 차를 대기 수월했어요"
+  },
+  "matchingTableOnly": [
+    "혼잡도",
+    "대화"
+  ],
+  "addedByLlm": [
+    "주차"
+  ],
+  "response": {
+    "reviewId": 271,
+    "tagStatus": "COMPLETED",
+    "tags": [
+      {
+        "tag": "혼잡도",
+        "fact": "한산함",
+        "want": "한산함",
+        "evidence": "한산"
+      },
+      {
+        "tag": "대화",
+        "fact": "대화하기 좋음",
+        "want": "대화하기 좋음",
+        "evidence": "얘기 나누기 좋"
+      },
+      {
+        "tag": "주차",
+        "fact": "편함",
+        "want": null,
+        "evidence": "가게 앞에 차를 대기 수월했어요"
+      }
+    ]
+  },
+  "usage": {
+    "promptTokens": 1090,
+    "completionTokens": 35,
+    "costUsd": 0.0001845
+  }
+}

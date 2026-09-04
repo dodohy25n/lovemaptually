@@ -65,7 +65,8 @@ public class MatchingTableAiClient implements AiClient {
             }
             String factLabel = labelOf(definition, hit.level());
             String wantLabel = wantOf(content, hit, definition);
-            found.put(rule.name(), new TagCandidate(rule.name(), factLabel, wantLabel, hit.evidence()));
+            found.put(rule.name(), new TagCandidate(rule.name(), factLabel, wantLabel, hit.evidence(),
+                    TagCandidate.SOURCE_MATCHING));
             if (found.size() >= MAX_TAGS_PER_REVIEW) {
                 break;
             }

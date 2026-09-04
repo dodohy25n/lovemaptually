@@ -31,7 +31,9 @@ class DatabaseMigrationTest {
             "unmatched_tag_logs",
             "place_similarity",
             "recommendation_requests",
-            "recommendations"
+            "recommendations",
+            "monthly_reports",
+            "subscriptions"
     );
 
     @Container
@@ -39,7 +41,7 @@ class DatabaseMigrationTest {
             new PostgreSQLContainer<>("postgres:17-alpine");
 
     @Test
-    void migrationCreatesFifteenDomainTablesAndApprovedTagStatus() throws Exception {
+    void migrationCreatesSeventeenDomainTablesAndApprovedTagStatus() throws Exception {
         Flyway.configure()
                 .dataSource(POSTGRES.getJdbcUrl(), POSTGRES.getUsername(), POSTGRES.getPassword())
                 .load()

@@ -143,6 +143,14 @@ function onMapPick(coordinate) {
   formOpen.value = true
 }
 
+/**
+ * 리뷰가 저장되면 핀 라벨이 바뀝니다.
+ * 모달이 이미 스토어를 다시 읽지만, 저장한 장소를 다시 골라 두어 핀이 선택 상태로 남게 합니다.
+ */
+function onReviewSaved({ placeId }) {
+  if (placeId) store.select(placeId)
+}
+
 async function submitForm(draft) {
   saving.value = true
   formError.value = null
@@ -254,7 +262,9 @@ async function submitForm(draft) {
       :open="reviewOpen"
       :initial-role="reviewRole"
       :place-id="selectedId"
+      :group-id="groupId"
       @close="reviewOpen = false"
+      @saved="onReviewSaved"
     />
   </div>
 </template>

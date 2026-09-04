@@ -48,11 +48,16 @@ function toReviewModel(data, draft) {
   }
 }
 
-/** POST /api/reviews 호출. 화면 계약 유지를 위해 저장된 리뷰 한 건을 반환합니다. */
+/**
+ * POST /api/reviews 호출. 화면 계약 유지를 위해 저장된 리뷰 한 건을 반환합니다.
+ *
+ * withGroupId 를 함께 보내면 백엔드가 그룹 장소의 라벨과 집계를 다시 계산해,
+ * 지도 핀이 '기록 전' 에서 벗어납니다. 값을 모르면 생략합니다.
+ */
 export async function createReviewFromApi(
   placeId,
   review,
-  { visitedOn, fetchImpl = globalThis.fetch } = {},
+  { visitedOn, withGroupId = null, fetchImpl = globalThis.fetch } = {},
 ) {
   if (!config.apiBaseUrl) {
     throw new ReviewApiError('API 기본 주소가 설정되지 않았습니다.', 'missing_base_url')
@@ -78,6 +83,7 @@ export async function createReviewFromApi(
       headers,
       body: JSON.stringify({
         placeId: Number.isNaN(Number(placeId)) ? placeId : Number(placeId),
+        ...(withGroupId != null && { withGroupId: Number(withGroupId) }),
         visitedOn,
         rating: reviewAverage(review),
         content: String(review?.content ?? '').trim(),
@@ -89,11 +95,12 @@ export async function createReviewFromApi(
 
   const payload = await response.json().catch(() => null)
   if (!response.ok) {
-    const duplicate = response.status === 409 && payload?.error?.code === 'REVIEW_DUPLICATED'
-    throw new ReviewApiError(
-      payload?.message || '리뷰를 저장하지 못했습니다.',
-      duplicate ? 'duplicate_review' : 'http_error',
-    )
+    // 같은 날 중복(409)과 별점 범위 초과(422)는 사용자가 직접 고칠 수 있는 상태라
+    // 화면이 다른 문구를 띄울 수 있게 코드를 나눠 둡니다.
+    let code = 'http_error'
+    if (response.status === 409) code = 'duplicate_review'
+    else if (response.status === 422) code = 'rating_out_of_range'
+    throw new ReviewApiError(payload?.message || '리뷰를 저장하지 못했습니다.', code)
   }
   if (!payload?.data || payload.data.reviewId == null) {
     throw new ReviewApiError('리뷰 등록 응답 형식이 올바르지 않습니다.', 'invalid_response')

@@ -33,3 +33,9 @@ backend/*.iml
 
 # 디자인 원본 (Figma 내보내기 · 용량이 커서 저장소에 넣지 않음)
 frontend/design/
+
+# 추천 엔진 파이썬
+recommender/.venv/
+**/__pycache__/
+*.pyc
+.demo-logs/

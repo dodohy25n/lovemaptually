@@ -352,6 +352,45 @@ async function submitForm(draft) {
   color: var(--lm-ink-soft);
 }
 
+/* 노트북 화면처럼 세로 공간이 짧을 때도 사이드 메뉴 전체가 한 화면에 들어오게 합니다. */
+@media (max-height: 850px) and (min-width: 901px) {
+  .mapview__side {
+    top: 14px;
+    left: 14px;
+    gap: 9px;
+    width: 270px;
+    height: calc(100% - 28px);
+  }
+  .mapview__side :deep(.summary),
+  .mapview__side :deep(.recent) {
+    min-height: 0;
+  }
+  .mapview__side :deep(.summary) { padding: 29px 12px 10px; }
+  .mapview__side :deep(.summary__title),
+  .mapview__side :deep(.lm-card__title) { font-size: 14px; }
+  .mapview__side :deep(.summary__avatar) { width: 92px!important; height: 92px!important; }
+  .mapview__side :deep(.summary__label),
+  .mapview__side :deep(.recent__name) { font-size: 12px; }
+  .mapview__side :deep(.recent) { gap: 6px; padding: 29px 12px 10px; }
+  .mapview__side :deep(.recent__item) { gap: 8px; padding: 7px 4px; }
+  .mapview__side :deep(.recent__thumb) { width: 40px; height: 40px; }
+  .mapview__notebook { flex: 1 1 0; min-height: 224px; }
+  .mapview__notebook :deep(.notebook) { padding: 27px 12px 11px; }
+  .mapview__notebook :deep(.notebook__title) { margin-bottom: 7px; font-size: 20px; }
+  .mapview__notebook :deep(.notebook__grid) { gap: 6px; }
+  .mapview__notebook :deep(.notebook__item) { min-height: 54px; gap: 4px; padding: 5px; font-size: 11px; }
+  .mapview__notebook :deep(.notebook__item--recommend) { min-height: 40px; }
+  .mapview__notebook :deep(.notebook__icon) { width: 31px; height: 31px; }
+  .mapview__map-ui { bottom: 14px; }
+  .mapview__map-ui :deep(.filter) { gap: 8px; padding: 13px 18px; }
+  .mapview__map-ui :deep(.filter__item) { min-width: 82px; gap: 5px; padding: 7px 10px; }
+  .mapview__map-ui :deep(.filter__item .lm-icon) { width: 31px; height: 31px; }
+  .mapview__map-ui :deep(.filter__label) { font-size: 14px; }
+  .mapview__search { top: 14px; }
+  .mapview__search :deep(.map-search__form) { height: 54px; }
+  .mapview__search :deep(.map-search input) { font-size: 15px; }
+}
+
 @media (max-width: 900px) {
   .mapview__side{top:14px;left:14px;width:280px;height:calc(100% - 28px)}
   .mapview__map-ui{bottom:14px;max-width:calc(100% - 28px);overflow-x:auto}

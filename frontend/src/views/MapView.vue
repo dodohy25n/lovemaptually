@@ -331,9 +331,11 @@ async function submitForm(draft) {
 .mapview__side :deep(.recent__thumb){width:54px;height:54px}
 
 .mapview__map-ui {
-  position: absolute;
+  /* 지도 위에 떠 있는 바입니다. 컨테이너가 화면보다 길어져도 잘리지 않도록
+     화면 기준으로 고정합니다. 지도를 움직이거나 확대해도 자리가 그대로입니다. */
+  position: fixed;
   left: 50%;
-  bottom: 24px;
+  bottom: max(24px, env(safe-area-inset-bottom, 0px));
   transform: translateX(-50%);
   z-index: calc(var(--lm-z-map-ui) + 1);
 }
@@ -368,7 +370,7 @@ async function submitForm(draft) {
 
 @media (max-width: 900px) {
   .mapview__side{top:14px;left:14px;width:280px;height:calc(100% - 28px)}
-  .mapview__map-ui{bottom:14px;max-width:calc(100% - 28px);overflow-x:auto}
+  .mapview__map-ui{bottom:max(14px, env(safe-area-inset-bottom, 0px));max-width:calc(100% - 28px);overflow-x:auto}
   .mapview__map-ui :deep(.filter){gap:8px;padding:14px 18px}
   .mapview__map-ui :deep(.filter__item){min-width:78px;padding:7px 10px}
   .mapview__map-ui :deep(.filter__item .lm-icon){width:32px;height:32px}

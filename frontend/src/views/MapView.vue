@@ -382,10 +382,10 @@ async function submitForm(draft) {
   .mapview__notebook :deep(.notebook__item--recommend) { min-height: 40px; }
   .mapview__notebook :deep(.notebook__icon) { width: 31px; height: 31px; }
   .mapview__map-ui { bottom: 14px; }
-  .mapview__map-ui :deep(.filter) { gap: 8px; padding: 13px 18px; }
-  .mapview__map-ui :deep(.filter__item) { min-width: 82px; gap: 5px; padding: 7px 10px; }
-  .mapview__map-ui :deep(.filter__item .lm-icon) { width: 31px; height: 31px; }
-  .mapview__map-ui :deep(.filter__label) { font-size: 14px; }
+  .mapview__map-ui :deep(.filter) { gap: 4px; padding: 9px 13px; border-radius: 20px; }
+  .mapview__map-ui :deep(.filter__item) { min-width: 66px; gap: 3px; padding: 5px 8px; }
+  .mapview__map-ui :deep(.filter__item .lm-icon) { width: 25px; height: 25px; }
+  .mapview__map-ui :deep(.filter__label) { font-size: 11px; }
   .mapview__search { top: 14px; }
   .mapview__search :deep(.map-search__form) { height: 54px; }
   .mapview__search :deep(.map-search input) { font-size: 15px; }

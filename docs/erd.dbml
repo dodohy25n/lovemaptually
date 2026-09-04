@@ -1,13 +1,13 @@
 // Love Map-tually - ERD v3.2 (dbdiagram.io / DBML)
 // 기준: PRD v6.1 (UC-08 월간 리포트 반영) + 팀원 10테이블 SQL(2026-09-03) 검토 반영
 //
-// v3.2에서 바뀐 것 - 월간 리포트(UC-08, 유료)가 쓸 자리를 채웁니다 (15개 → 18개)
+// v3.2에서 바뀐 것 - 월간 리포트(UC-08, 유료)가 쓸 자리를 채웁니다 (15개 → 17개)
 //   1. relation_groups.plan 추가 - FREE / PREMIUM. 리포트 생성 권한은 사람이 아니라 그룹에 걸립니다
 //      한 명이 결제하면 둘 다 봅니다. 구독 단위가 그룹이라 플랜도 그룹 컬럼입니다
 //   2. monthly_reports 추가 - 그룹의 한 달 리포트 한 편. UQ(group_id, report_month)로 월 1회입니다
 //      status를 두는 것은 D-14(상태 컬럼을 두지 않는다)의 예외입니다. 추천과 같은 2단계 비동기라
 //      recommendation_requests.status와 같은 모양으로 맞췄습니다
-//      prompt_tokens / completion_tokens는 응답 usage 실측값이고 원가 계산의 근거입니다
+//      prompt_tokens / completion_tokens는 응답 usage 실측값입니다. 원가 계산에만 쓰고 응답에는 싣지 않습니다
 //      content는 JSONB - 리포트 출력 스키마가 고정돼 있어 컬럼으로 펼치지 않고 통째로 둡니다
 //   3. subscriptions 추가 - Mock 결제 기록. 언제부터 유료였는지가 없으면 환불·분쟁 대응이 불가합니다
 //      실제 PG 연동은 비목표이고 payment_ref에 Mock 승인 번호가 들어갑니다

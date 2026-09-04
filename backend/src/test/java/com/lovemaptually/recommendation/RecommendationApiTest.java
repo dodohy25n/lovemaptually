@@ -34,7 +34,7 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 
 /**
  * FastAPI 추천 엔진은 테스트 중에 떠 있지 않습니다. 그래서 규칙 폴백이 전부를 받고
- * 결과에는 degraded와 안내 문구가 실립니다 — 그 자체가 검증 대상입니다.
+ * 엔진이 없어도 규칙 폴백이 순위를 내고 요청이 COMPLETED로 끝납니다 — 그 자체가 검증 대상입니다.
  */
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -115,9 +115,6 @@ class RecommendationApiTest {
 
         JsonNode result = awaitFinishedRequest(ownerToken, requestId);
         assertThat(result.path("status").asText()).isEqualTo("COMPLETED");
-        assertThat(result.path("degraded").asBoolean()).isTrue();
-        assertThat(result.path("notice").isNull()).isFalse();
-        assertThat(result.path("notice").asText()).isNotBlank();
         assertThat(result.path("intent").path("region").asText()).isEqualTo("인사동");
         assertThat(result.path("intent").path("count").asInt()).isEqualTo(3);
         assertThat(result.path("candidateCount").asInt()).isEqualTo(1);

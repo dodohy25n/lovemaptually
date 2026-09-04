@@ -8,13 +8,13 @@
 | v2.0에서 바뀐 것 | 추천 순위 결정이 협업 필터링으로 옮겨가며 `recommendation_requests`·`recommendations` 두 테이블이 추가됐습니다(13개→14개). `recommendation_requests.cf_weight`를 새로 설명하고, 질의 해석을 가리키던 옛 "AI-2a" 표기를 규칙 기반이라는 현재 표현으로 바꿨습니다 |
 | v2.1에서 바뀐 것 | 온보딩 취향 입력(UC-02)이 없어지고 리뷰 작성(UC-04)으로 통합되면서(D-20), `user_tags`에 있던 "온보딩 설문은 2표로 심는다"는 특수 규칙을 없앴습니다. 테이블 수·컬럼은 바뀌지 않았습니다 |
 | v2.2에서 바뀐 것 | ① `place_similarity`를 추가했습니다(14개→15개). API·추천설계문서가 이 테이블을 전제하는데 스키마에 정의가 없어 비어 있던 자리입니다. ② `reviews.tag_status`를 추가했습니다. API 응답의 `tagStatus`를 저장할 자리가 없었습니다 |
-| v2.3에서 바뀐 것 | **월간 리포트(UC-08, 유료)를 받았습니다(15개→18개).** ① `relation_groups.plan`(FREE/PREMIUM) ② `monthly_reports` — 그룹의 한 달 리포트 한 편, `UQ (group_id, report_month)` ③ `subscriptions` — Mock 결제 이력. 상태 컬럼을 둔 것은 D-14의 예외이고, 그 이유와 리포트를 저장하는 이유를 새 절에 적었습니다 |
+| v2.3에서 바뀐 것 | **월간 리포트(UC-08, 유료)를 받았습니다(15개→17개).** ① `relation_groups.plan`(FREE/PREMIUM) ② `monthly_reports` — 그룹의 한 달 리포트 한 편, `UQ (group_id, report_month)` ③ `subscriptions` — Mock 결제 이력. 상태 컬럼을 둔 것은 D-14의 예외이고, 그 이유와 리포트를 저장하는 이유를 새 절에 적었습니다 |
 
 PRD는 **무엇을 왜 만드는가**까지만 담고, 테이블과 제약은 이 문서가 담습니다.
 
 ---
 
-테이블은 **18개**입니다. 결정의 근거는 [설계결정.md](설계결정.md)에, 컬럼과 제약은 [erd.dbml](erd.dbml)에 있습니다.
+테이블은 **17개**입니다. 결정의 근거는 [설계결정.md](설계결정.md)에, 컬럼과 제약은 [erd.dbml](erd.dbml)에 있습니다.
 
 | 테이블 | 키 | 설명 |
 | --- | --- | --- |

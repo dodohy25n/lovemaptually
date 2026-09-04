@@ -2,13 +2,14 @@
 
 | 항목 | 내용 |
 | --- | --- |
-| 문서 버전 | v3.3 |
+| 문서 버전 | v3.4 |
 | 최종 수정 | 2026-09-04 |
 | 대응 문서 | [PRD.md](PRD.md) v6.1 · [ERD.md](ERD.md) v2.3 · [설계결정.md](설계결정.md) |
 | v2.0에서 바뀐 것 | 공통 응답 봉투 도입, 엔드포인트마다 상태 코드 명시, 추천을 2단계 비동기로, `fact`/`want` 반영 |
 | v3.0에서 바뀐 것 | 추천 순위 결정을 협업 필터링으로 옮겼습니다. 질의 해석은 규칙이 되어 실패 사유 문구를 갱신했고, 추천 결과에 `cfWeight`를 추가했습니다. 엔드포인트 경로·메서드는 바뀌지 않았습니다 |
 | v3.1에서 바뀐 것 | 오류 응답 모양을 팀원 노션 표기에 맞춰 `{status, code, message, field}`에서 `{status, message, error:{code, details}}`로 바꿨습니다. 공통 상태 코드에 `500`을 추가했습니다. 엔드포인트 경로·메서드·성공 응답은 바뀌지 않았습니다 |
 | v3.2에서 바뀐 것 | UC-02(온보딩 취향 입력)를 없앴습니다. `GET /api/tags`·`PUT/GET /api/users/me/preferences` 세 엔드포인트가 빠지고, 온보딩은 UC-04(`POST /api/reviews`)로 통합됩니다(PRD D-20) |
+| v3.4에서 바뀐 것 | 오류 코드 목록을 구현이 실제로 내보내는 이름으로 맞췄습니다. 화면이 그 값으로 분기하고 있어 문서를 코드에 맞췄습니다. 리포트 응답의 `meta`에서 토큰 두 개를 뺐습니다. 원가 근거는 `monthly_reports` 컬럼에 남습니다. 엔드포인트와 상태 코드는 바뀌지 않았습니다 |
 | v3.3에서 바뀐 것 | **UC-08 월간 리포트(유료)를 추가했습니다.** 구독 전환 1개, 리포트 생성·목록·조회 3개 — 네 엔드포인트 전부 실동작입니다. 상태 코드에 `402 PLAN_REQUIRED`(플랜 필요 — 403과 다릅니다)·`409 REPORT_ALREADY_EXISTS`·`422 NO_VISITS_IN_MONTH`가 들어왔고, 오류 코드에 `PLAN_REQUIRED`·`REPORT_ALREADY_EXISTS`·`NO_VISITS_IN_MONTH`·`ALREADY_PREMIUM` 네 개를 더했습니다. 기존 엔드포인트는 바뀌지 않았습니다 |
 
 PRD는 **무엇을 왜 만드는가**까지만 담고, 인터페이스 규격은 이 문서가 담습니다.
@@ -151,7 +152,7 @@ label : ALL_SAME | ONE_SIDED | SPLIT
 
 **`202 Accepted`입니다.** 요청은 받았지만 결과가 아직 없다는 뜻입니다. `201`은 자원이 완성됐을 때 쓰는 코드라 여기엔 맞지 않습니다.
 
-**이 요청은 세 단계를 거칩니다.** 지역·개수·예산은 규칙으로 즉시 뽑히지만, 그다음이 시간이 걸립니다 — 협업 필터링과 태그 매칭을 결합해 후보 순위를 매기고(알고리즘), 상위 후보에 이유 문장을 붙입니다(AI-2, LLM). 그래서 요청과 결과 조회를 나눴습니다. 화면은 `status`가 `PENDING`이면 스켈레톤을 그리고, `COMPLETED`가 될 때까지 조회합니다.
+**이 요청은 세 단계를 거칩니다.** 지역·개수·예산은 규칙으로 즉시 뽑히지만, 그다음이 시간이 걸립니다 — 협업 필터링과 태그 매칭을 결합해 후보 순위를 매기고, 상위 후보에 이유 문장을 붙입니다. 둘 다 알고리즘이고 LLM은 쓰지 않습니다. 그래서 요청과 결과 조회를 나눴습니다. 화면은 `status`가 `PENDING`이면 스켈레톤을 그리고, `COMPLETED`가 될 때까지 조회합니다.
 
 `candidateCount`는 화면에 쓰지 않지만 응답에 둡니다. **시연에서 알고리즘이 몇 곳을 넘겼는지 보여 줄 수 있어** 파이프라인 구조를 설명하기 쉬워집니다.
 
@@ -302,7 +303,7 @@ GET /api/recommendation-requests/3301
 }
 ```
 
-**`intent`는 규칙이 채웁니다. `recommendations`의 순서와 `matchedTags`는 협업 필터링과 태그 매칭을 가중 결합한 알고리즘이 정합니다. `reason`만 LLM(AI-2)이 씁니다.** 셋 중 무엇도 서로의 실패에 영향을 주지 않습니다 — 알고리즘이 고른 장소는 확정돼 있으므로 이유 생성이 실패해도 템플릿 문장으로 대체될 뿐 추천 자체는 유지됩니다.
+**`intent`는 규칙이 채우고, `recommendations`의 순서와 `matchedTags`는 협업 필터링과 태그 매칭을 가중 결합한 알고리즘이 정합니다. `reason`도 알고리즘이 조립합니다 — LLM을 쓰지 않습니다.** 이유에 들어가는 재료(`matchedTags`, `basis`, 갈린 태그)는 점수를 계산할 때 이미 나온 값이라 창작할 것이 없고, **그래서 이유가 항상 사실입니다.** LLM이 쓰면 그럴듯하지만 틀린 이유가 나올 수 있고, 추천에서 이유가 틀리면 추천 자체를 못 믿게 됩니다.
 
 **`basis`는 LLM이 판단하지 않습니다.** 어느 갈래에서 나왔는지 알고리즘이 이미 알고 있으므로 그대로 실어 보냈다 응답에 되받습니다. LLM에게 맡기면 틀릴 수 있고, 틀리면 **"우리가 갔던 곳"과 "남이 간 곳"이 섞여** 서비스 신뢰가 깨집니다.
 
@@ -386,7 +387,7 @@ GET /api/reports/512
         { "placeId": 433, "name": "□□카페", "reason": "조용함과 대화 태그가 두 분 취향과 맞고, 아직 안 가 본 곳입니다." }
       ],
       "closingLine": "9월에는 갈린 맵기를 피해서 둘 다 편한 곳으로 시작해 보시길 바랍니다.",
-      "meta": { "model": "gpt-4o-mini", "promptTokens": 1840, "completionTokens": 620, "discarded": 1 }
+      "meta": { "model": "gpt-4o-mini", "discarded": 1 }
     }
   }
 }
@@ -394,7 +395,7 @@ GET /api/reports/512
 
 **`content`의 숫자와 집계는 전부 서버가 SQL로 센 것이고, LLM은 문장만 썼습니다.** `highlights`·`nextMonth`의 `placeId`는 서버가 입력으로 준 집합 안에서만 유효하며, 밖을 가리키는 항목은 저장 전에 버리고 `meta.discarded`에 개수를 남깁니다. 위 예시의 `discarded: 1`은 LLM이 입력에 없는 장소를 하나 지어냈고 서버가 그것을 걸러 냈다는 뜻입니다. 추천에서 후보 밖 장소를 막은 것과 같은 원칙이 두 번째로 적용되는 자리입니다.
 
-`splitTags`의 `memberA`·`memberB`는 **익명화된 구성원**입니다. LLM에는 이메일·닉네임·`userId`를 보내지 않고 A·B로만 보내며, 화면이 그룹 구성원 순서로 실제 닉네임을 붙입니다. `meta`의 토큰 수는 응답 usage 실측값이고 원가 계산의 근거입니다.
+`splitTags`의 `memberA`·`memberB`는 **익명화된 구성원**입니다. LLM에는 이메일·닉네임·`userId`를 보내지 않고 A·B로만 보내며, 화면이 그룹 구성원 순서로 실제 닉네임을 붙입니다. 토큰 사용량은 `monthly_reports`의 `prompt_tokens`와 `completion_tokens`에 저장하고 응답에는 싣지 않습니다. 원가 계산에 쓰는 값이지 화면이 쓰는 값이 아닙니다.
 
 실패하면 `status: FAILED`이고 `content`에는 `meta.error`만 있습니다. 화면은 재시도 버튼을 띄우고, 재시도는 같은 `month`로 `POST /api/groups/{groupId}/reports`를 다시 부릅니다.
 
@@ -429,25 +430,69 @@ GET /api/reports/512
 
 **`204`와 `429`는 쓰지 않습니다.** `204`(삭제 성공)는 이번 범위에 DELETE 엔드포인트가 하나도 없어서이고, `429`(요청 한도 초과)는 rate limit 자체가 3일 범위 밖이라 뺐습니다. 둘 다 나중에 R1에서 필요해지면 이 표에 추가하면 됩니다.
 
-**`502`를 AI 실패에 쓰지 않습니다.** AI-1이 실패해도 리뷰는 저장되므로 `201` + `tagStatus: FAILED`이고, AI-2가 실패하면 `status: FAILED`로 조회됩니다. AI-3(리포트)도 같아서 생성 요청은 `202`로 접수되고 실패는 조회 응답의 `status: FAILED`가 알립니다. **부분 성공을 오류로 처리하면 사용자가 한 일이 사라집니다.**
+**`502`를 AI 실패에 쓰지 않습니다.** AI-1이 실패해도 리뷰는 저장되므로 `201` + `tagStatus: FAILED`입니다. 추천은 엔진 장애 시 규칙 폴백으로 `degraded: true`를 달아 결과를 냅니다. AI-3(리포트)은 생성 요청이 `202`로 접수되고 실패는 조회 응답의 `status: FAILED`가 알립니다. **부분 성공을 오류로 처리하면 사용자가 한 일이 사라집니다.**
 
 **`402`를 쓰는 곳은 리포트 생성 하나뿐입니다.** 이 서비스에서 플랜에 걸리는 기능이 그것 하나이기 때문입니다. `402 Payment Required`는 RFC에 "장래 사용을 위해 예약"으로 남아 있어 브라우저·프록시가 특별히 다루지 않는 비표준에 가까운 코드입니다. 그 대가를 알고도 고른 이유는 `403`으로 합치면 화면이 "결제하면 열린다"와 "내 그룹이 아니다"를 `error.code`로만 갈라야 해서, 상태 코드만 보는 공통 처리기가 둘을 같은 오류로 다루기 때문입니다.
 
 ### 오류 코드 목록
 
-| `code` | 상황 |
-| --- | --- |
-| `EMAIL_DUPLICATED` | 가입 시 이메일 중복 |
-| `INVALID_CREDENTIALS` | 로그인 실패 |
-| `NOT_GROUP_MEMBER` | 내 그룹이 아닌 접근 |
-| `ALREADY_IN_COUPLE` | 이미 커플 그룹 소속 |
-| `INVITE_EXPIRED` | 초대 코드 만료·소진 |
-| `REVIEW_DUPLICATED` | 같은 날 같은 장소에 리뷰 중복 |
-| `PLACE_ALREADY_ADDED` | 이미 담은 장소 |
-| `RATING_OUT_OF_RANGE` | 별점 범위 밖 |
-| `REGION_NOT_FOUND` | 지역을 읽지 못함 |
-| `MAP_PROVIDER_ERROR` | 지도 API 오류 |
-| `PLAN_REQUIRED` | FREE 그룹이 월간 리포트 생성을 요청 (`402`) |
-| `REPORT_ALREADY_EXISTS` | 같은 달 리포트가 이미 있음 (`409`). `details`에 기존 `reportId` |
-| `NO_VISITS_IN_MONTH` | 그 달에 함께 간 리뷰가 0건 (`422`) |
-| `ALREADY_PREMIUM` | 이미 PREMIUM인 그룹의 전환 요청 (`409`) |
+구현이 실제로 내보내는 이름입니다. 화면이 이 값으로 분기합니다.
+
+**인증과 공통**
+
+| `code` | 상태 | 상황 |
+| --- | ---: | --- |
+| `EMAIL_ALREADY_EXISTS` | 409 | 가입 시 이메일 중복 |
+| `AUTHENTICATION_FAILED` | 401 | 로그인 실패. 어느 쪽이 틀렸는지 밝히지 않습니다 |
+| `UNAUTHORIZED` | 401 | 토큰이 없거나 만료 또는 변조됨 |
+| `VALIDATION_ERROR` | 400 | 입력값 검증 실패. `details`에 필드별 사유 |
+| `INVALID_REQUEST_BODY` | 400 | 본문을 읽지 못함 |
+| `API_NOT_FOUND` | 404 | 없는 경로 |
+| `INTERNAL_SERVER_ERROR` | 500 | 처리하지 못한 예외의 안전망 |
+
+**그룹과 초대**
+
+| `code` | 상태 | 상황 |
+| --- | ---: | --- |
+| `NOT_GROUP_MEMBER` | 403 | 내 그룹이 아닌 접근 |
+| `GROUP_ACCESS_DENIED` | 403 | 내가 소유한 그룹이 아님. 초대 코드 발급은 OWNER만 |
+| `GROUP_NOT_FOUND` | 404 | 없는 그룹 |
+| `COUPLE_GROUP_ALREADY_EXISTS` | 409 | 이미 커플 그룹 소속 |
+| `GROUP_MEMBER_ALREADY_EXISTS` | 409 | 이미 그 그룹의 구성원 |
+| `COUPLE_GROUP_FULL` | 409 | 커플 그룹에 이미 두 명 |
+| `INVITE_NOT_FOUND` | 404 | 없는 초대 코드 |
+| `INVITE_UNAVAILABLE` | 410 | 만료되었거나 모두 사용된 코드 |
+
+**장소와 리뷰**
+
+| `code` | 상태 | 상황 |
+| --- | ---: | --- |
+| `SEARCH_QUERY_REQUIRED` | 400 | 검색어 누락 |
+| `PLACE_REQUIRED` | 400 | `placeId`도 `place`도 없음 |
+| `INVALID_LABEL` | 400 | 라벨 필터 값이 잘못됨 |
+| `PLACE_NOT_FOUND` | 404 | 없는 장소 |
+| `GROUP_PLACE_NOT_FOUND` | 404 | 우리 지도에 없는 장소 |
+| `PLACE_ALREADY_ADDED` | 409 | 이미 담은 장소 |
+| `REVIEW_NOT_FOUND` | 404 | 없는 리뷰 |
+| `REVIEW_ACCESS_DENIED` | 403 | 내 리뷰가 아님 |
+| `REVIEW_DUPLICATED` | 409 | 같은 날 같은 장소에 리뷰 중복 |
+| `RATING_OUT_OF_RANGE` | 422 | 별점이 1~5 밖 |
+
+**추천과 리포트**
+
+| `code` | 상태 | 상황 |
+| --- | ---: | --- |
+| `REGION_NOT_FOUND` | 422 | 질의에서 지역을 읽지 못함 |
+| `RECOMMENDATION_NOT_FOUND` | 404 | 없는 추천 요청 |
+| `INVALID_PLAN` | 400 | PREMIUM 외의 플랜 요청 |
+| `ALREADY_PREMIUM` | 409 | 이미 PREMIUM인 그룹의 전환 요청 |
+| `PLAN_REQUIRED` | 402 | FREE 그룹이 리포트 생성을 요청 |
+| `INVALID_MONTH` | 400 | 월이 `YYYY-MM` 형식이 아님 |
+| `NO_VISITS_IN_MONTH` | 422 | 그 달에 함께 간 리뷰가 0건 |
+| `REPORT_ALREADY_EXISTS` | 409 | 같은 달 리포트가 이미 있음. `details`에 기존 `reportId` |
+| `REPORT_NOT_FOUND` | 404 | 없는 리포트 |
+
+**아직 쓰지 않는 코드**
+
+`MAP_PROVIDER_ERROR`(502)는 카카오 지도를 붙이는 R1의 자리입니다.
+지금은 장소 검색이 우리 DB를 보므로 외부 게이트웨이 오류가 발생하지 않습니다.

@@ -11,8 +11,6 @@ public record RecommendationResultResponse(
         Integer candidateCount,
         BigDecimal cfWeight,
         RecStatus status,
-        boolean degraded,
-        String notice,
         List<RecommendationItemResponse> recommendations
 ) {
 }

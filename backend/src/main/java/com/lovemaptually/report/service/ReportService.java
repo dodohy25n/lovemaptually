@@ -114,8 +114,7 @@ public class ReportService {
         MonthlyReport report = reportRepository.findById(reportId).orElseThrow();
         ReportInput input = aggregator.aggregate(report.getGroupId(), report.getReportMonth());
         ReportDraft draft = reportWriter.write(input);
-        Verified verified = verify(draft.content(), input,
-                draft.model(), draft.promptTokens(), draft.completionTokens());
+        Verified verified = verify(draft.content(), input, draft.model());
         report.complete(draft.model(), draft.promptTokens(), draft.completionTokens(),
                 verified.content(), OffsetDateTime.now(ZoneOffset.UTC));
     }
@@ -132,12 +131,11 @@ public class ReportService {
      */
     @SuppressWarnings("unchecked")
     Verified verify(Map<String, Object> content, ReportInput input) {
-        return verify(content, input, null, null, null);
+        return verify(content, input, null);
     }
 
     @SuppressWarnings("unchecked")
-    Verified verify(Map<String, Object> content, ReportInput input, String model,
-                    Integer promptTokens, Integer completionTokens) {
+    Verified verify(Map<String, Object> content, ReportInput input, String model) {
         Set<Long> visited = input.places().stream().map(ReportInput.VisitedPlace::placeId)
                 .collect(Collectors.toSet());
         Set<Long> candidates = input.candidates().stream().map(ReportInput.Candidate::placeId)
@@ -166,8 +164,6 @@ public class ReportService {
 
         Map<String, Object> meta = new LinkedHashMap<>();
         meta.put("model", model == null ? reportWriter.name() : model);
-        meta.put("promptTokens", promptTokens);
-        meta.put("completionTokens", completionTokens);
         meta.put("discarded", discarded);
         cleaned.put("meta", meta);
         return new Verified(cleaned, discarded);

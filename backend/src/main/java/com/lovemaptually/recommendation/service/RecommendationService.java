@@ -27,8 +27,6 @@ import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -37,7 +35,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 /**
  * 추천은 두 단계입니다. 접수는 202로 즉시 끝내고 순위 계산은 워커가 합니다.
- * 엔진이 응답하지 않으면 규칙 폴백이 받고 결과에 degraded를 남깁니다.
+ * 엔진이 응답하지 않으면 규칙 폴백이 태그 점수만으로 순위를 냅니다.
  */
 @Service
 public class RecommendationService {
@@ -51,12 +49,6 @@ public class RecommendationService {
     private final QueryParser queryParser;
     private final RecommendationClient httpClient;
     private final RecommendationClient fallbackClient;
-    /**
-     * degraded와 notice는 명세에 없는 추가 필드이고 저장할 컬럼이 없어 요청 단위로 들고 있습니다.
-     * 재기동하면 사라지므로 화면은 이 값이 없을 때를 정상으로 다뤄야 합니다. 컬럼으로 올리는 것은 R1입니다.
-     */
-    private static final int META_LIMIT = 500;
-    private final Map<Long, RequestMeta> meta = new ConcurrentHashMap<>();
 
     public RecommendationService(RecommendationRequestRepository requestRepository,
                                  RecommendationRepository recommendationRepository,
@@ -114,10 +106,6 @@ public class RecommendationService {
         request.complete(result.candidateCount(),
                 BigDecimal.valueOf(result.cfWeight()).setScale(2, RoundingMode.HALF_UP),
                 OffsetDateTime.now(ZoneOffset.UTC));
-        if (meta.size() >= META_LIMIT) {
-            meta.clear();
-        }
-        meta.put(request.getId(), new RequestMeta(result.degraded(), result.notice()));
     }
 
     @Transactional
@@ -146,15 +134,11 @@ public class RecommendationService {
                     recommendation.getBasis(), recommendation.getReason(),
                     recommendation.getDisplayOrder().intValue()));
         }
-        RequestMeta requestMeta = meta.getOrDefault(requestId, new RequestMeta(false, null));
         return new RecommendationResultResponse(request.getId(), request.getQuery(),
                 new RecommendationIntentResponse(request.getIntentRegion(),
                         request.getIntentCount() == null ? null : request.getIntentCount().intValue(),
                         request.getIntentBudget() == null ? null : request.getIntentBudget().intValue()),
-                request.getCandidateCount(), request.getCfWeight(), request.getStatus(),
-                requestMeta.degraded(), requestMeta.notice(), items);
+                request.getCandidateCount(), request.getCfWeight(), request.getStatus(), items);
     }
 
-    private record RequestMeta(boolean degraded, String notice) {
-    }
 }

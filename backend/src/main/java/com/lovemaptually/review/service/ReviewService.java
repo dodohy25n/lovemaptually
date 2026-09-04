@@ -119,6 +119,11 @@ public class ReviewService {
 
         LabelSnapshot snapshot = null;
         if (review.getWithGroupId() != null) {
+            // 지도에 없는 장소에 리뷰가 붙으면 라벨을 적을 행이 없어 응답과 저장이 어긋납니다.
+            if (groupPlaceRepository.findByGroupIdAndPlaceId(review.getWithGroupId(), review.getPlaceId()).isEmpty()) {
+                groupPlaceRepository.saveAndFlush(
+                        new GroupPlace(review.getWithGroupId(), review.getPlaceId(), userId, now));
+            }
             snapshot = recalculator.recomputeGroupPlace(review.getWithGroupId(), review.getPlaceId(), now);
         }
         return toResponse(review, saved, snapshot, nicknameOf(userId));

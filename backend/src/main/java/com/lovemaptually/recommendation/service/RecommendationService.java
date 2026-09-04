@@ -51,6 +51,11 @@ public class RecommendationService {
     private final QueryParser queryParser;
     private final RecommendationClient httpClient;
     private final RecommendationClient fallbackClient;
+    /**
+     * degraded와 notice는 명세에 없는 추가 필드이고 저장할 컬럼이 없어 요청 단위로 들고 있습니다.
+     * 재기동하면 사라지므로 화면은 이 값이 없을 때를 정상으로 다뤄야 합니다. 컬럼으로 올리는 것은 R1입니다.
+     */
+    private static final int META_LIMIT = 500;
     private final Map<Long, RequestMeta> meta = new ConcurrentHashMap<>();
 
     public RecommendationService(RecommendationRequestRepository requestRepository,
@@ -109,6 +114,9 @@ public class RecommendationService {
         request.complete(result.candidateCount(),
                 BigDecimal.valueOf(result.cfWeight()).setScale(2, RoundingMode.HALF_UP),
                 OffsetDateTime.now(ZoneOffset.UTC));
+        if (meta.size() >= META_LIMIT) {
+            meta.clear();
+        }
         meta.put(request.getId(), new RequestMeta(result.degraded(), result.notice()));
     }
 

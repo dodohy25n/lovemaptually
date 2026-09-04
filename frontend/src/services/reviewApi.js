@@ -1,5 +1,6 @@
 import { fetchPlace, updatePlace } from './placeApi.js'
 import { config, isLocalMode } from './config.js'
+import { STORAGE_KEYS, readText } from './storageService.js'
 import { COUPLE_MEMBERS, memberOf } from '@/utils/users.js'
 import { coupleScoreFromReviews, reviewAverage, toHeartGrade } from '@/utils/heartGrade.js'
 import { extractReviewTags } from './aiReadyMock.js'
@@ -176,4 +177,40 @@ export async function deleteReview(placeId, userId) {
 /** 리뷰 한 건의 세부 점수 평균 (화면 표시용). */
 export function scoreOf(review) {
   return reviewAverage(review)
+}
+
+/**
+ * 그룹이 담은 장소 하나의 리뷰를 가져옵니다. api 모드 전용입니다.
+ * 내 리뷰가 없으면 상대 리뷰가 잠기므로 otherReviews 가 비어 올 수 있습니다.
+ */
+export async function fetchGroupPlaceReviews(groupId, placeId, { fetchImpl = globalThis.fetch } = {}) {
+  if (!config.apiBaseUrl) {
+    throw new ReviewApiError('백엔드 주소가 없어 리뷰를 불러올 수 없습니다.', 'no_base_url')
+  }
+  const url = new URL(`/api/groups/${groupId}/places/${placeId}/reviews`, config.apiBaseUrl)
+  const token = readText(STORAGE_KEYS.accessToken)
+  const response = await fetchImpl(url, {
+    headers: { Accept: 'application/json', Authorization: `Bearer ${token}` },
+  })
+  if (!response.ok) {
+    throw new ReviewApiError('리뷰를 불러오지 못했습니다.', 'fetch_failed')
+  }
+  const body = await response.json()
+  const data = body?.data ?? {}
+  const toCard = (review) => review && ({
+    userId: review.userId,
+    nickname: review.nickname,
+    rating: review.rating,
+    content: review.content,
+    text: review.content,
+    visitedOn: review.visitedOn,
+    tags: Array.isArray(review.tags) ? review.tags : [],
+    images: [],
+  })
+  return {
+    myReview: toCard(data.myReview),
+    otherReviews: (data.otherReviews ?? []).map(toCard).filter(Boolean),
+    locked: Boolean(data.otherReviewsLocked),
+    lockedReason: data.lockedReason ?? '',
+  }
 }

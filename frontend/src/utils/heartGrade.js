@@ -49,6 +49,8 @@ export function clampScore(score) {
 /** 리뷰 한 건의 세부 점수(분위기·맛·가성비·서비스) 평균. */
 export function reviewAverage(review) {
   if (!review) return 0
+  // 백엔드 리뷰는 별점 하나뿐입니다. 세부 점수 네 개는 로컬 모드의 옛 모델입니다.
+  if (Number.isFinite(Number(review.rating))) return round1(clampScore(Number(review.rating)))
   const parts = [review.atmosphere, review.taste, review.value, review.service]
     .map(Number)
     .filter((n) => Number.isFinite(n))

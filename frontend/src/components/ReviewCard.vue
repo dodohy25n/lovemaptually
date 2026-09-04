@@ -38,6 +38,13 @@ const scores = computed(() =>
 )
 
 /** 사진은 항상 photoSlots개 칸을 유지합니다. 없으면 placeholder가 자리를 지킵니다. */
+// 세부 점수 네 개는 로컬 모드의 옛 모델입니다. 백엔드 리뷰에는 별점 하나뿐이라
+// 모드가 아니라 값이 실제로 있는지로 가릅니다.
+const reviewTags = computed(() => (Array.isArray(props.review?.tags) ? props.review.tags : []))
+const hasDetailScores = computed(() =>
+  ['atmosphere', 'taste', 'value', 'service'].some((key) => Number.isFinite(Number(props.review?.[key]))))
+const hasRevisit = computed(() => props.review != null && 'revisitIntent' in props.review)
+
 const photos = computed(() => {
   const source = props.review?.images?.length ? props.review.images : props.place.images
   return Array.from({ length: props.photoSlots }, (_, index) => source?.[index] ?? null)
@@ -91,7 +98,7 @@ const photos = computed(() => {
     <p v-if="review?.content" class="review__body">{{ review.content }}</p>
     <p v-else class="review__body review__body--empty">아직 리뷰를 작성하지 않았어요.</p>
 
-    <dl class="review__scores">
+    <dl v-if="hasDetailScores" class="review__scores">
       <div v-for="score in scores" :key="score.key" class="review__score">
         <dt>{{ score.label }}</dt>
         <dd>
@@ -103,10 +110,18 @@ const photos = computed(() => {
       </div>
     </dl>
 
-    <p class="review__revisit">
+    <p v-if="hasRevisit" class="review__revisit">
       재방문 의사
       <strong>{{ review?.revisitIntent ? '있어요' : '없어요' }}</strong>
     </p>
+
+    <ul v-if="reviewTags.length" class="review__tags">
+      <li v-for="tag in reviewTags" :key="tag.tag" class="review__tag">
+        <strong>{{ tag.tag }}</strong>
+        <span v-if="tag.fact">가게 {{ tag.fact }}</span>
+        <span v-if="tag.want" class="review__tag-want">원함 {{ tag.want }}</span>
+      </li>
+    </ul>
   </article>
 </template>
 
@@ -224,6 +239,15 @@ const photos = computed(() => {
   width: 24px;
   text-align: right;
 }
+
+.review__tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+.review__tag {
+  display: flex; align-items: baseline; gap: 5px;
+  padding: 4px 9px; border-radius: 999px;
+  background: var(--lm-surface-2, #fff5f3); font-size: 11px; color: #8a6a63;
+}
+.review__tag strong { font-weight: 600; color: #b65e6d; }
+.review__tag-want { color: #d9546e; }
 
 .review__revisit {
   font-size: var(--lm-text-sm);

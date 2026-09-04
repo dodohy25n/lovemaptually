@@ -429,6 +429,9 @@ DEMO_WANTS = {
                   "인테리어": "HIGH", "플레이팅": "HIGH", "좌석": "HIGH", "단맛": "HIGH"},
 }
 
+# 402 를 확인할 무료 그룹 하나. 시연에 쓰지 않는 합성 커플입니다.
+FREE_GROUP_INDEX = 12
+
 DEMO_ADDED_ONLY = ["SEED-0009", "SEED-0010"]
 DEMO_ONE_SIDE_ONLY = "SEED-0006"
 # 데모 커플이 리뷰를 남기는 곳. 나머지 인사동 장소는 전부 추천 후보가 됩니다.
@@ -510,7 +513,10 @@ def make_users(rng, all_tags):
                 "bias": rng.choice([0.7, -0.7, 0.0, 0.0]),
             })
         users.extend(pair)
-        groups.append({"owner": pair[0]["email"], "member": pair[1]["email"], "name": f"{a}과 {b}", "plan": "FREE"})
+        # 시연은 플랜에 막히지 않아야 합니다. 유료 기능이라는 것은 발표에서 말로 설명합니다.
+        # 402 를 확인하는 계약 테스트와 Postman 이 쓸 무료 그룹 하나만 남깁니다.
+        plan = "FREE" if i == FREE_GROUP_INDEX else "PREMIUM"
+        groups.append({"owner": pair[0]["email"], "member": pair[1]["email"], "name": f"{a}과 {b}", "plan": plan})
     return users, groups
 
 

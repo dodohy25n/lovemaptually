@@ -37,7 +37,7 @@ OTHER=$(login yongmin@lovemap.dev)
 # 데모 리허설이 couple01a 를 PREMIUM 으로 올렸을 수 있어 아직 FREE 인 계정을 찾습니다.
 FREE=""
 FREE_GROUP=""
-for account in couple01a couple02a couple03a couple04a; do
+for account in couple12a couple01a couple02a couple03a; do
   candidate=$(login "$account@lovemap.dev")
   [ -z "$candidate" ] && continue
   group=$(curl -s "$API/api/groups/me" -H "Authorization: Bearer $candidate" \

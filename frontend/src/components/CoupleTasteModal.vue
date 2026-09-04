@@ -3,22 +3,35 @@ import { computed, ref, watch } from 'vue'
 import BaseIcon from './BaseIcon.vue'
 import { getCoupleTaste } from '@/services/aiReadyMock.js'
 import { fetchTags } from '@/services/tagApi.js'
-const props = defineProps({ open: { type: Boolean, default: false } })
+import { fetchGroupPreferences } from '@/services/preferenceApi.js'
+const props = defineProps({ open: { type: Boolean, default: false }, groupId: { type: [String, Number], default: null } })
 const emit = defineEmits(['close', 'recommend'])
 const taste = getCoupleTaste()
 const categories = [{label:'맛집 탐방',value:90},{label:'카페 데이트',value:81},{label:'감성 여행',value:67}]
 const fallbackKeywords = ['분위기맛집','사진맛집','조용한데이트','파스타','창가좌석','재방문의사']
 const tags = ref([])
+const groupPreferences = ref([])
 const tagLoading = ref(false)
 const tagError = ref('')
-const keywords = computed(() => tags.value.length ? tags.value.map((tag) => tag.name) : fallbackKeywords)
+const keywords = computed(() => groupPreferences.value.length
+  ? groupPreferences.value.map((item) => item.sideLabel || item.tagName).filter(Boolean)
+  : tags.value.length ? tags.value.map((tag) => tag.name) : fallbackKeywords)
+const compatibility = computed(() => groupPreferences.value.length
+  ? Math.round((groupPreferences.value.filter((item) => item.label === 'ALL_SAME').length / groupPreferences.value.length) * 100)
+  : taste.compatibility)
+const splitPreference = computed(() => groupPreferences.value.find((item) => item.label === 'SPLIT'))
 
 watch(() => props.open, async (open) => {
   if (!open || tags.value.length || tagLoading.value) return
   tagLoading.value = true
   tagError.value = ''
   try {
-    tags.value = await fetchTags()
+    if (props.groupId) {
+      const result = await fetchGroupPreferences(props.groupId)
+      groupPreferences.value = result.preferences
+    } else {
+      tags.value = await fetchTags()
+    }
   } catch {
     tagError.value = '태그 API를 불러오지 못해 기존 취향 키워드를 표시하고 있어요.'
   } finally {
@@ -35,14 +48,14 @@ watch(() => props.open, async (open) => {
       <h2 id="taste-title">두 사람이 함께 만든 취향을 분석했어요</h2>
       <p class="subtitle">저장된 방문·평점·리뷰 데이터를 기준으로 정리한 결과예요.</p>
       <section class="match">
-        <span class="match__heart">💞</span><div><h3>우리 커플의 취향 일치도</h3><strong>{{taste.compatibility}}%</strong></div>
-        <div class="match__track"><span :style="{width:`${taste.compatibility}%`}"></span></div><p>서로 다른 취향도 데이트 선택의 폭을 넓혀줘요.</p>
+        <span class="match__heart">💞</span><div><h3>우리 커플의 취향 일치도</h3><strong>{{compatibility}}%</strong></div>
+        <div class="match__track"><span :style="{width:`${compatibility}%`}"></span></div><p>서로 다른 취향도 데이트 선택의 폭을 넓혀줘요.</p>
         <div class="match__count"><small>함께 기록한 장소</small><strong>{{taste.reviewedCount}}곳</strong></div>
       </section>
       <h3 class="section-title">♥ 카테고리별 선호</h3>
       <div class="analysis-grid">
         <section class="paper-card"><h4>자주 선택한 데이트</h4><ul class="bars"><li v-for="item in categories" :key="item.label"><span>{{item.label}}</span><i><b :style="{width:`${item.value}%`}"></b></i><strong>{{item.value}}%</strong></li></ul></section>
-        <section class="paper-card"><h4>공통 취향 키워드</h4><p v-if="tagLoading" class="tag-state" role="status">태그를 불러오는 중이에요…</p><ul v-else class="chips"><li v-for="keyword in keywords" :key="keyword">#{{keyword}}</li></ul><p v-if="tagError" class="tag-error" role="status">{{tagError}}</p><p class="split"><strong>취향 갈림 · 맵기</strong><span>도현→순함 · 지민→매움 · 2명 판정</span></p></section>
+        <section class="paper-card"><h4>공통 취향 키워드</h4><p v-if="tagLoading" class="tag-state" role="status">태그를 불러오는 중이에요…</p><ul v-else class="chips"><li v-for="keyword in keywords" :key="keyword">#{{keyword}}</li></ul><p v-if="tagError" class="tag-error" role="status">{{tagError}}</p><p class="split"><strong>취향 갈림 · {{splitPreference?.tagName || '맵기'}}</strong><span>{{splitPreference?.members?.map(member => `${member.nickname}→${member.sideLabel}`).join(' · ') || '도현→순함 · 지민→매움 · 2명 판정'}}</span></p></section>
       </div>
       <section class="lovey"><span>✨</span><div><h3>러비의 한 줄 분석</h3><p>두 분은 조용한 분위기에서 맛있는 음식과 사진을 함께 즐기는 데이트를 가장 좋아해요.</p><small>다음 추천에서는 분위기 좋은 파스타·브런치 장소를 먼저 보여드릴게요. ♥</small></div></section>
       <button class="action" @click="emit('recommend')">우리 취향에 맞는 장소 보기</button>

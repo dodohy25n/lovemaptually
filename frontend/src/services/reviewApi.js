@@ -47,6 +47,35 @@ function toReviewModel(data, draft) {
   }
 }
 
+/** GET /api/reviews/{reviewId} — 태그 추출 결과가 포함된 리뷰 상세. */
+export async function fetchReviewDetail(reviewId, { baseReview = {}, fetchImpl = globalThis.fetch } = {}) {
+  if (!config.apiBaseUrl) throw new ReviewApiError('API 기본 주소가 설정되지 않았습니다.', 'missing_base_url')
+  if (reviewId == null || String(reviewId).trim() === '') throw new ReviewApiError('리뷰를 선택해 주세요.', 'missing_review_id')
+  if (typeof fetchImpl !== 'function') throw new ReviewApiError('리뷰 상세를 요청할 수 없습니다.', 'fetch_unavailable')
+
+  const url = new URL(`/api/reviews/${encodeURIComponent(String(reviewId))}`, config.apiBaseUrl)
+  let response
+  try {
+    response = await fetchImpl(url, {
+      method: 'GET',
+      headers: { Accept: 'application/json', Authorization: authorizationFor(url) },
+    })
+  } catch {
+    throw new ReviewApiError('리뷰 상세를 불러오지 못했습니다.', 'network_error')
+  }
+  const payload = await response.json().catch(() => null)
+  if (!response.ok) {
+    throw new ReviewApiError(
+      payload?.message || '리뷰 상세를 불러오지 못했습니다.',
+      response.status === 404 ? 'not_found' : 'http_error',
+    )
+  }
+  if (!payload?.data || payload.data.reviewId == null) {
+    throw new ReviewApiError('리뷰 상세 응답 형식이 올바르지 않습니다.', 'invalid_response')
+  }
+  return toReviewModel(payload.data, baseReview)
+}
+
 /** POST /api/reviews 호출. 화면 계약 유지를 위해 저장된 리뷰 한 건을 반환합니다. */
 export async function createReviewFromApi(
   placeId,

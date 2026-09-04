@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { config } from '@/services/config.js'
-import { createReviewFromApi, ReviewApiError } from '@/services/reviewApi.js'
+import { createReviewFromApi, fetchReviewDetail, ReviewApiError } from '@/services/reviewApi.js'
 
 const REVIEW = {
   userId: 'him',
@@ -94,5 +94,44 @@ describe('리뷰 등록 API', () => {
     await expect(createReviewFromApi(412, REVIEW, {
       visitedOn: '2026-09-01',
     })).rejects.toBeInstanceOf(ReviewApiError)
+  })
+})
+
+describe('리뷰 상세 API', () => {
+  it('GET /api/reviews/{id} 응답을 기존 리뷰 모델과 합친다', async () => {
+    config.apiBaseUrl = 'https://demo.mock.pstmn.io'
+    const fetchImpl = vi.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: async () => ({
+        data: {
+          reviewId: 501,
+          placeId: 412,
+          visitedOn: '2026-09-01',
+          rating: 5,
+          content: '상세 리뷰',
+          tagStatus: 'COMPLETED',
+          tags: [{ tag: '조용함', fact: 'HIGH', want: 'HIGH', evidence: '조용해요' }],
+          createdAt: '2026-09-03T14:22:10Z',
+        },
+      }),
+    })
+
+    await expect(fetchReviewDetail(501, { baseReview: REVIEW, fetchImpl })).resolves.toMatchObject({
+      reviewId: 501,
+      userId: 'him',
+      content: '상세 리뷰',
+      tagStatus: 'COMPLETED',
+      extractedTags: [{ tag: '조용함' }],
+    })
+    const [url, request] = fetchImpl.mock.calls[0]
+    expect(String(url)).toBe('https://demo.mock.pstmn.io/api/reviews/501')
+    expect(request.headers.Authorization).toBe('Bearer mock-token')
+  })
+
+  it('404 응답을 not_found로 변환한다', async () => {
+    config.apiBaseUrl = 'https://example.test'
+    const fetchImpl = vi.fn().mockResolvedValue({ ok: false, status: 404, json: async () => ({}) })
+    await expect(fetchReviewDetail(999, { fetchImpl })).rejects.toMatchObject({ code: 'not_found' })
   })
 })

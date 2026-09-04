@@ -104,6 +104,16 @@ export function writeText(key, value) {
   }
 }
 
+export function readText(key, fallback = '') {
+  const store = resolveStore()
+  try {
+    return store.getItem(key) ?? fallback
+  } catch (error) {
+    lastError = { type: 'read', key, message: String(error) }
+    return fallback
+  }
+}
+
 export function removeKey(key) {
   const store = resolveStore()
   try {

@@ -23,6 +23,56 @@ export class ReviewApiError extends Error {
   }
 }
 
+function toSummaryReview(review) {
+  if (!review || review.reviewId == null) return null
+  const rating = Number(review.rating) || 0
+  return {
+    reviewId: String(review.reviewId),
+    userId: String(review.userId ?? ''),
+    userName: String(review.nickname ?? ''),
+    content: String(review.content ?? ''),
+    visitedOn: review.visitedOn ?? null,
+    rating,
+    atmosphere: rating,
+    taste: rating,
+    value: rating,
+    service: rating,
+    revisitIntent: rating >= 4,
+    images: [],
+  }
+}
+
+/** GET /api/groups/{groupId}/places/{placeId}/reviews — 커플 장소의 리뷰 목록. */
+export async function fetchGroupPlaceReviews(groupId, placeId, { fetchImpl = globalThis.fetch } = {}) {
+  if (!config.apiBaseUrl) throw new ReviewApiError('API 기본 주소가 설정되지 않았습니다.', 'missing_base_url')
+  if (groupId == null || placeId == null) throw new ReviewApiError('그룹과 장소를 선택해 주세요.', 'missing_context')
+  if (typeof fetchImpl !== 'function') throw new ReviewApiError('리뷰 목록을 요청할 수 없습니다.', 'fetch_unavailable')
+
+  const url = new URL(`/api/groups/${encodeURIComponent(String(groupId))}/places/${encodeURIComponent(String(placeId))}/reviews`, config.apiBaseUrl)
+  let response
+  try {
+    response = await fetchImpl(url, {
+      method: 'GET',
+      headers: { Accept: 'application/json', Authorization: authorizationFor(url) },
+    })
+  } catch {
+    throw new ReviewApiError('리뷰 목록을 불러오지 못했습니다.', 'network_error')
+  }
+  const payload = await response.json().catch(() => null)
+  if (!response.ok) throw new ReviewApiError(payload?.message || '리뷰 목록을 불러오지 못했습니다.', 'http_error')
+  const data = payload?.data
+  if (!data || !Array.isArray(data.otherReviews)) throw new ReviewApiError('리뷰 목록 응답 형식이 올바르지 않습니다.', 'invalid_response')
+  return {
+    placeLabel: data.placeLabel ?? null,
+    reviewedCount: Number(data.reviewedCount) || 0,
+    likedCount: Number(data.likedCount) || 0,
+    myReview: toSummaryReview(data.myReview),
+    otherReviews: data.otherReviews.map(toSummaryReview).filter(Boolean),
+    otherReviewsLocked: Boolean(data.otherReviewsLocked),
+    lockedReason: data.lockedReason ?? null,
+  }
+}
+
 function authorizationFor(url) {
   if (url.hostname.endsWith('.mock.pstmn.io')) return 'Bearer mock-token'
   const token = typeof window !== 'undefined'

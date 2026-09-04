@@ -5,20 +5,35 @@ import BaseIcon from './BaseIcon.vue'
 import ReviewCard from './ReviewCard.vue'
 import { usePlacesStore } from '@/stores/places.js'
 import { COUPLE } from '@/utils/users.js'
+import { fetchGroupPlaceReviews } from '@/services/reviewApi.js'
 
 const props = defineProps({
   open: { type: Boolean, default: false },
   initialRole: { type: String, default: 'him' },
   placeId: { type: String, default: '' },
+  groupId: { type: [String, Number], default: null },
 })
 const emit = defineEmits(['close'])
 const store = usePlacesStore()
 const { recentPlaces } = storeToRefs(store)
 const role = ref(props.initialRole)
 const index = ref(0)
+const remoteReviews = ref(null)
+const reviewError = ref('')
 
 watch(() => props.initialRole, (next) => { role.value = next; index.value = 0 })
-watch(() => props.open, (open) => { if (open) index.value = 0 })
+watch(() => props.open, async (open) => {
+  if (!open) return
+  index.value = 0
+  remoteReviews.value = null
+  reviewError.value = ''
+  if (!props.groupId || !props.placeId) return
+  try {
+    remoteReviews.value = await fetchGroupPlaceReviews(props.groupId, props.placeId)
+  } catch (error) {
+    reviewError.value = error?.message || '리뷰를 불러오지 못했습니다.'
+  }
+})
 
 const member = computed(() => COUPLE[role.value])
 const entries = computed(() => recentPlaces.value
@@ -27,7 +42,11 @@ const entries = computed(() => recentPlaces.value
   place,
   review: place.reviews.find((item) => item.userId === member.value.userId) ?? null,
 })))
+const remoteReview = computed(() => role.value === 'him'
+  ? remoteReviews.value?.myReview
+  : remoteReviews.value?.otherReviews?.[0])
 const current = computed(() => entries.value[index.value] ?? null)
+const currentReview = computed(() => remoteReviews.value ? remoteReview.value : current.value?.review)
 
 function move(step) {
   const count = entries.value.length
@@ -61,11 +80,12 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKeydown))
       <div v-if="current" class="stage">
         <button class="arrow arrow--left" type="button" aria-label="이전 게시물" @click="move(-1)">‹</button>
         <Transition name="slide" mode="out-in">
-          <ReviewCard :key="`${role}-${current.place.id}`" :place="current.place" :review="current.review" :role="role" />
+          <ReviewCard :key="`${role}-${current.place.id}`" :place="current.place" :review="currentReview" :role="role" />
         </Transition>
         <button class="arrow arrow--right" type="button" aria-label="다음 게시물" @click="move(1)">›</button>
       </div>
       <p v-else class="empty">아직 작성된 리뷰가 없어요.</p>
+      <p v-if="reviewError" class="empty" role="alert">{{ reviewError }}</p>
 
       <footer v-if="entries.length" class="viewer__foot">
         <span>{{ index + 1 }} / {{ entries.length }}</span>

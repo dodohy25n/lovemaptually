@@ -20,6 +20,21 @@ import { createId } from '@/utils/id.js'
  * 뒤가 localStorage인지 HTTP인지 알지 못합니다.
  */
 
+/**
+ * 시연용 사진입니다. 사진 업로드가 아직 없어서 장소마다 고정된 표본 사진을 붙입니다.
+ * placeId 로 고르므로 같은 장소는 늘 같은 사진이 나옵니다.
+ */
+const SAMPLE_PHOTOS = [
+  '/samples/cake.jpg', '/samples/ade.jpg', '/samples/window.jpg',
+  '/samples/salad.jpg', '/samples/pudding.jpg', '/samples/pasta.jpg',
+]
+
+function samplePhotos(placeId, count = 3) {
+  const seed = Number(placeId) || 0
+  return Array.from({ length: count }, (_, index) =>
+    SAMPLE_PHOTOS[(seed * 2 + index) % SAMPLE_PHOTOS.length])
+}
+
 export class PlaceRepositoryError extends Error {
   constructor(message, code = 'repository_error') {
     super(message)
@@ -301,7 +316,7 @@ export class ApiPlaceRepository extends PlaceRepository {
           latitude: marker.latitude,
           longitude: marker.longitude,
           coupleScore,
-          images: [],
+          images: samplePhotos(marker.placeId),
           tags: [],
           reviews: [],
         }, { id: String(marker.placeId) })]
@@ -365,7 +380,7 @@ export class ApiPlaceRepository extends PlaceRepository {
           category: place.category,
           latitude: place.latitude,
           longitude: place.longitude,
-          images: [],
+          images: samplePhotos(place.placeId),
           tags: [],
           reviews: [],
         }, { id: String(place.placeId) })]
@@ -426,7 +441,7 @@ export class ApiPlaceRepository extends PlaceRepository {
       tags: Array.isArray(place.tags)
         ? place.tags.map((item) => typeof item === 'string' ? item : item?.tag).filter(Boolean)
         : [],
-      images: [],
+      images: samplePhotos(place.placeId),
       reviews: [],
     }, { id: String(place.placeId) })
   }                                               // GET    /api/places/:id

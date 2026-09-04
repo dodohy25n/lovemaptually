@@ -1,4 +1,4 @@
-import { STORAGE_KEYS, readJson, writeJson, removeKey } from './storageService.js'
+import { STORAGE_KEYS, readJson, readText, writeJson, removeKey } from './storageService.js'
 import { createSeedPlaces } from './seedPlaces.js'
 import { normalizeCoordinate } from '@/utils/coords.js'
 import {
@@ -105,6 +105,7 @@ export function normalizePlace(draft, { id, createdAt } = {}) {
 
   return {
     id: id ?? draft?.id ?? createId('place'),
+    groupPlaceId: draft?.groupPlaceId == null ? null : String(draft.groupPlaceId),
     name,
     provider,
     providerPlaceId,
@@ -115,6 +116,7 @@ export function normalizePlace(draft, { id, createdAt } = {}) {
     visitedAt: String(draft?.visitedAt ?? '').trim(),
     coupleScore,
     heartGrade: toHeartGrade(coupleScore),
+    label: draft?.label == null ? null : String(draft.label),
     images: Array.isArray(draft?.images) ? draft.images.filter((src) => typeof src === 'string') : [],
     tags: Array.isArray(draft?.tags) ? draft.tags.map(String).filter(Boolean) : [],
     reviews,
@@ -255,7 +257,7 @@ export class ApiPlaceRepository extends PlaceRepository {
     )
   }
 
-  async list() {
+  async list({ groupId } = {}) {
     if (!this.baseUrl) {
       throw new PlaceRepositoryError('API 기본 주소가 설정되지 않았습니다.', 'missing_base_url')
     }
@@ -263,9 +265,16 @@ export class ApiPlaceRepository extends PlaceRepository {
       throw new PlaceRepositoryError('이 환경에서는 장소 목록 요청을 보낼 수 없습니다.', 'fetch_unavailable')
     }
 
-    const url = new URL('/api/places', this.baseUrl)
-    const headers = { Accept: 'application/json' }
-    if (url.hostname.endsWith('.mock.pstmn.io')) headers.Authorization = 'Bearer mock-token'
+    if (groupId == null || String(groupId).trim() === '') {
+      throw new PlaceRepositoryError('그룹을 선택해야 장소 목록을 불러올 수 있습니다.', 'missing_group_id')
+    }
+
+    const url = new URL(`/api/groups/${encodeURIComponent(String(groupId))}/places`, this.baseUrl)
+    const token = readText(STORAGE_KEYS.accessToken)
+    const headers = {
+      Accept: 'application/json',
+      Authorization: `Bearer ${token || (url.hostname.endsWith('.mock.pstmn.io') ? 'mock-token' : '')}`,
+    }
 
     let response
     try {
@@ -280,24 +289,27 @@ export class ApiPlaceRepository extends PlaceRepository {
     }
 
     const payload = await response.json().catch(() => null)
-    if (!response.ok || !Array.isArray(payload?.data?.content)) {
+    if (!response.ok || !Array.isArray(payload?.data?.markers)) {
       throw new PlaceRepositoryError(
         payload?.message || `장소 목록 응답이 올바르지 않습니다. (${response.status})`,
         response.ok ? 'invalid_response' : 'http_error',
       )
     }
 
-    return payload.data.content.flatMap((place) => {
+    return payload.data.markers.flatMap((place) => {
       try {
+        const reviewedCount = Number(place.reviewedCount) || 0
+        const likedCount = Number(place.likedCount) || 0
         return [normalizePlace({
           id: String(place.placeId),
-          provider: place.provider,
-          providerPlaceId: place.providerPlaceId,
+          groupPlaceId: place.groupPlaceId,
           name: place.name,
           address: place.address,
           category: place.category,
           latitude: place.latitude,
           longitude: place.longitude,
+          coupleScore: reviewedCount > 0 ? (likedCount / reviewedCount) * 5 : 0,
+          label: place.label,
           images: [],
           tags: [],
           reviews: [],
@@ -306,7 +318,7 @@ export class ApiPlaceRepository extends PlaceRepository {
         return []
       }
     })
-  }                                                     // GET    /api/places
+  }                                                     // GET    /api/groups/:groupId/places
 
   async get(id) {
     if (!this.baseUrl) {

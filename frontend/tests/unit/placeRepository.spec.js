@@ -246,7 +246,7 @@ describe('Repository 인터페이스', () => {
 })
 
 describe('장소 목록 API', () => {
-  it('GET /api/places 응답을 화면의 장소 목록으로 변환한다', async () => {
+  it('GET /api/groups/{groupId}/places 응답을 화면의 장소 목록으로 변환한다', async () => {
     const fetchImpl = vi.fn().mockResolvedValue({
       ok: true,
       status: 200,
@@ -254,22 +254,21 @@ describe('장소 목록 API', () => {
         status: 200,
         message: '조회했습니다',
         data: {
-          content: [
+          markers: [
             {
+              groupPlaceId: 9001,
               placeId: 412,
-              provider: 'KAKAO',
-              providerPlaceId: 'DEMO-412',
               name: '○○찻집',
               address: '서울 종로구 인사동길',
               category: '카페',
               latitude: 37.5741,
               longitude: 126.9853,
+              label: 'ALL_LIKED',
+              reviewedCount: 2,
+              likedCount: 2,
             },
             { placeId: 999, name: '', latitude: null, longitude: null },
           ],
-          page: 0,
-          size: 10,
-          totalElements: 2,
         },
       }),
     })
@@ -278,25 +277,26 @@ describe('장소 목록 API', () => {
       fetchImpl,
     })
 
-    await expect(api.list()).resolves.toMatchObject([
+    await expect(api.list({ groupId: 7001 })).resolves.toMatchObject([
       {
         id: '412',
-        provider: 'kakao',
-        providerPlaceId: 'DEMO-412',
+        groupPlaceId: '9001',
         name: '○○찻집',
+        coupleScore: 5,
+        label: 'ALL_LIKED',
         tags: [],
         reviews: [],
       },
     ])
     const [url, request] = fetchImpl.mock.calls[0]
-    expect(String(url)).toBe('https://demo.mock.pstmn.io/api/places')
+    expect(String(url)).toBe('https://demo.mock.pstmn.io/api/groups/7001/places')
     expect(request).toMatchObject({
       method: 'GET',
       headers: { Accept: 'application/json', Authorization: 'Bearer mock-token' },
     })
   })
 
-  it('content가 없는 성공 응답을 거부한다', async () => {
+  it('markers가 없는 성공 응답을 거부한다', async () => {
     const api = new ApiPlaceRepository({
       baseUrl: 'https://example.test',
       fetchImpl: vi.fn().mockResolvedValue({
@@ -306,7 +306,7 @@ describe('장소 목록 API', () => {
       }),
     })
 
-    await expect(api.list()).rejects.toMatchObject({ code: 'invalid_response' })
+    await expect(api.list({ groupId: 7001 })).rejects.toMatchObject({ code: 'invalid_response' })
   })
 
   it('HTTP 오류의 API 메시지를 전달한다', async () => {
@@ -319,10 +319,18 @@ describe('장소 목록 API', () => {
       }),
     })
 
-    await expect(api.list()).rejects.toMatchObject({
+    await expect(api.list({ groupId: 7001 })).rejects.toMatchObject({
       code: 'http_error',
       message: '잠시 후 다시 시도해주세요',
     })
+  })
+
+  it('그룹 ID가 없으면 요청 전에 실패한다', async () => {
+    const fetchImpl = vi.fn()
+    const api = new ApiPlaceRepository({ baseUrl: 'https://example.test', fetchImpl })
+
+    await expect(api.list()).rejects.toMatchObject({ code: 'missing_group_id' })
+    expect(fetchImpl).not.toHaveBeenCalled()
   })
 })
 

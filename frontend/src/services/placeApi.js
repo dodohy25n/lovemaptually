@@ -36,8 +36,8 @@ export function setPlaceRepository(next) {
   repository = next
 }
 
-export function fetchPlaces() {
-  return getPlaceRepository().list()
+export function fetchPlaces(options) {
+  return getPlaceRepository().list(options)
 }
 
 export function fetchPlace(id) {

@@ -5,6 +5,7 @@ import BaseIcon from '@/components/BaseIcon.vue'
 import CoupleReportCard from '@/components/CoupleReportCard.vue'
 import EmptyState from '@/components/EmptyState.vue'
 import { usePlacesStore } from '@/stores/places.js'
+import { fetchMyGroups } from '@/services/groupApi.js'
 import bookshelfAsset from '../../frontend-assets/decorations/empty-memory-bookshelf.png'
 import bookPink from '../../frontend-assets/decorations/memory-book-pink-beach.png'
 import bookIvory from '../../frontend-assets/decorations/memory-book-ivory-flower.png'
@@ -50,9 +51,18 @@ function onKeydown(event) {
 }
 
 watch(isDetailOpen, (open) => { document.body.style.overflow = open ? 'hidden' : '' })
-onMounted(() => {
+onMounted(async () => {
   document.addEventListener('keydown', onKeydown)
-  if (!recentPlaces.value.length) store.load()
+  if (!recentPlaces.value.length) {
+    let groupId = null
+    try {
+      const groups = await fetchMyGroups()
+      groupId = (groups.find((group) => group.type === 'COUPLE') ?? groups[0])?.id ?? null
+    } catch {
+      // 로컬 모드나 로그아웃 상태에서는 기존 로컬 장소 목록을 사용합니다.
+    }
+    await store.load({ groupId })
+  }
 })
 onBeforeUnmount(() => {
   document.removeEventListener('keydown', onKeydown)

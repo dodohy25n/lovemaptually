@@ -5,6 +5,7 @@ import BaseIcon from './BaseIcon.vue'
 import ReviewCard from './ReviewCard.vue'
 import { usePlacesStore } from '@/stores/places.js'
 import { COUPLE } from '@/utils/users.js'
+import { fetchReviewDetail } from '@/services/reviewApi.js'
 
 const props = defineProps({
   open: { type: Boolean, default: false },
@@ -16,6 +17,7 @@ const store = usePlacesStore()
 const { recentPlaces } = storeToRefs(store)
 const role = ref(props.initialRole)
 const index = ref(0)
+const detailedReview = ref(null)
 
 watch(() => props.initialRole, (next) => { role.value = next; index.value = 0 })
 watch(() => props.open, (open) => { if (open) index.value = 0 })
@@ -28,6 +30,20 @@ const entries = computed(() => recentPlaces.value
   review: place.reviews.find((item) => item.userId === member.value.userId) ?? null,
 })))
 const current = computed(() => entries.value[index.value] ?? null)
+const shownReview = computed(() => detailedReview.value ?? current.value?.review ?? null)
+
+watch(
+  () => [props.open, current.value?.review?.reviewId],
+  async ([open, reviewId]) => {
+    detailedReview.value = null
+    if (!open || !reviewId) return
+    try {
+      detailedReview.value = await fetchReviewDetail(reviewId, { baseReview: current.value.review })
+    } catch {
+      // 목록 응답의 리뷰로 계속 표시하고 상세 태그 갱신만 건너뜁니다.
+    }
+  },
+)
 
 function move(step) {
   const count = entries.value.length
@@ -61,7 +77,7 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKeydown))
       <div v-if="current" class="stage">
         <button class="arrow arrow--left" type="button" aria-label="이전 게시물" @click="move(-1)">‹</button>
         <Transition name="slide" mode="out-in">
-          <ReviewCard :key="`${role}-${current.place.id}`" :place="current.place" :review="current.review" :role="role" />
+          <ReviewCard :key="`${role}-${current.place.id}`" :place="current.place" :review="shownReview" :role="role" />
         </Transition>
         <button class="arrow arrow--right" type="button" aria-label="다음 게시물" @click="move(1)">›</button>
       </div>

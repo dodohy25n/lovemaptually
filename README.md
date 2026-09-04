@@ -89,11 +89,14 @@ createdb -O lovemaptually lovemaptually
 
 | 경로 | 내용 |
 | --- | --- |
-| `backend/` | Spring Boot API. 마이그레이션과 엔티티, 서비스, 계약 테스트 |
+| `backend/` | Spring Boot API. 마이그레이션과 엔티티, 서비스, 계약 테스트. **실행 대상은 이쪽입니다** |
 | `frontend/` | Vue 3 화면 |
 | `recommender/` | FastAPI 추천 엔진과 순위 계산 |
 | `scripts/` | 데모 기동과 시드, 유사도 배치 |
 | `docs/` | 설계 문서 스냅샷, AI 실호출 검증 |
+
+`back/`은 같은 API를 다른 구조로 시도한 별도 디렉터리입니다. 실행과 채점 대상은 `backend/`이고,
+데모 스크립트와 테스트도 그쪽을 가리킵니다.
 
 ## R&R
 

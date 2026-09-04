@@ -6,7 +6,11 @@ import coupleProfile from '@/assets/couple-profile.jpeg'
 defineProps({
   count: { type: Number, default: 0 },
   groupName: { type: String, default: '' },
+  canCreateGroup: { type: Boolean, default: false },
+  creatingGroup: { type: Boolean, default: false },
 })
+
+defineEmits(['create-group'])
 </script>
 
 <template>
@@ -27,6 +31,15 @@ defineProps({
       <strong data-testid="place-count">{{ count }}</strong>
       <span class="summary__unit">곳</span>
     </p>
+    <button
+      v-if="canCreateGroup"
+      type="button"
+      class="lm-btn lm-btn--primary summary__create"
+      :disabled="creatingGroup"
+      @click="$emit('create-group')"
+    >
+      {{ creatingGroup ? '만드는 중…' : '커플 러브맵 만들기' }}
+    </button>
   </section>
 </template>
 
@@ -97,4 +110,5 @@ defineProps({
   font-size: var(--lm-text-md);
   color: var(--lm-ink-soft);
 }
+.summary__create { margin-top: var(--lm-space-2); font-size: var(--lm-text-xs); }
 </style>

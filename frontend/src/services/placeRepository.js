@@ -1,4 +1,4 @@
-import { STORAGE_KEYS, readJson, writeJson, removeKey } from './storageService.js'
+import { STORAGE_KEYS, readJson, readText, writeJson, removeKey } from './storageService.js'
 import { createSeedPlaces } from './seedPlaces.js'
 import { normalizeCoordinate } from '@/utils/coords.js'
 import {
@@ -105,6 +105,7 @@ export function normalizePlace(draft, { id, createdAt } = {}) {
 
   return {
     id: id ?? draft?.id ?? createId('place'),
+    groupPlaceId: draft?.groupPlaceId == null ? null : String(draft.groupPlaceId),
     name,
     provider,
     providerPlaceId,
@@ -115,6 +116,7 @@ export function normalizePlace(draft, { id, createdAt } = {}) {
     visitedAt: String(draft?.visitedAt ?? '').trim(),
     coupleScore,
     heartGrade: toHeartGrade(coupleScore),
+    label: draft?.label == null ? null : String(draft.label),
     images: Array.isArray(draft?.images) ? draft.images.filter((src) => typeof src === 'string') : [],
     tags: Array.isArray(draft?.tags) ? draft.tags.map(String).filter(Boolean) : [],
     reviews,
@@ -363,7 +365,62 @@ export class ApiPlaceRepository extends PlaceRepository {
       reviews: [],
     }, { id: String(place.placeId) })
   }                                               // GET    /api/places/:id
-  async create() { return this.#notReady('create') }    // POST   /places
+  async create(draft, { groupId } = {}) {
+    if (!this.baseUrl) throw new PlaceRepositoryError('API 기본 주소가 설정되지 않았습니다.', 'missing_base_url')
+    if (groupId == null || String(groupId).trim() === '') {
+      throw new PlaceRepositoryError('그룹을 선택해야 장소를 저장할 수 있습니다.', 'missing_group_id')
+    }
+    if (typeof this.fetchImpl !== 'function') {
+      throw new PlaceRepositoryError('이 환경에서는 장소 저장 요청을 보낼 수 없습니다.', 'fetch_unavailable')
+    }
+
+    const place = normalizePlace(draft)
+    const url = new URL(`/api/groups/${encodeURIComponent(String(groupId))}/places`, this.baseUrl)
+    const token = readText(STORAGE_KEYS.accessToken)
+    const providerPlaceId = place.providerPlaceId || `manual:${place.name}:${place.latitude},${place.longitude}`
+    const region = String(draft?.region ?? place.address.split(/\s+/).slice(0, 2).join(' ')).trim() || '지역 미정'
+    let response
+    try {
+      response = await this.fetchImpl(url, {
+        method: 'POST',
+        headers: {
+          Accept: 'application/json',
+          Authorization: `Bearer ${token || (url.hostname.endsWith('.mock.pstmn.io') ? 'mock-token' : '')}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          place: {
+            provider: place.provider.toUpperCase(),
+            providerPlaceId,
+            name: place.name,
+            address: place.address,
+            region,
+            category: place.category,
+            priceBand: draft?.priceBand ?? null,
+            latitude: place.latitude,
+            longitude: place.longitude,
+          },
+        }),
+      })
+    } catch {
+      throw new PlaceRepositoryError('장소를 우리 지도에 저장하지 못했습니다.', 'network_error')
+    }
+
+    const payload = await response.json().catch(() => null)
+    if (!response.ok) {
+      throw new PlaceRepositoryError(
+        payload?.message || '장소를 우리 지도에 저장하지 못했습니다.',
+        response.status === 409 ? 'duplicate_place' : 'http_error',
+      )
+    }
+    if (payload?.data?.placeId == null || payload?.data?.groupPlaceId == null) {
+      throw new PlaceRepositoryError('장소 저장 응답 형식이 올바르지 않습니다.', 'invalid_response')
+    }
+    return normalizePlace({ ...place, groupPlaceId: payload.data.groupPlaceId, label: payload.data.label }, {
+      id: String(payload.data.placeId),
+      createdAt: payload.data.createdAt,
+    })
+  }                                               // POST   /api/groups/:groupId/places
   async update() { return this.#notReady('update') }    // PATCH  /places/:id
   async remove() { return this.#notReady('remove') }    // DELETE /places/:id
   async reset() { return this.#notReady('reset') }

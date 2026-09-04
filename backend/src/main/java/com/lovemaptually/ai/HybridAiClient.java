@@ -18,6 +18,13 @@ import org.slf4j.LoggerFactory;
  */
 public class HybridAiClient implements AiClient {
 
+    private static final int MIN_EVIDENCE_SYLLABLES = 2;
+    private static final List<String> SENTIMENT_WORDS = List.of(
+            "좋았어요", "좋았", "좋아", "좋네", "좋더", "괜찮", "만족", "최고", "훌륭",
+            "아쉬웠어요", "아쉬", "별로", "싫", "힘들", "불편", "실망", "지쳤", "후회",
+            "그리고", "그래서", "하지만", "어요", "습니다", "네요", "더라고요"
+    );
+
     private static final Logger log = LoggerFactory.getLogger(HybridAiClient.class);
 
     private static final int MAX_TAGS_PER_REVIEW = 5;
@@ -98,12 +105,35 @@ public class HybridAiClient implements AiClient {
         return count;
     }
 
+
+    /**
+     * 근거에서 감정 표현과 조사를 걷어 냈을 때 남는 말이 없으면 그 태그는 문장에 근거가 없는 것입니다.
+     * "서 좋았어요" 만 잘라 놓고 조명 태그를 붙이는 경우를 막습니다(D-27).
+     */
+    private boolean hasRealEvidence(TagCandidate candidate) {
+        String evidence = candidate.evidence();
+        if (evidence == null || evidence.isBlank()) {
+            return false;
+        }
+        String stripped = evidence;
+        for (String cue : SENTIMENT_WORDS) {
+            stripped = stripped.replace(cue, "");
+        }
+        long syllables = stripped.chars().filter(c -> c >= 0xAC00 && c <= 0xD7A3).count();
+        return syllables >= MIN_EVIDENCE_SYLLABLES;
+    }
+
     private List<TagCandidate> merge(List<TagCandidate> matched, List<TagCandidate> llmTags) {
         Map<String, TagCandidate> merged = new LinkedHashMap<>();
         for (TagCandidate candidate : matched) {
             merged.put(candidate.tagName(), candidate);
         }
         for (TagCandidate candidate : llmTags) {
+            if (!hasRealEvidence(candidate)) {
+                log.info("근거가 감정 표현뿐이라 태그를 버립니다 tag={} evidence={}",
+                        candidate.tagName(), candidate.evidence());
+                continue;
+            }
             if (merged.size() >= MAX_TAGS_PER_REVIEW) {
                 break;
             }

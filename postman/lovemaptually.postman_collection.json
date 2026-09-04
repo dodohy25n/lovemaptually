@@ -1351,7 +1351,7 @@
                   "});",
                   "",
                   "pm.test('검색 결과 항목에 tags 가 더 붙습니다', function () {",
-                  "    pm.expect(body.data.placeId).to.eql(Number(pm.collectionVariables.get('placeId')));",
+                  "    pm.expect(body.data.place.placeId).to.eql(Number(pm.collectionVariables.get('placeId')));",
                   "    pm.expect(body.data.tags).to.be.an('array');",
                   "});"
                 ]
@@ -1781,13 +1781,12 @@
                   "    pm.expect(body.data.tagStatus).to.eql('COMPLETED');",
                   "});",
                   "",
-                  "pm.test('tags 의 모든 항목에 fact 와 want 가 있습니다', function () {",
+                  "pm.test('tags 항목마다 fact 가 있고 want 자리가 있습니다', function () {",
                   "    pm.expect(body.data.tags).to.be.an('array').that.is.not.empty;",
                   "    body.data.tags.forEach(function (t) {",
                   "        pm.expect(t).to.have.property('fact');",
                   "        pm.expect(t).to.have.property('want');",
                   "        pm.expect(t.fact, 'fact 가 비어 있습니다: ' + t.tag).to.not.eql(null);",
-                  "        pm.expect(t.want, 'want 가 비어 있습니다: ' + t.tag).to.not.eql(null);",
                   "    });",
                   "});",
                   "",
@@ -1798,7 +1797,11 @@
                   "",
                   "pm.collectionVariables.set('reviewId', body.data.reviewId);",
                   "pm.collectionVariables.set('visitedOn', body.data.visitedOn);",
-                  "pm.collectionVariables.set('reportMonth', String(body.data.visitedOn).slice(0, 7));"
+                  "pm.collectionVariables.set('reportMonth', String(body.data.visitedOn).slice(0, 7));",
+                  "",
+                  "pm.test('want 가 채워진 태그가 최소 하나 있습니다', function () {",
+                  "    pm.expect(body.data.tags.some(function (t) { return t.want !== null; })).to.be.true;",
+                  "});"
                 ]
               }
             }

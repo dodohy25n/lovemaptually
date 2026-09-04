@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { config } from '@/services/config.js'
-import { createReviewFromApi, ReviewApiError } from '@/services/reviewApi.js'
+import { createReviewFromApi, ReviewApiError, toApiRating } from '@/services/reviewApi.js'
 
 const REVIEW = {
   userId: 'him',
@@ -63,9 +63,30 @@ describe('리뷰 등록 API', () => {
     expect(JSON.parse(request.body)).toEqual({
       placeId: 412,
       visitedOn: '2026-09-01',
-      rating: 4.5,
+      rating: 5,
       content: '조용해서 대화하기 좋았어요.',
     })
+  })
+
+  it('세부 점수 평균을 backend 계약인 1~5 정수로 반올림한다', () => {
+    expect(toApiRating({ atmosphere: 3, taste: 4, value: 4, service: 3 })).toBe(4)
+    expect(toApiRating(REVIEW)).toBe(5)
+  })
+
+  it('선택한 점수가 없으면 API 요청 전에 거부한다', async () => {
+    config.apiBaseUrl = 'https://api.example.test'
+    const fetchImpl = vi.fn()
+    await expect(createReviewFromApi(412, {
+      ...REVIEW,
+      atmosphere: 0,
+      taste: 0,
+      value: 0,
+      service: 0,
+    }, {
+      visitedOn: '2026-09-01',
+      fetchImpl,
+    })).rejects.toMatchObject({ code: 'invalid_rating' })
+    expect(fetchImpl).not.toHaveBeenCalled()
   })
 
   it('중복 리뷰 오류를 구분해 전달한다', async () => {

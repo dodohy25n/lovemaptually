@@ -155,9 +155,19 @@ public class ReportAggregator {
                 .setParameter("from", month)
                 .setParameter("to", month.plusMonths(1))
                 .getResultList();
+        // 한 태그가 양쪽 방향으로 다 잡히면 그건 취향 변화가 아니라 갈린 태그입니다.
+        // splitTags가 따로 보여 주므로 여기서는 빼야 화면에 모순이 뜨지 않습니다.
+        Map<String, Integer> directionCount = new LinkedHashMap<>();
+        for (Object[] row : rows) {
+            directionCount.merge((String) row[0], 1, Integer::sum);
+        }
         List<TagShift> shifts = new ArrayList<>();
         for (Object[] row : rows) {
-            shifts.add(new TagShift((String) row[0], (String) row[1], ((Number) row[2]).intValue()));
+            String tag = (String) row[0];
+            if (directionCount.getOrDefault(tag, 0) > 1) {
+                continue;
+            }
+            shifts.add(new TagShift(tag, (String) row[1], ((Number) row[2]).intValue()));
         }
         return shifts;
     }

@@ -192,7 +192,9 @@ public class ReportAggregator {
         for (Map.Entry<String, Map<String, String>> entry : byTag.entrySet()) {
             Map<String, String> sides = entry.getValue();
             if (sides.size() >= 2 && sides.values().stream().distinct().count() > 1) {
+                // A와 B는 합류 순서로 고정된 별칭이라 SQL 행 순서가 아니라 별칭 순서로 짝지어야 합니다.
                 List<String> members = new ArrayList<>(sides.keySet());
+                members.sort(String::compareTo);
                 splits.add(new SplitTag(entry.getKey(), sides.get(members.get(0)), sides.get(members.get(1))));
             }
         }

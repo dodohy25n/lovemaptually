@@ -184,7 +184,7 @@ monthly_reports
 
 **`content`를 JSONB 한 컬럼으로 두는 이유는 출력 스키마가 고정이기 때문입니다.** `title`·`summary`·`highlights`·`tasteShift`·`splitTags`·`nextMonth`·`closingLine`을 테이블 일곱 개로 펼치면 조인만 늘고 얻는 것이 없습니다. 리포트를 항목별로 검색하거나 집계할 일이 없고, 화면은 항상 한 편을 통째로 읽습니다. `recommendations.matched_tags`를 배열로 굳힌 것과 같은 이유로 **그 시점에 보여 준 문장의 스냅샷**이라 나중에 사전이나 장소 이름이 바뀌어도 과거 리포트는 그대로 읽혀야 합니다.
 
-**`model`·`prompt_tokens`·`completion_tokens`는 원가의 실측치입니다.** 응답의 usage를 그대로 저장하며, 리포트 1건 원가 = `prompt_tokens × 입력 단가 + completion_tokens × 출력 단가`가 이 세 컬럼에서 나옵니다. 가격을 정할 때 추정이 아니라 실측으로 손익분기를 계산할 수 있습니다([기획-정리.md](기획-정리.md) §5.6).
+**`model`·`prompt_tokens`·`completion_tokens`는 원가의 실측치입니다.** 응답의 usage를 그대로 저장하며, 리포트 1건 원가 = `prompt_tokens × 입력 단가 + completion_tokens × 출력 단가`가 이 세 컬럼에서 나옵니다. 가격을 정할 때 추정이 아니라 실측으로 손익분기를 계산할 수 있습니다(기획 정리 문서 §5.6).
 
 ### 상태 컬럼을 둔 이유 — D-14의 예외입니다
 

@@ -26,6 +26,19 @@ app:
     access-token-ttl: ${JWT_ACCESS_TOKEN_TTL_SECONDS:3600}
   cors:
     allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:5173}
+  ai:
+    client: ${AI_CLIENT:matching}
+  recommender:
+    base-url: ${RECOMMENDER_BASE_URL:http://localhost:8000}
+  report:
+    writer: ${REPORT_WRITER:template}
+    openai:
+      api-key: ${OPENAI_API_KEY:}
+      base-url: ${OPENAI_BASE_URL:https://api.openai.com/v1}
+      model: ${OPENAI_MODEL:gpt-4o-mini}
+      temperature: ${OPENAI_TEMPERATURE:0.3}
+      max-tokens: ${OPENAI_MAX_TOKENS:1500}
+      timeout-seconds: ${OPENAI_TIMEOUT_SECONDS:30}
 
 springdoc:
   api-docs:

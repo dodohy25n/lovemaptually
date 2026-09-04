@@ -22,12 +22,15 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
 import org.springframework.http.HttpStatus;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 /**
  * 외부 계약을 먼저 연결하기 위한 재현 가능한 인메모리 Mock 구현입니다.
  * 이후 DB 구현체로 바꿔도 Controller와 DTO는 그대로 유지됩니다.
+ * 기본 빈은 JpaGroupService이고, 이 구현은 demo-group 프로파일에서만 올라옵니다.
  */
+@Profile("demo-group")
 @Service
 public class DemoGroupService implements GroupUseCase {
 

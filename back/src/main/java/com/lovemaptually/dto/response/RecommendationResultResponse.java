@@ -1,0 +1,1 @@
+package com.lovemaptually.dto.response;import java.math.BigDecimal;import java.util.List;public record RecommendationResultResponse(Long requestId,String query,RecommendationIntentResponse intent,Integer candidateCount,BigDecimal cfWeight,String status,List<RecommendationItemResponse> recommendations){}

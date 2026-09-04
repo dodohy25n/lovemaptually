@@ -1,0 +1,1 @@
+package com.lovemaptually.repository;import com.lovemaptually.entity.RecommendationRequest;import org.springframework.data.jpa.repository.*;import java.util.Optional;public interface RecommendationRequestRepository extends JpaRepository<RecommendationRequest,Long>{@EntityGraph(attributePaths={"group","requestedBy"})Optional<RecommendationRequest> findDetailByRequestId(Long id);}

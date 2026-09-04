@@ -1,0 +1,1 @@
+package com.lovemaptually.dto.response;import java.time.OffsetDateTime;public record InvitePreviewResponse(Long groupId,String groupType,String name,long memberCount,boolean available,OffsetDateTime expiresAt){}

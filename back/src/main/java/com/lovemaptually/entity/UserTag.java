@@ -1,0 +1,4 @@
+package com.lovemaptually.entity;
+import jakarta.persistence.*;import lombok.*;import java.time.OffsetDateTime;
+@Entity @Table(name="user_tags",uniqueConstraints=@UniqueConstraint(name="uq_user_tags_pair",columnNames={"user_id","tag_id"})) @Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
+public class UserTag {@Id @GeneratedValue(strategy=GenerationType.IDENTITY) private Long userTagId;@ManyToOne(fetch=FetchType.LAZY,optional=false) @JoinColumn(name="user_id") private User user;@ManyToOne(fetch=FetchType.LAZY,optional=false) @JoinColumn(name="tag_id") private Tag tag;@Column(nullable=false) private Integer wantHighCount;@Column(nullable=false) private Integer wantLowCount;@org.hibernate.annotations.Generated(event=org.hibernate.generator.EventType.INSERT) @Column(nullable=false,insertable=false,updatable=false) private OffsetDateTime updatedAt;}

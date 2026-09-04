@@ -1,0 +1,1 @@
+package com.lovemaptually.dto.response;import java.math.BigDecimal;public record MapMarkerResponse(Long groupPlaceId,Long placeId,String name,String address,String category,BigDecimal latitude,BigDecimal longitude,String label,int reviewedCount,int likedCount){}

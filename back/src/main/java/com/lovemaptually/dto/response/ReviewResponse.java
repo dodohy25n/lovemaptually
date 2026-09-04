@@ -1,0 +1,1 @@
+package com.lovemaptually.dto.response;import java.time.*;import java.util.List;public record ReviewResponse(Long reviewId,Long placeId,LocalDate visitedOn,Short rating,String content,String tagStatus,List<ExtractedTagResponse> tags,PlaceLabelResponse placeLabel,OffsetDateTime createdAt){}

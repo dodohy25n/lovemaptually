@@ -1,0 +1,1 @@
+package com.lovemaptually.dto.response;import java.time.OffsetDateTime;import java.util.List;public record GroupResponse(Long groupId,String groupType,String name,OffsetDateTime createdAt,List<MemberResponse> members){}

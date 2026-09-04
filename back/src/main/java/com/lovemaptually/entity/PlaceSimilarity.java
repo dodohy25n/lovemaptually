@@ -1,0 +1,4 @@
+package com.lovemaptually.entity;
+import jakarta.persistence.*;import lombok.*;import java.math.BigDecimal;import java.time.OffsetDateTime;
+@Entity @Table(name="place_similarity",uniqueConstraints=@UniqueConstraint(name="uq_place_similarity_pair",columnNames={"place_id","similar_place_id"})) @Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
+public class PlaceSimilarity {@Id @GeneratedValue(strategy=GenerationType.IDENTITY) private Long placeSimilarityId;@ManyToOne(fetch=FetchType.LAZY,optional=false) @JoinColumn(name="place_id") private Place place;@ManyToOne(fetch=FetchType.LAZY,optional=false) @JoinColumn(name="similar_place_id") private Place similarPlace;@Column(nullable=false,precision=5,scale=4) private BigDecimal score;@org.hibernate.annotations.Generated(event=org.hibernate.generator.EventType.INSERT) @Column(nullable=false,insertable=false,updatable=false) private OffsetDateTime computedAt;}

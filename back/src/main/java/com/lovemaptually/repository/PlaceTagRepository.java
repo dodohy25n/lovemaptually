@@ -1,0 +1,1 @@
+package com.lovemaptually.repository;import com.lovemaptually.entity.PlaceTag;import org.springframework.data.jpa.repository.*;import java.util.List;public interface PlaceTagRepository extends JpaRepository<PlaceTag,Long>{@EntityGraph(attributePaths="tag")List<PlaceTag> findAllByPlacePlaceId(Long placeId);}

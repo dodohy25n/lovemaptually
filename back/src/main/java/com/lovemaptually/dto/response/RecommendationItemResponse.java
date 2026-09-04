@@ -1,0 +1,1 @@
+package com.lovemaptually.dto.response;import java.math.BigDecimal;import java.util.List;public record RecommendationItemResponse(Long recommendationId,Long placeId,String name,String category,Short priceBand,BigDecimal latitude,BigDecimal longitude,List<String> matchedTags,String basis,String reason,Short displayOrder){}

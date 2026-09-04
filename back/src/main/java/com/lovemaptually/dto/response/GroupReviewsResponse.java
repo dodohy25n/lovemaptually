@@ -1,0 +1,1 @@
+package com.lovemaptually.dto.response;import java.util.List;public record GroupReviewsResponse(String placeLabel,int reviewedCount,int likedCount,ReviewSummaryResponse myReview,List<ReviewSummaryResponse> otherReviews,boolean otherReviewsLocked,String lockedReason){}

@@ -1,0 +1,1 @@
+package com.lovemaptually.repository;import com.lovemaptually.entity.UnmatchedTagLog;import org.springframework.data.jpa.repository.JpaRepository;public interface UnmatchedTagLogRepository extends JpaRepository<UnmatchedTagLog,Long>{}

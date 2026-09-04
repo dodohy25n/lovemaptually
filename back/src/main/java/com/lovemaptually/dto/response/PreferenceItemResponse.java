@@ -1,0 +1,1 @@
+package com.lovemaptually.dto.response;import java.util.List;public record PreferenceItemResponse(Long tagId,String tagName,String axis,String label,String side,String sideLabel,int judgedMemberCount,List<PreferenceMemberResponse> members){}

@@ -1,0 +1,1 @@
+package com.lovemaptually.repository;import com.lovemaptually.entity.Recommendation;import org.springframework.data.jpa.repository.*;import java.util.List;public interface RecommendationRepository extends JpaRepository<Recommendation,Long>{@EntityGraph(attributePaths="place")List<Recommendation> findAllByRequestRequestIdOrderByDisplayOrder(Long id);}

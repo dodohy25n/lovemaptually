@@ -1,0 +1,1 @@
+package com.lovemaptually.repository;import com.lovemaptually.entity.RelationGroup;import org.springframework.data.jpa.repository.JpaRepository;public interface RelationGroupRepository extends JpaRepository<RelationGroup,Long>{}

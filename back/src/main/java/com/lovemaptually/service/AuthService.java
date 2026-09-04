@@ -1,0 +1,8 @@
+package com.lovemaptually.service;
+import com.lovemaptually.auth.JwtService;import com.lovemaptually.common.ApiException;import com.lovemaptually.dto.request.*;import com.lovemaptually.dto.response.AuthResponse;import com.lovemaptually.entity.User;import com.lovemaptually.repository.UserRepository;import lombok.RequiredArgsConstructor;import org.springframework.http.HttpStatus;import org.springframework.security.crypto.password.PasswordEncoder;import org.springframework.stereotype.Service;import org.springframework.transaction.annotation.Transactional;
+@Service @RequiredArgsConstructor
+public class AuthService {private final UserRepository users;private final PasswordEncoder passwords;private final JwtService jwt;
+ @Transactional public AuthResponse signup(SignupRequest b){if(users.existsByEmailIgnoreCase(b.email()))throw new ApiException(HttpStatus.CONFLICT,"EMAIL_DUPLICATED","이미 사용 중인 이메일입니다");User u=users.save(User.builder().email(b.email().toLowerCase()).passwordHash(passwords.encode(b.password())).nickname(b.nickname()).build());return response(u);}
+ @Transactional(readOnly=true) public AuthResponse login(LoginRequest b){User u=users.findByEmailIgnoreCase(b.email()).orElseThrow(()->failed());if(!passwords.matches(b.password(),u.getPasswordHash()))throw failed();return response(u);}
+ private ApiException failed(){return new ApiException(HttpStatus.UNAUTHORIZED,"AUTHENTICATION_FAILED","이메일 또는 비밀번호가 올바르지 않습니다");}
+ private AuthResponse response(User u){return new AuthResponse(u.getUserId(),u.getEmail(),u.getNickname(),jwt.issue(u.getUserId()),"Bearer",jwt.expirationSeconds());}}

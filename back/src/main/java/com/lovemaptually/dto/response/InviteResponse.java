@@ -1,0 +1,1 @@
+package com.lovemaptually.dto.response;import java.time.OffsetDateTime;public record InviteResponse(Long inviteCodeId,String code,Integer maxUses,Integer useCount,String status,OffsetDateTime expiresAt,OffsetDateTime createdAt){}

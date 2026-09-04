@@ -1,0 +1,2 @@
+package com.lovemaptually.repository;import com.lovemaptually.entity.InviteCode;import org.springframework.data.jpa.repository.*;import jakarta.persistence.LockModeType;import java.util.Optional;
+public interface InviteCodeRepository extends JpaRepository<InviteCode,Long>{Optional<InviteCode> findByCode(String code);boolean existsByCode(String code);@Lock(LockModeType.PESSIMISTIC_WRITE) @EntityGraph(attributePaths="group") Optional<InviteCode> findLockedByCode(String code);}

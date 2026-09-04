@@ -1,0 +1,1 @@
+package com.lovemaptually.repository;import com.lovemaptually.entity.ReviewTag;import org.springframework.data.jpa.repository.*;import java.util.List;public interface ReviewTagRepository extends JpaRepository<ReviewTag,Long>{@EntityGraph(attributePaths="tag")List<ReviewTag> findAllByReviewReviewId(Long reviewId);}

@@ -1,0 +1,1 @@
+package com.lovemaptually.repository;import com.lovemaptually.entity.UserTag;import org.springframework.data.jpa.repository.*;import java.util.List;public interface UserTagRepository extends JpaRepository<UserTag,Long>{@EntityGraph(attributePaths={"tag","user"})List<UserTag> findAllByUserUserIdIn(List<Long> ids);}

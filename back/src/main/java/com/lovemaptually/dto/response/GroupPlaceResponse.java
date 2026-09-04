@@ -1,0 +1,1 @@
+package com.lovemaptually.dto.response;import java.time.OffsetDateTime;public record GroupPlaceResponse(Long groupPlaceId,Long groupId,Long placeId,Long addedByUserId,String label,OffsetDateTime createdAt){}

@@ -1,0 +1,1 @@
+package com.lovemaptually.repository;import com.lovemaptually.entity.PlaceSimilarity;import org.springframework.data.jpa.repository.JpaRepository;public interface PlaceSimilarityRepository extends JpaRepository<PlaceSimilarity,Long>{}

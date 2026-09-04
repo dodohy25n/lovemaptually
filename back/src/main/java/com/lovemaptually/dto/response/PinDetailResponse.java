@@ -1,0 +1,1 @@
+package com.lovemaptually.dto.response;import java.time.OffsetDateTime;import java.util.List;public record PinDetailResponse(Long groupPlaceId,PlaceResponse place,String label,int reviewedCount,int likedCount,OffsetDateTime labelUpdatedAt,List<VisitSummaryResponse> visits,List<ReviewSummaryResponse> reviews){}

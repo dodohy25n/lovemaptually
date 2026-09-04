@@ -17,22 +17,24 @@ const emit = defineEmits(['select'])
 
 const grade = computed(() => heartGradeInfo(toHeartGrade(props.place.coupleScore)))
 const scoreText = computed(() => formatScore(props.place.coupleScore))
+// 담기만 하고 아무도 리뷰를 안 쓴 장소입니다. 아무도 좋아하지 않은 것과는 다른 상태입니다.
+const pending = computed(() => props.place.reviewedCount === 0)
 </script>
 
 <template>
   <button
     type="button"
     class="pin"
-    :class="{ 'pin--active': active }"
+    :class="{ 'pin--active': active, 'pin--pending': pending }"
     :data-testid="`map-pin-${place.id}`"
     :data-grade="grade.key"
-    :aria-label="`${place.name}, ${grade.label}, 점수 ${scoreText}점`"
+    :aria-label="pending ? `${place.name}, 아직 기록 없음` : `${place.name}, ${grade.label}, 점수 ${scoreText}점`"
     @click.stop="emit('select', place.id)"
   >
     <span class="pin__drop">
       <img class="pin__heart" :src="grade.asset" alt="" width="26" height="26" />
     </span>
-    <span class="pin__score" data-testid="pin-score">{{ scoreText }}</span>
+    <span class="pin__score" data-testid="pin-score">{{ pending ? '기록 전' : scoreText }}</span>
     <span class="pin__name" data-testid="pin-name">{{ place.name }}</span>
   </button>
 </template>
@@ -63,6 +65,13 @@ const scoreText = computed(() => formatScore(props.place.coupleScore))
 .pin__heart { transform: rotate(45deg); }
 
 .pin--active .pin__drop { border-color: var(--lm-pink); }
+
+.pin--pending .pin__drop { filter: grayscale(1); opacity: 0.72; }
+.pin--pending .pin__score {
+  color: #8b8b8b;
+  border-color: #cfcfcf;
+  border-style: dashed;
+}
 
 .pin__name {
   max-width: 92px;

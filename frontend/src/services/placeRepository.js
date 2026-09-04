@@ -130,6 +130,9 @@ export function normalizePlace(draft, { id, createdAt } = {}) {
     visitedAt: String(draft?.visitedAt ?? '').trim(),
     coupleScore,
     heartGrade: toHeartGrade(coupleScore),
+    // 아직 아무도 리뷰를 안 쓴 상태를 점수 0과 구분합니다.
+    reviewedCount: Number.isFinite(Number(draft?.reviewedCount)) ? Number(draft.reviewedCount) : null,
+    groupLabel: draft?.label ?? null,
     images: Array.isArray(draft?.images) ? draft.images.filter((src) => typeof src === 'string') : [],
     tags: Array.isArray(draft?.tags) ? draft.tags.map(String).filter(Boolean) : [],
     reviews,
@@ -316,6 +319,10 @@ export class ApiPlaceRepository extends PlaceRepository {
           latitude: marker.latitude,
           longitude: marker.longitude,
           coupleScore,
+          // 담기만 하고 리뷰가 없는 상태를 화면이 구분할 수 있게 함께 내려보냅니다.
+          label: marker.label ?? null,
+          reviewedCount: reviewed,
+          likedCount: liked,
           images: samplePhotos(marker.placeId),
           tags: [],
           reviews: [],

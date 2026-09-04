@@ -139,12 +139,33 @@ async function loadSearchServices() {
  * @returns {Promise<Array>} toPlaceDraft() 형태의 결과 목록 (없으면 빈 배열)
  * @throws {PlaceSearchError} no_key | sdk_unavailable | search_failed
  */
+const KAKAO_SEARCH_TIMEOUT_MS = 2500
+
 export async function searchPlaces(keyword, options = {}) {
   const query = String(keyword ?? '').trim()
   if (!query) return []
 
-  if (config.apiBaseUrl) return searchPlacesFromApi(query, options)
+  // 우리 기록을 먼저 찾고, 카카오에서 아직 우리에게 없는 곳을 이어 붙입니다.
+  // 우리 기록이 먼저 오는 이유는 이미 평가가 쌓인 곳이 사용자에게 더 쓸모 있기 때문입니다.
+  if (config.apiBaseUrl) {
+    // 백엔드 응답이 깨진 것은 조용히 넘기지 않습니다. 검색이 됐는지 안 됐는지 사용자가 알아야 합니다.
+    const mine = await searchPlacesFromApi(query, options)
+    if (!isKakaoConfigured()) return mine
+    // 카카오가 늦거나 막히면 우리 기록만으로 답합니다. 검색창이 멈추는 편이 더 나쁩니다.
+    const fromKakao = await Promise.race([
+      searchWithKakao(query, options).catch(() => []),
+      new Promise((resolve) => setTimeout(() => resolve([]), KAKAO_SEARCH_TIMEOUT_MS)),
+    ])
+    const known = new Set(mine.map((place) => place.providerPlaceId))
+    const extra = fromKakao.filter((place) => !known.has(place.providerPlaceId))
+    return [...mine, ...extra]
+  }
 
+  return searchWithKakao(query, options)
+}
+
+/** 카카오 SDK의 키워드 검색. 지도와 같은 스크립트를 씁니다. */
+async function searchWithKakao(query, options = {}) {
   const services = await loadSearchServices()
 
   return new Promise((resolve, reject) => {

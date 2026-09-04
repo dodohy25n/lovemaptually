@@ -1,6 +1,7 @@
 <script setup>
 import { computed, reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
+import { signup } from '@/services/authApi.js'
 import raccoon from '../../frontend-assets/mascots/rubia_raccoon_waving.png'
 import heartBurst from '../../frontend-assets/decorations/crayon_heart_burst.png'
 import pinkTape from '../../frontend-assets/decorations/love_maptually_pink_tape.png'
@@ -11,15 +12,26 @@ const form = reactive({ email: '', password: '', passwordConfirm: '', nickname: 
 const dateStyles = ['맛집 탐방', '카페 데이트', '감성 여행', '액티비티', '전시·공연']
 const passwordMismatch = computed(() => form.passwordConfirm && form.password !== form.passwordConfirm)
 const canSubmit = computed(() => form.email && form.password.length >= 8 && !passwordMismatch.value && form.nickname && form.birthDate && form.styles.length && form.agreed)
+const submitting = ref(false)
+const error = ref('')
 
 function toggleStyle(style) {
   const index = form.styles.indexOf(style)
   if (index >= 0) form.styles.splice(index, 1)
   else form.styles.push(style)
 }
-function submit() {
-  if (!canSubmit.value) return
-  router.push('/login')
+async function submit() {
+  if (!canSubmit.value || submitting.value) return
+  error.value = ''
+  submitting.value = true
+  try {
+    await signup({ email: form.email, password: form.password, nickname: form.nickname })
+    await router.push('/login')
+  } catch (err) {
+    error.value = err?.message || '회원가입하지 못했습니다.'
+  } finally {
+    submitting.value = false
+  }
 }
 </script>
 
@@ -54,7 +66,10 @@ function submit() {
       <aside class="signup-guide">
         <div class="speech">러비와 함께<br /><strong>특별한 추억을<br />만들어보자!</strong> 💕</div>
         <img :src="raccoon" alt="손을 흔드는 러비" />
-        <button type="button" :disabled="!canSubmit" data-testid="signup-submit" @click="submit">회원가입 완료</button>
+        <button type="button" :disabled="!canSubmit || submitting" data-testid="signup-submit" @click="submit">
+          {{ submitting ? '가입 중…' : '회원가입 완료' }}
+        </button>
+        <p v-if="error" class="success" role="alert">{{ error }}</p>
       </aside>
     </div>
   </main>

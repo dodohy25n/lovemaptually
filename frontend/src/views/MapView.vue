@@ -55,11 +55,11 @@ const groupError = ref('')
 
 const hasFilteredResult = computed(() => visiblePlaces.value.length > 0)
 
-onMounted(() => {
-  store.load()
+onMounted(async () => {
+  let primary = null
   fetchMyGroups()
     .then((groups) => {
-      const primary = groups.find((group) => group.type === 'COUPLE') ?? groups[0]
+      primary = groups.find((group) => group.type === 'COUPLE') ?? groups[0]
       hasGroup.value = groups.length > 0
       groupName.value = primary?.name ?? ''
       groupLoaded.value = true
@@ -67,6 +67,7 @@ onMounted(() => {
     .catch((err) => {
       if (err?.code !== 'auth_required') console.warn('그룹 목록을 불러오지 못했습니다.', err)
     })
+    .finally(() => store.load({ groupId: primary?.id }))
 })
 
 async function createCoupleGroup() {

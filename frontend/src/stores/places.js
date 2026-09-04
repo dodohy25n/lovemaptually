@@ -59,11 +59,11 @@ export const usePlacesStore = defineStore('places', () => {
   const totalCount = computed(() => places.value.length)
   const isEmpty = computed(() => !loading.value && places.value.length === 0)
 
-  async function load() {
+  async function load(options) {
     loading.value = true
     error.value = null
     try {
-      places.value = await fetchPlaces()
+      places.value = await fetchPlaces(options)
       // 깨진 JSON을 만나도 앱은 계속 동작하되, 사용자에게는 알립니다.
       const storageError = getLastStorageError()
       storageWarning.value = storageError?.type === 'parse'

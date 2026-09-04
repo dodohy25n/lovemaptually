@@ -33,7 +33,7 @@ echo "계약 점검 $API"
 echo
 
 TOKEN=$(login dohyeon@lovemap.dev)
-OTHER=$(login jiwoo@lovemap.dev)
+OTHER=$(login yongmin@lovemap.dev)
 # 데모 리허설이 couple01a 를 PREMIUM 으로 올렸을 수 있어 아직 FREE 인 계정을 찾습니다.
 FREE=""
 FREE_GROUP=""

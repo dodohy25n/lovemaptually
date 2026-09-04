@@ -81,7 +81,7 @@ createdb -O lovemaptually lovemaptually
 | 이메일 | 비밀번호 | 닉네임 |
 | --- | --- | --- |
 | dohyeon@lovemap.dev | demo1234! | 도현 |
-| jiwoo@lovemap.dev | demo1234! | 지우 |
+| yongmin@lovemap.dev | demo1234! | 용민 |
 
 둘은 같은 커플 그룹이고 프리미엄입니다. FREE 그룹의 잠금 화면을 보려면 `couple01a@lovemap.dev`로 들어갑니다.
 

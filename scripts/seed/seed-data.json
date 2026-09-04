@@ -1227,8 +1227,8 @@
       "bias": 0.0
     },
     {
-      "email": "jiwoo@lovemap.dev",
-      "nickname": "지우",
+      "email": "yongmin@lovemap.dev",
+      "nickname": "용민",
       "password": "demo1234!",
       "wants": {
         "조용함": "HIGH",
@@ -1626,8 +1626,8 @@
   "groups": [
     {
       "owner": "dohyeon@lovemap.dev",
-      "member": "jiwoo@lovemap.dev",
-      "name": "도현과 지우",
+      "member": "yongmin@lovemap.dev",
+      "name": "도현과 용민",
       "plan": "PREMIUM"
     },
     {
@@ -3137,7 +3137,7 @@
       "groupOwnerEmail": "dohyeon@lovemap.dev"
     },
     {
-      "userEmail": "jiwoo@lovemap.dev",
+      "userEmail": "yongmin@lovemap.dev",
       "providerPlaceId": "SEED-0001",
       "visitedOn": "2026-07-18",
       "rating": 5,
@@ -3353,7 +3353,7 @@
       "groupOwnerEmail": "dohyeon@lovemap.dev"
     },
     {
-      "userEmail": "jiwoo@lovemap.dev",
+      "userEmail": "yongmin@lovemap.dev",
       "providerPlaceId": "SEED-0002",
       "visitedOn": "2026-08-02",
       "rating": 4,
@@ -3481,7 +3481,7 @@
       "groupOwnerEmail": "dohyeon@lovemap.dev"
     },
     {
-      "userEmail": "jiwoo@lovemap.dev",
+      "userEmail": "yongmin@lovemap.dev",
       "providerPlaceId": "SEED-0003",
       "visitedOn": "2026-08-09",
       "rating": 4,
@@ -3577,7 +3577,7 @@
       "groupOwnerEmail": "dohyeon@lovemap.dev"
     },
     {
-      "userEmail": "jiwoo@lovemap.dev",
+      "userEmail": "yongmin@lovemap.dev",
       "providerPlaceId": "SEED-0004",
       "visitedOn": "2026-08-15",
       "rating": 2,
@@ -3713,7 +3713,7 @@
       "groupOwnerEmail": "dohyeon@lovemap.dev"
     },
     {
-      "userEmail": "jiwoo@lovemap.dev",
+      "userEmail": "yongmin@lovemap.dev",
       "providerPlaceId": "SEED-0005",
       "visitedOn": "2026-08-23",
       "rating": 3,
@@ -3777,7 +3777,7 @@
       "groupOwnerEmail": "dohyeon@lovemap.dev"
     },
     {
-      "userEmail": "jiwoo@lovemap.dev",
+      "userEmail": "yongmin@lovemap.dev",
       "providerPlaceId": "SEED-0006",
       "visitedOn": "2026-08-30",
       "rating": 4,
@@ -3787,7 +3787,7 @@
   ],
   "demo": {
     "ownerEmail": "dohyeon@lovemap.dev",
-    "memberEmail": "jiwoo@lovemap.dev",
+    "memberEmail": "yongmin@lovemap.dev",
     "addedOnly": [
       "SEED-0009",
       "SEED-0010"

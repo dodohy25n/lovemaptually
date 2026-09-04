@@ -11,7 +11,7 @@ import { reactive } from 'vue'
  */
 const MEMBERS = reactive({
   him: { userId: 'him', userName: '도현', role: 'him' },
-  her: { userId: 'her', userName: '지우', role: 'her' },
+  her: { userId: 'her', userName: '용민', role: 'her' },
 })
 
 /** 화면에 쓰는 이름표. 닉네임이 바뀌면 함께 바뀝니다. */

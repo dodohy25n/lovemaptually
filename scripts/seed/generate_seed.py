@@ -20,7 +20,7 @@ OUTPUT = Path(__file__).resolve().parent / "seed-data.json"
 
 PASSWORD = "demo1234!"
 DEMO_OWNER = "dohyeon@lovemap.dev"
-DEMO_MEMBER = "jiwoo@lovemap.dev"
+DEMO_MEMBER = "yongmin@lovemap.dev"
 
 REGION_CENTER = {
     "인사동": (37.574, 126.985),
@@ -428,7 +428,7 @@ DEMO_ONE_SIDE_ONLY = "SEED-0006"
 # 데모 커플이 리뷰를 남기는 곳. 나머지 인사동 장소는 전부 추천 후보가 됩니다.
 DEMO_REVIEWED = ["SEED-0001", "SEED-0002", "SEED-0003", "SEED-0004", "SEED-0005", "SEED-0006"]
 
-# (장소, 날짜, 도현 별점, 도현이 쓸 태그, 지우 별점, 지우가 쓸 태그)
+# (장소, 날짜, 도현 별점, 도현이 쓸 태그, 용민 별점, 용민이 쓸 태그)
 DEMO_SHARED_PLAN = [
     ("SEED-0001", "2026-07-18", 5, ["조용함", "웨이팅"], 5, ["조용함", "웨이팅", "음료"]),
     ("SEED-0002", "2026-08-02", 4, ["조용함", "사진"], 4, ["조용함", "사진"]),
@@ -436,7 +436,7 @@ DEMO_SHARED_PLAN = [
     ("SEED-0004", "2026-08-15", 5, ["맵기", "양"], 2, ["맵기", "양"]),
     ("SEED-0005", "2026-08-23", 2, ["맵기", "웨이팅"], 3, ["맵기", "웨이팅"]),
 ]
-# 한쪽만 쓴 리뷰. 도현은 달빛찻집 재방문, 지우는 도현이 안 가 본 떡집.
+# 한쪽만 쓴 리뷰. 도현은 달빛찻집 재방문, 용민은 도현이 안 가 본 떡집.
 DEMO_SOLO_PLAN = [
     (DEMO_OWNER, "SEED-0001", "2026-08-29", 4, ["조용함", "웨이팅", "음료"]),
     (DEMO_MEMBER, DEMO_ONE_SIDE_ONLY, "2026-08-30", 4, ["조용함", "웨이팅", "단맛"]),
@@ -483,9 +483,9 @@ def random_wants(rng, all_tags):
 def make_users(rng, all_tags):
     users = [
         {"email": DEMO_OWNER, "nickname": "도현", "password": PASSWORD, "wants": DEMO_WANTS[DEMO_OWNER], "bias": 0.0},
-        {"email": DEMO_MEMBER, "nickname": "지우", "password": PASSWORD, "wants": DEMO_WANTS[DEMO_MEMBER], "bias": 0.0},
+        {"email": DEMO_MEMBER, "nickname": "용민", "password": PASSWORD, "wants": DEMO_WANTS[DEMO_MEMBER], "bias": 0.0},
     ]
-    groups = [{"owner": DEMO_OWNER, "member": DEMO_MEMBER, "name": "도현과 지우", "plan": "PREMIUM"}]
+    groups = [{"owner": DEMO_OWNER, "member": DEMO_MEMBER, "name": "도현과 용민", "plan": "PREMIUM"}]
     for i, (a, b) in enumerate(SYNTH_NICKNAMES, start=1):
         pair = []
         for suffix, nick in (("a", a), ("b", b)):
@@ -670,9 +670,9 @@ def main():
     demo_member = sum(1 for r in reviews if r["userEmail"] == DEMO_MEMBER)
     insa = sum(1 for p in places if p["region"] == "인사동")
     print(f"places={len(places)} (인사동={insa}) users={len(users)} groups={len(groups)} reviews={len(reviews)}")
-    print(f"demo reviews: 도현={demo_owner} 지우={demo_member}")
+    print(f"demo reviews: 도현={demo_owner} 용민={demo_member}")
     print(f"인사동 candidate places (합성 리뷰 있고 데모 커플이 안 가 본 곳): {len(candidates)}")
-    for email, nickname in ((DEMO_OWNER, "도현"), (DEMO_MEMBER, "지우")):
+    for email, nickname in ((DEMO_OWNER, "도현"), (DEMO_MEMBER, "용민")):
         summary = ", ".join(f"{tag} {sides[0]} x{len(sides)}" for tag, sides in sorted(derived[email].items())
                             if tag in DEMO_WANT_TARGETS[email])
         print(f"demo want counts {nickname}: {summary}")

@@ -1,6 +1,7 @@
 <script setup>
 import { computed, reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
+import { login } from '@/services/authApi.js'
 import raccoon from '../../frontend-assets/mascots/rubia_raccoon_waving.png'
 import heartBurst from '../../frontend-assets/decorations/crayon_heart_burst.png'
 import pinkTape from '../../frontend-assets/decorations/love_maptually_pink_tape.png'
@@ -11,12 +12,24 @@ const router = useRouter()
 const form = reactive({ email: '', password: '', remember: false })
 const showPassword = ref(false)
 const notice = ref('')
+const error = ref('')
+const submitting = ref(false)
 const canSubmit = computed(() => /.+@.+\..+/.test(form.email) && form.password.length >= 8)
 
-function submit() {
-  if (!canSubmit.value) return
-  notice.value = '로그인 정보를 확인했어요. 홈으로 이동합니다. ♡'
-  window.setTimeout(() => router.push('/map'), 350)
+async function submit() {
+  if (!canSubmit.value || submitting.value) return
+  notice.value = ''
+  error.value = ''
+  submitting.value = true
+  try {
+    await login({ email: form.email, password: form.password })
+    notice.value = '로그인했어요. 홈으로 이동합니다. ♡'
+    await router.push('/map')
+  } catch (err) {
+    error.value = err?.message || '로그인하지 못했습니다.'
+  } finally {
+    submitting.value = false
+  }
 }
 
 </script>
@@ -56,10 +69,13 @@ function submit() {
           <button type="button">비밀번호 찾기</button>
         </div>
 
-        <button class="login-submit" type="submit" :disabled="!canSubmit" data-testid="login-submit">로그인</button>
+        <button class="login-submit" type="submit" :disabled="!canSubmit || submitting" data-testid="login-submit">
+          {{ submitting ? '로그인 중…' : '로그인' }}
+        </button>
 
         <p class="join">아직 러비가 아니신가요? <RouterLink to="/signup">회원가입하기 ›</RouterLink></p>
         <p v-if="notice" class="notice" role="status">{{ notice }}</p>
+        <p v-if="error" class="notice" role="alert">{{ error }}</p>
       </form>
     </div>
   </main>

@@ -13,6 +13,8 @@ const VERSION = 'v1'
 export const STORAGE_KEYS = {
   places: `${NAMESPACE}:places:${VERSION}`,
   seeded: `${NAMESPACE}:seeded:${VERSION}`,
+  accessToken: `${NAMESPACE}:access-token`,
+  authUser: `${NAMESPACE}:auth-user:${VERSION}`,
 }
 
 /** 마지막으로 발생한 저장소 오류 (UI에서 안내 배너를 띄우는 데 사용). */
@@ -85,6 +87,18 @@ export function writeJson(key, value) {
     return true
   } catch (error) {
     // 용량 초과(QuotaExceededError) 등. 앱은 계속 동작하되 저장은 실패했음을 알립니다.
+    lastError = { type: 'write', key, message: String(error) }
+    return false
+  }
+}
+
+/** 토큰처럼 JSON 직렬화 없이 저장해야 하는 문자열을 기록합니다. */
+export function writeText(key, value) {
+  const store = resolveStore()
+  try {
+    store.setItem(key, String(value))
+    return true
+  } catch (error) {
     lastError = { type: 'write', key, message: String(error) }
     return false
   }

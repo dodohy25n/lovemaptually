@@ -48,6 +48,7 @@ const reviewOpen = ref(false)
 const reviewRole = ref('him')
 const searchedPlace = ref(null)
 const groupName = ref('')
+const currentGroupId = ref(null)
 const groupLoaded = ref(false)
 const hasGroup = ref(false)
 const creatingGroup = ref(false)
@@ -60,6 +61,7 @@ onMounted(() => {
   fetchMyGroups()
     .then((groups) => {
       const primary = groups.find((group) => group.type === 'COUPLE') ?? groups[0]
+      currentGroupId.value = primary?.id ?? null
       hasGroup.value = groups.length > 0
       groupName.value = primary?.name ?? ''
       groupLoaded.value = true
@@ -234,7 +236,7 @@ async function submitForm(draft) {
       @close="closeForm"
       @pick-request="requestPick"
     />
-    <CoupleTasteModal :open="tasteOpen" @close="tasteOpen = false" @recommend="tasteOpen = false; recommendationOpen = true" />
+    <CoupleTasteModal :open="tasteOpen" :group-id="currentGroupId" @close="tasteOpen = false" @recommend="tasteOpen = false; recommendationOpen = true" />
     <RecommendationModal :open="recommendationOpen" @close="recommendationOpen = false" />
     <ReviewCarouselModal
       :open="reviewOpen"

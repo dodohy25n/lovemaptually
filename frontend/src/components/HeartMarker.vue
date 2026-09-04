@@ -33,6 +33,7 @@ const scoreText = computed(() => formatScore(props.place.coupleScore))
       <img class="pin__heart" :src="grade.asset" alt="" width="26" height="26" />
     </span>
     <span class="pin__score" data-testid="pin-score">{{ scoreText }}</span>
+    <span class="pin__name" data-testid="pin-name">{{ place.name }}</span>
   </button>
 </template>
 
@@ -62,6 +63,20 @@ const scoreText = computed(() => formatScore(props.place.coupleScore))
 .pin__heart { transform: rotate(45deg); }
 
 .pin--active .pin__drop { border-color: var(--lm-pink); }
+
+.pin__name {
+  max-width: 92px;
+  padding: 1px 7px;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  background: rgba(255, 255, 255, 0.92);
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #6b4b45;
+  line-height: 1.5;
+}
 
 .pin__score {
   margin-top: 2px;

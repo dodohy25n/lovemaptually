@@ -8,9 +8,12 @@ defineProps({
   groupName: { type: String, default: '' },
   canCreateGroup: { type: Boolean, default: false },
   creatingGroup: { type: Boolean, default: false },
+  canInvite: { type: Boolean, default: false },
+  inviting: { type: Boolean, default: false },
+  inviteCode: { type: String, default: '' },
 })
 
-defineEmits(['create-group'])
+defineEmits(['create-group', 'create-invite'])
 </script>
 
 <template>
@@ -40,6 +43,18 @@ defineEmits(['create-group'])
     >
       {{ creatingGroup ? '만드는 중…' : '커플 러브맵 만들기' }}
     </button>
+    <button
+      v-if="canInvite && !inviteCode"
+      type="button"
+      class="lm-btn lm-btn--quiet summary__create"
+      :disabled="inviting"
+      @click="$emit('create-invite')"
+    >
+      {{ inviting ? '발급 중…' : '초대 코드 만들기' }}
+    </button>
+    <p v-if="inviteCode" class="summary__invite" role="status">
+      초대 코드 <strong>{{ inviteCode }}</strong>
+    </p>
   </section>
 </template>
 
@@ -111,4 +126,6 @@ defineEmits(['create-group'])
   color: var(--lm-ink-soft);
 }
 .summary__create { margin-top: var(--lm-space-2); font-size: var(--lm-text-xs); }
+.summary__invite { margin-top: var(--lm-space-2); font-size: var(--lm-text-xs); color: var(--lm-ink-soft); }
+.summary__invite strong { display: block; margin-top: 3px; color: var(--lm-pink); letter-spacing: .08em; }
 </style>

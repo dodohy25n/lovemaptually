@@ -13,7 +13,7 @@ import RecommendationModal from '@/components/RecommendationModal.vue'
 import ReviewCarouselModal from '@/components/ReviewCarouselModal.vue'
 import FloatingNotebookMenu from '@/components/FloatingNotebookMenu.vue'
 import { usePlacesStore } from '@/stores/places.js'
-import { createGroup, fetchMyGroups } from '@/services/groupApi.js'
+import { createGroup, createInvite, fetchMyGroups } from '@/services/groupApi.js'
 import heartFlourish from '../../frontend-assets/decorations/love_maptually_heart_flourish.png'
 import pinkTape from '../../frontend-assets/decorations/love_maptually_pink_tape.png'
 
@@ -48,10 +48,13 @@ const reviewOpen = ref(false)
 const reviewRole = ref('him')
 const searchedPlace = ref(null)
 const groupName = ref('')
+const activeGroupId = ref(null)
 const groupLoaded = ref(false)
 const hasGroup = ref(false)
 const creatingGroup = ref(false)
 const groupError = ref('')
+const inviting = ref(false)
+const inviteCode = ref('')
 
 const hasFilteredResult = computed(() => visiblePlaces.value.length > 0)
 
@@ -61,6 +64,7 @@ onMounted(() => {
     .then((groups) => {
       const primary = groups.find((group) => group.type === 'COUPLE') ?? groups[0]
       hasGroup.value = groups.length > 0
+      activeGroupId.value = primary?.groupId ?? null
       groupName.value = primary?.name ?? ''
       groupLoaded.value = true
     })
@@ -76,11 +80,26 @@ async function createCoupleGroup() {
   try {
     const group = await createGroup({ groupType: 'COUPLE', name: '우리 둘' })
     hasGroup.value = true
+    activeGroupId.value = group.groupId
     groupName.value = group.name
   } catch (err) {
     groupError.value = err?.message || '커플 러브맵을 만들지 못했습니다.'
   } finally {
     creatingGroup.value = false
+  }
+}
+
+async function createGroupInvite() {
+  if (!activeGroupId.value || inviting.value) return
+  groupError.value = ''
+  inviting.value = true
+  try {
+    const invite = await createInvite(activeGroupId.value)
+    inviteCode.value = invite.code
+  } catch (err) {
+    groupError.value = err?.message || '초대 코드를 만들지 못했습니다.'
+  } finally {
+    inviting.value = false
   }
 }
 
@@ -176,7 +195,11 @@ async function submitForm(draft) {
           :group-name="groupName"
           :can-create-group="groupLoaded && !hasGroup"
           :creating-group="creatingGroup"
+          :can-invite="Boolean(activeGroupId)"
+          :inviting="inviting"
+          :invite-code="inviteCode"
           @create-group="createCoupleGroup"
+          @create-invite="createGroupInvite"
         />
         <RecentPlaces
           :places="recentPlaces"

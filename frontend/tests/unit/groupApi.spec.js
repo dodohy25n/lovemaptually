@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { config } from '@/services/config.js'
-import { createGroup, fetchMyGroups } from '@/services/groupApi.js'
+import { createGroup, createInvite, fetchMyGroups } from '@/services/groupApi.js'
 import { STORAGE_KEYS, writeText } from '@/services/storageService.js'
 
 const originalBaseUrl = config.apiBaseUrl
@@ -108,6 +108,54 @@ describe('그룹 생성 API', () => {
     await expect(createGroup({ groupType: 'COUPLE' }, { fetchImpl })).rejects.toMatchObject({
       code: 'couple_group_exists',
       message: '이미 참여 중인 커플 그룹이 있습니다',
+    })
+  })
+})
+
+describe('초대 코드 생성 API', () => {
+  it('POST /api/groups/{id}/invites로 초대 코드를 발급한다', async () => {
+    config.apiBaseUrl = 'https://api.example.test'
+    writeText(STORAGE_KEYS.accessToken, 'signed-token')
+    const fetchImpl = vi.fn().mockResolvedValue({
+      ok: true,
+      status: 201,
+      json: async () => ({
+        status: 201,
+        message: '초대 코드를 발급했습니다',
+        data: {
+          inviteCodeId: 9001,
+          code: 'LOVE9001',
+          maxUses: 1,
+          useCount: 0,
+          status: 'ACTIVE',
+          expiresAt: '2026-09-05T00:00:00Z',
+          createdAt: '2026-09-04T00:00:00Z',
+        },
+      }),
+    })
+
+    await expect(createInvite(7001, {}, { fetchImpl })).resolves.toMatchObject({
+      id: '9001',
+      code: 'LOVE9001',
+      status: 'ACTIVE',
+    })
+    const [url, request] = fetchImpl.mock.calls[0]
+    expect(String(url)).toBe('https://api.example.test/api/groups/7001/invites')
+    expect(request.method).toBe('POST')
+    expect(JSON.parse(request.body)).toEqual({ maxUses: 1, expiresInHours: 24 })
+  })
+
+  it('OWNER가 아니면 접근 거부 오류로 변환한다', async () => {
+    config.apiBaseUrl = 'https://api.example.test'
+    writeText(STORAGE_KEYS.accessToken, 'signed-token')
+    const fetchImpl = vi.fn().mockResolvedValue({
+      ok: false,
+      status: 403,
+      json: async () => ({ message: '내가 소유한 그룹이 아닙니다' }),
+    })
+
+    await expect(createInvite(7001, {}, { fetchImpl })).rejects.toMatchObject({
+      code: 'group_access_denied',
     })
   })
 })

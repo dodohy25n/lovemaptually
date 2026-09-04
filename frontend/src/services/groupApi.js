@@ -113,3 +113,51 @@ export async function createGroup(
   }
   return group
 }
+
+/** POST /api/groups/{groupId}/invites — 그룹 OWNER가 초대 코드를 발급합니다. */
+export async function createInvite(
+  groupId,
+  { maxUses = 1, expiresInHours = 24 } = {},
+  { fetchImpl = globalThis.fetch } = {},
+) {
+  const { token } = requireApiContext(fetchImpl)
+  const url = new URL(`/api/groups/${encodeURIComponent(String(groupId))}/invites`, config.apiBaseUrl)
+
+  let response
+  try {
+    response = await fetchImpl(url, {
+      method: 'POST',
+      headers: {
+        Accept: 'application/json',
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ maxUses, expiresInHours }),
+    })
+  } catch {
+    throw new GroupApiError('초대 코드를 만들지 못했습니다.', 'network_error')
+  }
+
+  const payload = await response.json().catch(() => null)
+  if (!response.ok) {
+    throw new GroupApiError(
+      payload?.message || '초대 코드를 만들지 못했습니다.',
+      response.status === 403 ? 'group_access_denied' : 'http_error',
+    )
+  }
+
+  const invite = payload?.data
+  if (invite?.inviteCodeId == null || !invite?.code) {
+    throw new GroupApiError('초대 코드 응답 형식이 올바르지 않습니다.', 'invalid_response')
+  }
+  return {
+    id: String(invite.inviteCodeId),
+    inviteCodeId: invite.inviteCodeId,
+    code: String(invite.code),
+    maxUses: invite.maxUses,
+    useCount: invite.useCount,
+    status: String(invite.status ?? '').toUpperCase(),
+    expiresAt: invite.expiresAt ?? null,
+    createdAt: invite.createdAt ?? null,
+  }
+}

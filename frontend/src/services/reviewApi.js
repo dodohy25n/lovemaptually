@@ -1,6 +1,7 @@
 import { fetchPlace, updatePlace } from './placeApi.js'
+import { config, isLocalMode } from './config.js'
 import { COUPLE_MEMBERS, memberOf } from '@/utils/users.js'
-import { reviewAverage } from '@/utils/heartGrade.js'
+import { coupleScoreFromReviews, reviewAverage, toHeartGrade } from '@/utils/heartGrade.js'
 import { extractReviewTags } from './aiReadyMock.js'
 
 /**
@@ -13,6 +14,92 @@ import { extractReviewTags } from './aiReadyMock.js'
  *   Review = { userId, userName, content,
  *              atmosphere, taste, value, service, revisitIntent, images }
  */
+
+export class ReviewApiError extends Error {
+  constructor(message, code = 'review_api_error') {
+    super(message)
+    this.name = 'ReviewApiError'
+    this.code = code
+  }
+}
+
+function authorizationFor(url) {
+  if (url.hostname.endsWith('.mock.pstmn.io')) return 'Bearer mock-token'
+  const token = typeof window !== 'undefined'
+    ? window.localStorage.getItem('love-maptually:access-token')
+    : ''
+  return token ? `Bearer ${token}` : ''
+}
+
+/** API 응답을 기존 리뷰 화면 모델로 합칩니다. */
+function toReviewModel(data, draft) {
+  return {
+    ...draft,
+    reviewId: data.reviewId,
+    visitedOn: data.visitedOn ?? null,
+    rating: data.rating ?? reviewAverage(draft),
+    content: String(data.content ?? draft.content ?? ''),
+    tagStatus: ['PENDING', 'COMPLETED', 'FAILED'].includes(data.tagStatus)
+      ? data.tagStatus
+      : 'PENDING',
+    extractedTags: Array.isArray(data.tags) ? data.tags : [],
+    createdAt: data.createdAt ?? null,
+  }
+}
+
+/** POST /api/reviews 호출. 화면 계약 유지를 위해 저장된 리뷰 한 건을 반환합니다. */
+export async function createReviewFromApi(
+  placeId,
+  review,
+  { visitedOn, fetchImpl = globalThis.fetch } = {},
+) {
+  if (!config.apiBaseUrl) {
+    throw new ReviewApiError('API 기본 주소가 설정되지 않았습니다.', 'missing_base_url')
+  }
+  if (typeof fetchImpl !== 'function') {
+    throw new ReviewApiError('이 환경에서는 리뷰 등록 요청을 보낼 수 없습니다.', 'fetch_unavailable')
+  }
+
+  const url = new URL('/api/reviews', config.apiBaseUrl)
+  const authorization = authorizationFor(url)
+  const isPostmanMock = url.hostname.endsWith('.mock.pstmn.io')
+  const headers = {
+    Accept: 'application/json',
+    'Content-Type': 'application/json',
+    ...(authorization && { Authorization: authorization }),
+    ...(isPostmanMock && { 'x-mock-response-code': '201' }),
+  }
+
+  let response
+  try {
+    response = await fetchImpl(url, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({
+        placeId: Number.isNaN(Number(placeId)) ? placeId : Number(placeId),
+        visitedOn,
+        rating: reviewAverage(review),
+        content: String(review?.content ?? '').trim(),
+      }),
+    })
+  } catch {
+    throw new ReviewApiError('리뷰를 저장하지 못했습니다.', 'network_error')
+  }
+
+  const payload = await response.json().catch(() => null)
+  if (!response.ok) {
+    const duplicate = response.status === 409 && payload?.error?.code === 'REVIEW_DUPLICATED'
+    throw new ReviewApiError(
+      payload?.message || '리뷰를 저장하지 못했습니다.',
+      duplicate ? 'duplicate_review' : 'http_error',
+    )
+  }
+  if (!payload?.data || payload.data.reviewId == null) {
+    throw new ReviewApiError('리뷰 등록 응답 형식이 올바르지 않습니다.', 'invalid_response')
+  }
+
+  return toReviewModel(payload.data, review)
+}
 
 /** 빈 리뷰 한 건. 폼의 초기값으로 사용합니다. */
 export function emptyReview(member) {
@@ -49,6 +136,26 @@ export async function saveReview(placeId, review) {
     throw new Error('리뷰를 저장할 장소를 찾을 수 없습니다.')
   }
   const member = memberOf(review.userId)
+
+  if (!isLocalMode()) {
+    const savedReview = await createReviewFromApi(placeId, {
+      ...review,
+      userName: review.userName || member?.userName || '',
+    }, {
+      visitedOn: place.visitedAt || new Date().toISOString().slice(0, 10),
+    })
+    const reviews = [...(place.reviews ?? []).filter((item) => item.userId !== savedReview.userId), savedReview]
+    const coupleScore = coupleScoreFromReviews(reviews)
+    return {
+      ...place,
+      visitedAt: savedReview.visitedOn || place.visitedAt,
+      reviews,
+      coupleScore,
+      heartGrade: toHeartGrade(coupleScore),
+      updatedAt: new Date().toISOString(),
+    }
+  }
+
   const extraction = await extractReviewTags(review.content)
   const next = {
     ...review,

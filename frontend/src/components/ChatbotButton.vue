@@ -108,6 +108,21 @@ defineEmits(['toggle'])
 }
 .chatbtn__badge :deep(.lm-icon) { width:30px;height:30px; }
 
+@media (max-height: 850px) and (min-width: 701px) {
+  .chatbtn__bubble {
+    width: 230px;
+    margin-right: 14px;
+    padding: 14px 18px;
+    border-radius: 18px;
+    font-size: 13px;
+  }
+  .chatbtn__bubble strong { margin-bottom: 3px; font-size: 14px; }
+  .chatbtn__bubble::after { right: 34px; width: 17px; height: 17px; }
+  .chatbtn__mascot img { width: 145px; height: 120px; }
+  .chatbtn__badge { right: -5px; width: 48px; height: 48px; }
+  .chatbtn__badge :deep(.lm-icon) { width: 22px; height: 22px; }
+}
+
 @media (max-width: 700px) {
   .chatbtn__bubble { display: none; }
   .chatbtn__mascot img { width: 130px; height: 108px; }

@@ -327,6 +327,47 @@ describe('장소 목록 API', () => {
 })
 
 describe('장소 상세 API', () => {
+  it('GET /api/groups/{groupId}/places/{placeId} 응답을 리뷰가 포함된 핀 상세로 변환한다', async () => {
+    const fetchImpl = vi.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: async () => ({
+        status: 200,
+        data: {
+          groupPlaceId: 9001,
+          label: 'ALL_LIKED',
+          reviewedCount: 2,
+          likedCount: 2,
+          place: {
+            placeId: 412,
+            provider: 'KAKAO',
+            providerPlaceId: 'DEMO-412',
+            name: '○○찻집',
+            address: '서울 종로구 인사동길',
+            category: '카페',
+            latitude: 37.5741,
+            longitude: 126.9853,
+          },
+          visits: [{ visitedOn: '2026-09-01', reviewCount: 2 }],
+          reviews: [{ reviewId: 81, userId: 1, nickname: '러비', rating: 5, content: '좋아요', visitedOn: '2026-09-01' }],
+        },
+      }),
+    })
+    const api = new ApiPlaceRepository({ baseUrl: 'https://demo.mock.pstmn.io', fetchImpl })
+
+    await expect(api.get(412, { groupId: 7001 })).resolves.toMatchObject({
+      id: '412',
+      groupPlaceId: '9001',
+      label: 'ALL_LIKED',
+      visitedAt: '2026-09-01',
+      coupleScore: 5,
+      reviews: [{ userId: '1', userName: '러비', content: '좋아요' }],
+    })
+    const [url, request] = fetchImpl.mock.calls[0]
+    expect(String(url)).toBe('https://demo.mock.pstmn.io/api/groups/7001/places/412')
+    expect(request.headers.Authorization).toBe('Bearer mock-token')
+  })
+
   it('GET /api/places/{id} 응답을 화면의 장소 모델로 변환한다', async () => {
     const fetchImpl = vi.fn().mockResolvedValue({
       ok: true,

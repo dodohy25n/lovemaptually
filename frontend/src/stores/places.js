@@ -2,6 +2,7 @@ import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import {
   fetchPlaces,
+  fetchPlace,
   createPlace,
   updatePlace,
   deletePlace,
@@ -74,6 +75,21 @@ export const usePlacesStore = defineStore('places', () => {
       places.value = []
     } finally {
       loading.value = false
+    }
+  }
+
+  async function loadDetail(id, options) {
+    error.value = null
+    try {
+      const place = await fetchPlace(id, options)
+      places.value = places.value.some((item) => item.id === id)
+        ? places.value.map((item) => (item.id === id ? place : item))
+        : [...places.value, place]
+      selectedId.value = place.id
+      return place
+    } catch (err) {
+      error.value = err.message ?? '장소 상세 정보를 불러오지 못했습니다.'
+      throw err
     }
   }
 
@@ -151,6 +167,7 @@ export const usePlacesStore = defineStore('places', () => {
     totalCount,
     isEmpty,
     load,
+    loadDetail,
     add,
     edit,
     saveReview,

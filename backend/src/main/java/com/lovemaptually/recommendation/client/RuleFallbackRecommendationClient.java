@@ -33,14 +33,14 @@ public class RuleFallbackRecommendationClient implements RecommendationClient {
     @Transactional(readOnly = true)
     @SuppressWarnings("unchecked")
     public RecommendationResult recommend(RecommendationCommand command) {
-        List<Object[]> candidateRows = entityManager.createNativeQuery("""
+        List<Number> candidateRows = entityManager.createNativeQuery("""
                 SELECT DISTINCT p.place_id
                 FROM places p
                 JOIN place_tags pt ON pt.place_id = p.place_id
                 LEFT JOIN group_places gp ON gp.place_id = p.place_id AND gp.group_id = :groupId
                 WHERE p.region = :region
                   AND (gp.label IS NULL OR gp.label <> 'ON_HOLD')
-                  AND (:budget IS NULL OR p.price_band IS NULL OR p.price_band <= :budget)
+                  AND (cast(:budget as integer) IS NULL OR p.price_band IS NULL OR p.price_band <= cast(:budget as integer))
                   AND NOT EXISTS (
                       SELECT 1 FROM reviews r WHERE r.place_id = p.place_id AND r.user_id IN (:memberIds)
                   )
@@ -50,7 +50,7 @@ public class RuleFallbackRecommendationClient implements RecommendationClient {
                 .setParameter("budget", command.budget())
                 .setParameter("memberIds", command.memberIds())
                 .getResultList();
-        List<Long> candidates = candidateRows.stream().map(row -> ((Number) row[0]).longValue()).toList();
+        List<Long> candidates = candidateRows.stream().map(Number::longValue).toList();
         if (candidates.isEmpty()) {
             return new RecommendationResult(0, 0.0, true, "이 지역에서 아직 추천할 곳을 찾지 못했습니다", List.of());
         }

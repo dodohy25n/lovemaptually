@@ -9,6 +9,7 @@ import com.lovemaptually.report.dto.response.ReportListResponse;
 import com.lovemaptually.report.dto.response.ReportResponse;
 import com.lovemaptually.report.dto.response.SubscriptionResponse;
 import com.lovemaptually.report.service.ReportService;
+import com.lovemaptually.report.service.ReportWorker;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -31,9 +32,11 @@ import org.springframework.web.bind.annotation.RestController;
 public class ReportController {
 
     private final ReportService reportService;
+    private final ReportWorker reportWorker;
 
-    public ReportController(ReportService reportService) {
+    public ReportController(ReportService reportService, ReportWorker reportWorker) {
         this.reportService = reportService;
+        this.reportWorker = reportWorker;
     }
 
     @Operation(summary = "프리미엄 전환", description = "Mock 결제로 즉시 승인하고 승인 번호를 남깁니다")
@@ -56,7 +59,7 @@ public class ReportController {
             @Valid @RequestBody CreateReportRequest request
     ) {
         ReportAcceptedResponse accepted = reportService.accept(AuthenticatedUser.id(jwt), groupId, request);
-        reportService.process(accepted.reportId());
+        reportWorker.process(accepted.reportId());
         return ResponseEntity.status(HttpStatus.ACCEPTED).body(ApiResponse.of(
                 HttpStatus.ACCEPTED.value(), "리포트를 쓰고 있습니다", accepted));
     }

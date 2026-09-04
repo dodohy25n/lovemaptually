@@ -32,7 +32,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -84,16 +83,6 @@ public class RecommendationService {
         return new RecommendationAcceptedResponse(saved.getId(), saved.getStatus(), saved.getCreatedAt());
     }
 
-    @Async("recommendationExecutor")
-    public void process(Long requestId) {
-        try {
-            run(requestId);
-        } catch (RuntimeException exception) {
-            log.error("추천 처리에 실패했습니다 requestId={}", requestId, exception);
-            markFailed(requestId);
-        }
-    }
-
     @Transactional
     public void run(Long requestId) {
         RecommendationRequest request = requestRepository.findById(requestId).orElseThrow();
@@ -107,7 +96,7 @@ public class RecommendationService {
         try {
             result = httpClient.recommend(command);
         } catch (RuntimeException exception) {
-            log.warn("추천 엔진에 연결하지 못해 규칙 폴백으로 넘어갑니다 requestId={}", requestId, exception.toString());
+            log.warn("추천 엔진에 연결하지 못해 규칙 폴백으로 넘어갑니다 requestId={} 사유={}", requestId, exception.toString());
             result = fallbackClient.recommend(command);
         }
 

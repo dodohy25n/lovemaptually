@@ -2,6 +2,7 @@ package com.lovemaptually.recommendation.client;
 
 import java.time.Duration;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import org.springframework.beans.factory.annotation.Value;
@@ -31,13 +32,7 @@ public class HttpRecommendationClient implements RecommendationClient {
         Map<String, Object> body = restClient.post()
                 .uri("/recommendations")
                 .contentType(MediaType.APPLICATION_JSON)
-                .body(Map.of(
-                        "groupId", command.groupId(),
-                        "memberIds", command.memberIds(),
-                        "region", command.region(),
-                        "count", command.count(),
-                        "budget", command.budget() == null ? null : command.budget()
-                ))
+                .body(requestBody(command))
                 .retrieve()
                 .body(Map.class);
         if (body == null) {
@@ -60,6 +55,16 @@ public class HttpRecommendationClient implements RecommendationClient {
                 false,
                 (String) body.get("notice"),
                 items);
+    }
+
+    private Map<String, Object> requestBody(RecommendationCommand command) {
+        Map<String, Object> body = new LinkedHashMap<>();
+        body.put("groupId", command.groupId());
+        body.put("memberIds", command.memberIds());
+        body.put("region", command.region());
+        body.put("count", command.count());
+        body.put("budget", command.budget());
+        return body;
     }
 
     @Override

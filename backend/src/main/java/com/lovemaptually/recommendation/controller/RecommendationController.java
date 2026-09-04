@@ -6,6 +6,7 @@ import com.lovemaptually.recommendation.dto.request.CreateRecommendationRequest;
 import com.lovemaptually.recommendation.dto.response.RecommendationAcceptedResponse;
 import com.lovemaptually.recommendation.dto.response.RecommendationResultResponse;
 import com.lovemaptually.recommendation.service.RecommendationService;
+import com.lovemaptually.recommendation.service.RecommendationWorker;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -28,9 +29,12 @@ import org.springframework.web.bind.annotation.RestController;
 public class RecommendationController {
 
     private final RecommendationService recommendationService;
+    private final RecommendationWorker recommendationWorker;
 
-    public RecommendationController(RecommendationService recommendationService) {
+    public RecommendationController(RecommendationService recommendationService,
+                                    RecommendationWorker recommendationWorker) {
         this.recommendationService = recommendationService;
+        this.recommendationWorker = recommendationWorker;
     }
 
     @Operation(summary = "추천 요청", description = "접수만 하고 순위 계산은 워커가 합니다. 지역을 못 읽으면 422입니다")
@@ -42,7 +46,7 @@ public class RecommendationController {
     ) {
         RecommendationAcceptedResponse accepted =
                 recommendationService.accept(AuthenticatedUser.id(jwt), groupId, request);
-        recommendationService.process(accepted.requestId());
+        recommendationWorker.process(accepted.requestId());
         return ResponseEntity.status(HttpStatus.ACCEPTED).body(ApiResponse.of(
                 HttpStatus.ACCEPTED.value(), "추천을 준비하고 있습니다", accepted));
     }

@@ -34,15 +34,29 @@ echo
 
 TOKEN=$(login dohyeon@lovemap.dev)
 OTHER=$(login jiwoo@lovemap.dev)
-FREE=$(login couple01a@lovemap.dev)
+# 데모 리허설이 couple01a 를 PREMIUM 으로 올렸을 수 있어 아직 FREE 인 계정을 찾습니다.
+FREE=""
+FREE_GROUP=""
+for account in couple01a couple02a couple03a couple04a; do
+  candidate=$(login "$account@lovemap.dev")
+  [ -z "$candidate" ] && continue
+  group=$(curl -s "$API/api/groups/me" -H "Authorization: Bearer $candidate" \
+    | python3 -c 'import sys,json;g=json.load(sys.stdin)["data"]["groups"];print(g[0]["groupId"] if g else "")')
+  [ -z "$group" ] && continue
+  plan=$(curl -s "$API/api/groups/$group/reports" -H "Authorization: Bearer $candidate" \
+    | python3 -c 'import sys,json;print(json.load(sys.stdin)["data"]["plan"])')
+  if [ "$plan" = "FREE" ]; then
+    FREE="$candidate"
+    FREE_GROUP="$group"
+    break
+  fi
+done
 if [ -z "$TOKEN" ]; then
   echo "데모 계정으로 로그인하지 못했습니다. scripts/seed-demo.sh 를 먼저 실행하십시오."
   exit 1
 fi
 
 GROUP=$(curl -s "$API/api/groups/me" -H "Authorization: Bearer $TOKEN" \
-  | python3 -c 'import sys,json;print(json.load(sys.stdin)["data"]["groups"][0]["groupId"])')
-FREE_GROUP=$(curl -s "$API/api/groups/me" -H "Authorization: Bearer $FREE" \
   | python3 -c 'import sys,json;print(json.load(sys.stdin)["data"]["groups"][0]["groupId"])')
 PLACE=$(curl -s "$API/api/groups/$GROUP/places" -H "Authorization: Bearer $TOKEN" \
   | python3 -c 'import sys,json;print(json.load(sys.stdin)["data"]["markers"][0]["placeId"])')

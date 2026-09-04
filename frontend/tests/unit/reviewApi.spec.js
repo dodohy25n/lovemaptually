@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { config } from '@/services/config.js'
-import { createReviewFromApi, ReviewApiError } from '@/services/reviewApi.js'
+import { createReviewFromApi, fetchGroupPlaceReviews, ReviewApiError } from '@/services/reviewApi.js'
 
 const REVIEW = {
   userId: 'him',
@@ -94,5 +94,41 @@ describe('리뷰 등록 API', () => {
     await expect(createReviewFromApi(412, REVIEW, {
       visitedOn: '2026-09-01',
     })).rejects.toBeInstanceOf(ReviewApiError)
+  })
+})
+
+describe('그룹 장소 리뷰 목록 API', () => {
+  it('GET 응답을 내 리뷰와 상대 리뷰로 정규화한다', async () => {
+    config.apiBaseUrl = 'https://demo.mock.pstmn.io'
+    const fetchImpl = vi.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: async () => ({
+        data: {
+          placeLabel: 'MIXED',
+          reviewedCount: 2,
+          likedCount: 1,
+          myReview: { reviewId: 1, userId: 10, nickname: '나', rating: 5, content: '좋아요', visitedOn: '2026-09-01' },
+          otherReviews: [{ reviewId: 2, userId: 11, nickname: '상대', rating: 3, content: '보통', visitedOn: '2026-09-01' }],
+          otherReviewsLocked: false,
+          lockedReason: null,
+        },
+      }),
+    })
+
+    await expect(fetchGroupPlaceReviews(7001, 412, { fetchImpl })).resolves.toMatchObject({
+      placeLabel: 'MIXED',
+      myReview: { reviewId: '1', userName: '나', atmosphere: 5 },
+      otherReviews: [{ reviewId: '2', userName: '상대', atmosphere: 3 }],
+    })
+    const [url, request] = fetchImpl.mock.calls[0]
+    expect(String(url)).toBe('https://demo.mock.pstmn.io/api/groups/7001/places/412/reviews')
+    expect(request.headers.Authorization).toBe('Bearer mock-token')
+  })
+
+  it('otherReviews 배열이 없으면 응답을 거부한다', async () => {
+    config.apiBaseUrl = 'https://example.test'
+    const fetchImpl = vi.fn().mockResolvedValue({ ok: true, status: 200, json: async () => ({ data: {} }) })
+    await expect(fetchGroupPlaceReviews(1, 2, { fetchImpl })).rejects.toMatchObject({ code: 'invalid_response' })
   })
 })

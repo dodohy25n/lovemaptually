@@ -98,6 +98,23 @@ const photos = computed(() => {
     <p v-if="review?.content" class="review__body">{{ review.content }}</p>
     <p v-else class="review__body review__body--empty">아직 리뷰를 작성하지 않았어요.</p>
 
+    <section v-if="reviewTags.length" class="review__ai" data-testid="review-ai-tags">
+      <h4 class="review__ai-title">이 문장에서 뽑은 태그</h4>
+      <ul class="review__ai-list">
+        <li v-for="tag in reviewTags" :key="tag.tag" class="review__ai-tag">
+          <strong class="review__ai-name">{{ tag.tag }}</strong>
+          <span v-if="tag.fact" class="review__ai-slot">
+            <span class="review__ai-key">가게</span>
+            <b>{{ tag.fact }}</b>
+          </span>
+          <span v-if="tag.want" class="review__ai-slot review__ai-slot--want">
+            <span class="review__ai-key">원함</span>
+            <b>{{ tag.want }}</b>
+          </span>
+        </li>
+      </ul>
+    </section>
+
     <dl v-if="hasDetailScores" class="review__scores">
       <div v-for="score in scores" :key="score.key" class="review__score">
         <dt>{{ score.label }}</dt>
@@ -115,13 +132,6 @@ const photos = computed(() => {
       <strong>{{ review?.revisitIntent ? '있어요' : '없어요' }}</strong>
     </p>
 
-    <ul v-if="reviewTags.length" class="review__tags">
-      <li v-for="tag in reviewTags" :key="tag.tag" class="review__tag">
-        <strong>{{ tag.tag }}</strong>
-        <span v-if="tag.fact">가게 {{ tag.fact }}</span>
-        <span v-if="tag.want" class="review__tag-want">원함 {{ tag.want }}</span>
-      </li>
-    </ul>
   </article>
 </template>
 
@@ -240,14 +250,43 @@ const photos = computed(() => {
   text-align: right;
 }
 
-.review__tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
-.review__tag {
-  display: flex; align-items: baseline; gap: 5px;
-  padding: 4px 9px; border-radius: 999px;
-  background: var(--lm-surface-2, #fff5f3); font-size: 11px; color: #8a6a63;
+/* AI가 뽑은 태그. 이 카드의 핵심이라 각주가 아니라 하나의 블록으로 세웁니다. */
+.review__ai {
+  padding: var(--lm-space-3) var(--lm-space-4);
+  border: 1px solid var(--lm-pink-line);
+  border-radius: var(--lm-radius);
+  background: var(--lm-pink-bg-2);
 }
-.review__tag strong { font-weight: 600; color: #b65e6d; }
-.review__tag-want { color: #d9546e; }
+.review__ai-title {
+  margin-bottom: var(--lm-space-2);
+  font-size: var(--lm-text-sm);
+  color: var(--lm-pink);
+}
+.review__ai-list { display: flex; flex-wrap: wrap; gap: var(--lm-space-2); }
+.review__ai-tag {
+  display: flex;
+  align-items: center;
+  gap: var(--lm-space-2);
+  padding: 7px 13px;
+  border: 1px solid var(--lm-pink-line);
+  border-radius: 999px;
+  background: var(--lm-card);
+  box-shadow: var(--lm-shadow-card);
+}
+.review__ai-name {
+  font-size: var(--lm-text-lg);
+  color: var(--lm-pink);
+}
+.review__ai-slot {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 4px;
+  font-size: var(--lm-text-xs);
+  color: var(--lm-ink-faint);
+}
+.review__ai-slot b { font-size: var(--lm-text-md); font-weight: 400; color: var(--lm-ink); }
+.review__ai-slot--want b { color: var(--lm-pink-btn); }
+.review__ai-key { letter-spacing: -0.02em; }
 
 .review__revisit {
   font-size: var(--lm-text-sm);

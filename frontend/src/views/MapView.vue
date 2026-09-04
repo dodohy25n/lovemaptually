@@ -48,6 +48,7 @@ const reviewOpen = ref(false)
 const reviewRole = ref('him')
 const searchedPlace = ref(null)
 const groupName = ref('')
+const currentGroupId = ref(null)
 const groupLoaded = ref(false)
 const hasGroup = ref(false)
 const creatingGroup = ref(false)
@@ -60,6 +61,7 @@ onMounted(() => {
   fetchMyGroups()
     .then((groups) => {
       const primary = groups.find((group) => group.type === 'COUPLE') ?? groups[0]
+      currentGroupId.value = primary?.id ?? null
       hasGroup.value = groups.length > 0
       groupName.value = primary?.name ?? ''
       groupLoaded.value = true
@@ -84,8 +86,15 @@ async function createCoupleGroup() {
   }
 }
 
-function selectPlace(id) {
+async function selectPlace(id) {
   store.select(id)
+  if (currentGroupId.value) {
+    try {
+      await store.loadDetail(id, { groupId: currentGroupId.value })
+    } catch {
+      // 목록 데이터로 화면을 계속 사용할 수 있게 상세 조회 실패는 스토어 배너로만 알립니다.
+    }
+  }
   reviewRole.value = 'him'
   reviewOpen.value = true
   mapRef.value?.focusPlace(id)

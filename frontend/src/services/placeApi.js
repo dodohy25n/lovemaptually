@@ -40,8 +40,8 @@ export function fetchPlaces() {
   return getPlaceRepository().list()
 }
 
-export function fetchPlace(id) {
-  return getPlaceRepository().get(id)
+export function fetchPlace(id, options) {
+  return getPlaceRepository().get(id, options)
 }
 
 export function createPlace(draft) {

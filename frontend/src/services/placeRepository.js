@@ -1,4 +1,4 @@
-import { STORAGE_KEYS, readJson, writeJson, removeKey } from './storageService.js'
+import { STORAGE_KEYS, readJson, readText, writeJson, removeKey } from './storageService.js'
 import { createSeedPlaces } from './seedPlaces.js'
 import { normalizeCoordinate } from '@/utils/coords.js'
 import {
@@ -105,6 +105,7 @@ export function normalizePlace(draft, { id, createdAt } = {}) {
 
   return {
     id: id ?? draft?.id ?? createId('place'),
+    groupPlaceId: draft?.groupPlaceId == null ? null : String(draft.groupPlaceId),
     name,
     provider,
     providerPlaceId,
@@ -115,6 +116,7 @@ export function normalizePlace(draft, { id, createdAt } = {}) {
     visitedAt: String(draft?.visitedAt ?? '').trim(),
     coupleScore,
     heartGrade: toHeartGrade(coupleScore),
+    label: draft?.label == null ? null : String(draft.label),
     images: Array.isArray(draft?.images) ? draft.images.filter((src) => typeof src === 'string') : [],
     tags: Array.isArray(draft?.tags) ? draft.tags.map(String).filter(Boolean) : [],
     reviews,
@@ -308,7 +310,7 @@ export class ApiPlaceRepository extends PlaceRepository {
     })
   }                                                     // GET    /api/places
 
-  async get(id) {
+  async get(id, { groupId } = {}) {
     if (!this.baseUrl) {
       throw new PlaceRepositoryError('API 기본 주소가 설정되지 않았습니다.', 'missing_base_url')
     }
@@ -316,9 +318,15 @@ export class ApiPlaceRepository extends PlaceRepository {
       throw new PlaceRepositoryError('이 환경에서는 장소 상세 요청을 보낼 수 없습니다.', 'fetch_unavailable')
     }
 
-    const url = new URL(`/api/places/${encodeURIComponent(String(id))}`, this.baseUrl)
+    const grouped = groupId != null && String(groupId).trim() !== ''
+    const url = new URL(grouped
+      ? `/api/groups/${encodeURIComponent(String(groupId))}/places/${encodeURIComponent(String(id))}`
+      : `/api/places/${encodeURIComponent(String(id))}`, this.baseUrl)
     const headers = { Accept: 'application/json' }
-    if (url.hostname.endsWith('.mock.pstmn.io')) headers.Authorization = 'Bearer mock-token'
+    if (grouped) {
+      const token = readText(STORAGE_KEYS.accessToken)
+      headers.Authorization = `Bearer ${token || (url.hostname.endsWith('.mock.pstmn.io') ? 'mock-token' : '')}`
+    } else if (url.hostname.endsWith('.mock.pstmn.io')) headers.Authorization = 'Bearer mock-token'
 
     let response
     try {
@@ -342,13 +350,20 @@ export class ApiPlaceRepository extends PlaceRepository {
     }
 
     const payload = await response.json()
-    const place = payload?.data
+    const detail = payload?.data
+    const place = grouped ? detail?.place : detail
     if (!place || place.placeId == null) {
       throw new PlaceRepositoryError('장소 상세 응답 형식이 올바르지 않습니다.', 'invalid_response')
     }
 
+    const reviewSummaries = grouped && Array.isArray(detail.reviews) ? detail.reviews : []
+    const latestVisit = grouped && Array.isArray(detail.visits)
+      ? detail.visits.map((visit) => visit?.visitedOn).filter(Boolean).sort().at(-1) ?? ''
+      : ''
+
     return normalizePlace({
       id: String(place.placeId),
+      groupPlaceId: grouped ? detail.groupPlaceId : null,
       provider: place.provider,
       providerPlaceId: place.providerPlaceId,
       name: place.name,
@@ -356,11 +371,25 @@ export class ApiPlaceRepository extends PlaceRepository {
       category: place.category,
       latitude: place.latitude,
       longitude: place.longitude,
+      visitedAt: latestVisit,
+      coupleScore: grouped && Number(detail.reviewedCount) > 0
+        ? (Number(detail.likedCount) / Number(detail.reviewedCount)) * 5
+        : 0,
+      label: grouped ? detail.label : null,
       tags: Array.isArray(place.tags)
         ? place.tags.map((item) => typeof item === 'string' ? item : item?.tag).filter(Boolean)
         : [],
       images: [],
-      reviews: [],
+      reviews: reviewSummaries.map((review) => ({
+        userId: review.userId,
+        userName: review.nickname,
+        content: review.content,
+        atmosphere: review.rating,
+        taste: review.rating,
+        value: review.rating,
+        service: review.rating,
+        revisitIntent: Number(review.rating) >= 4,
+      })),
     }, { id: String(place.placeId) })
   }                                               // GET    /api/places/:id
   async create() { return this.#notReady('create') }    // POST   /places

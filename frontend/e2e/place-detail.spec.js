@@ -12,7 +12,7 @@ test.describe('5. 장소 상세', () => {
     await expect(modal).toContainText('디어 모먼트')
     await expect(modal).toContainText('창가 자리에서')
 
-    await modal.getByRole('tab', { name: '그녀의 기억' }).click()
+    await modal.getByRole('tab', { name: '지우의 기억' }).click()
     await expect(modal).toContainText('햇빛 들어오는 자리')
     await expect(modal).not.toContainText('달빛 라멘')
   })

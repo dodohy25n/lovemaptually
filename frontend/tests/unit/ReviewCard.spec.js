@@ -73,7 +73,7 @@ describe('리뷰 카드 렌더링', () => {
     expect(wrapper.text()).toContain('아직 리뷰를 작성하지 않았어요.')
   })
 
-  it('그의 리뷰와 그녀의 리뷰는 구조가 같고 role만 다르다', () => {
+  it('두 사람의 리뷰는 구조가 같고 role만 다르다', () => {
     const him = mount(ReviewCard, { props: { place: PLACE, review: REVIEW, role: 'him' } })
     const her = mount(ReviewCard, {
       props: { place: PLACE, review: { ...REVIEW, userId: 'her' }, role: 'her' },

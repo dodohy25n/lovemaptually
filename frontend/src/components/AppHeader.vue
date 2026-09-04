@@ -1,16 +1,18 @@
 <script setup>
+import { computed } from 'vue'
 import BaseIcon from './BaseIcon.vue'
+import { COUPLE } from '@/utils/users.js'
 
 /**
  * 공통 헤더 — 스프링 제본 장식이 달린 종이 노트 상단.
  * 메뉴는 요구사항 화면(메인 지도 / 리뷰 / 기억)에 맞춰 구성했습니다.
  */
-const NAV_ITEMS = [
+const NAV_ITEMS = computed(() => [
   { label: '홈', to: '/' },
-  { label: '그의 기억', review: 'him' },
-  { label: '그녀의 기억', review: 'her' },
+  { label: COUPLE.him.label, review: 'him' },
+  { label: COUPLE.her.label, review: 'her' },
   { label: '추억 저장소', to: '/memories' },
-]
+])
 const emit = defineEmits(['open-review'])
 </script>
 

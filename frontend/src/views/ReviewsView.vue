@@ -7,7 +7,7 @@ import EmptyState from '@/components/EmptyState.vue'
 import { usePlacesStore } from '@/stores/places.js'
 import { COUPLE } from '@/utils/users.js'
 
-/** '그의 리뷰' / '그녀의 리뷰' — 한 사람이 남긴 리뷰를 장소별 카드로 모아 보여줍니다. */
+/** 한 사람이 남긴 리뷰를 장소별 카드로 모아 보여줍니다. */
 const props = defineProps({
   role: { type: String, required: true, validator: (v) => ['him', 'her'].includes(v) },
 })
@@ -17,6 +17,10 @@ const { recentPlaces, loading } = storeToRefs(store)
 const router = useRouter()
 
 const member = computed(() => COUPLE[props.role])
+/** 반대편 구성원의 기억 화면으로 건너가는 링크. */
+const other = computed(() => (props.role === 'him'
+  ? { member: COUPLE.her, to: '/reviews/partner' }
+  : { member: COUPLE.him, to: '/reviews/me' }))
 
 /** 리뷰를 쓴 장소가 먼저 오도록 정렬합니다. 리뷰가 없는 장소도 빈 카드로 보여줍니다. */
 const entries = computed(() =>
@@ -40,6 +44,7 @@ onMounted(() => {
       <p class="reviews__desc">
         {{ member.userName }}님이 남긴 리뷰 {{ written.length }}개
       </p>
+      <RouterLink class="reviews__switch" :to="other.to">{{ other.member.label }}</RouterLink>
     </header>
 
     <p v-if="loading" class="reviews__loading" role="status">불러오는 중이에요…</p>
@@ -64,6 +69,18 @@ onMounted(() => {
 .reviews { display: flex; flex-direction: column; gap: var(--lm-space-5); }
 .reviews__head { display: flex; flex-direction: column; gap: 4px; }
 .reviews__title { font-size: var(--lm-text-2xl); }
+.reviews__switch {
+  display: inline-block;
+  margin-top: var(--lm-space-3);
+  padding: 8px 18px;
+  border: 1px solid var(--lm-pink-line);
+  border-radius: 999px;
+  background: var(--lm-pink-bg);
+  color: var(--lm-pink);
+  font-size: var(--lm-text-sm);
+  font-weight: 700;
+  text-decoration: none;
+}
 .reviews[data-role='him'] .reviews__title { color: var(--lm-him); }
 .reviews[data-role='her'] .reviews__title { color: var(--lm-her); }
 .reviews__desc { font-size: var(--lm-text-sm); color: var(--lm-ink-soft); }
@@ -71,7 +88,7 @@ onMounted(() => {
 
 .reviews__grid {
   display: grid;
-  /* 카드 크기를 열 단위로 고정해 그의/그녀의 리뷰 카드가 항상 같은 폭이 되게 합니다. */
+  /* 카드 크기를 열 단위로 고정해 두 사람의 리뷰 카드가 항상 같은 폭이 되게 합니다. */
   grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
   gap: var(--lm-space-5);
 }

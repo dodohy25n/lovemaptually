@@ -1,4 +1,4 @@
-import { STORAGE_KEYS, readJson, writeJson, removeKey } from './storageService.js'
+import { STORAGE_KEYS, readJson, readText, writeJson, removeKey } from './storageService.js'
 import { createSeedPlaces } from './seedPlaces.js'
 import { normalizeCoordinate } from '@/utils/coords.js'
 import {
@@ -241,10 +241,74 @@ export class LocalPlaceRepository extends PlaceRepository {
  * 반환 형식은 normalizePlace()가 만드는 객체와 동일해야 합니다.
  */
 export class ApiPlaceRepository extends PlaceRepository {
-  constructor({ baseUrl = '', fetchImpl = globalThis.fetch } = {}) {
+  constructor({ baseUrl = '', fetchImpl = null, groupId = null } = {}) {
     super()
     this.baseUrl = baseUrl
-    this.fetchImpl = fetchImpl
+    // globalThis.fetch 를 그대로 담아 두면 this 가 Repository 로 바뀌어 브라우저가 호출을 거부합니다.
+    // 그래서 감싼 함수를 기본값으로 둡니다.
+    this.fetchImpl = fetchImpl ?? ((...args) => globalThis.fetch(...args))
+    // 지도 핀은 그룹에 종속됩니다. 로그인 후 그룹을 알아내면 이 값을 채웁니다.
+    this.groupId = groupId
+  }
+
+  setGroupId(groupId) {
+    this.groupId = groupId
+  }
+
+  /**
+   * GET /api/groups/{groupId}/places — 그룹이 기록한 장소 마커.
+   * /api/places 는 키워드 검색 전용이라 지도 핀은 이 경로로 읽습니다.
+   */
+  async listByGroup() {
+    if (!this.baseUrl) {
+      throw new PlaceRepositoryError('API 기본 주소가 설정되지 않았습니다.', 'missing_base_url')
+    }
+    if (typeof this.fetchImpl !== 'function') {
+      throw new PlaceRepositoryError('이 환경에서는 장소 목록 요청을 보낼 수 없습니다.', 'fetch_unavailable')
+    }
+
+    const token = readText(STORAGE_KEYS.accessToken)
+    const url = new URL(`/api/groups/${this.groupId}/places`, this.baseUrl)
+    const headers = { Accept: 'application/json' }
+    if (token) headers.Authorization = `Bearer ${token}`
+
+    let response
+    try {
+      response = await this.fetchImpl(url, { method: 'GET', headers })
+    } catch {
+      throw new PlaceRepositoryError('장소 목록을 불러오지 못했습니다.', 'network_error')
+    }
+
+    const payload = await response.json().catch(() => null)
+    if (!response.ok || !Array.isArray(payload?.data?.markers)) {
+      throw new PlaceRepositoryError(
+        payload?.message || `장소 목록 응답이 올바르지 않습니다. (${response.status})`,
+        response.ok ? 'invalid_response' : 'http_error',
+      )
+    }
+
+    return payload.data.markers.flatMap((marker) => {
+      // 마커에는 개별 점수가 없어 '좋아한 사람 수 / 리뷰한 사람 수' 로 하트 등급을 냅니다.
+      const reviewed = Number(marker.reviewedCount ?? 0)
+      const liked = Number(marker.likedCount ?? 0)
+      const coupleScore = reviewed > 0 ? round1((liked / reviewed) * 5) : 0
+      try {
+        return [normalizePlace({
+          id: String(marker.placeId),
+          name: marker.name,
+          address: marker.address,
+          category: marker.category,
+          latitude: marker.latitude,
+          longitude: marker.longitude,
+          coupleScore,
+          images: [],
+          tags: [],
+          reviews: [],
+        }, { id: String(marker.placeId) })]
+      } catch {
+        return []
+      }
+    })
   }
 
   #notReady(method) {
@@ -256,6 +320,9 @@ export class ApiPlaceRepository extends PlaceRepository {
   }
 
   async list() {
+    // 그룹을 알면 지도 핀(그룹 마커)을 읽고, 모르면 기존 검색 경로를 그대로 씁니다.
+    if (this.groupId != null) return this.listByGroup()
+
     if (!this.baseUrl) {
       throw new PlaceRepositoryError('API 기본 주소가 설정되지 않았습니다.', 'missing_base_url')
     }

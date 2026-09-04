@@ -22,6 +22,9 @@ export default defineConfig({
     // vite preview는 기본적으로 localhost(IPv6)에만 바인딩하므로 host를 명시합니다.
     command: `npm run build && npm run preview -- --host 127.0.0.1 --port ${PORT} --strictPort`,
     url: `http://127.0.0.1:${PORT}`,
+    // e2e는 백엔드 없이 도는 로컬 모드를 검증합니다.
+    // .env 가 api 모드를 가리키더라도 여기서 덮어써 빌드가 로컬 모드로 나오게 합니다.
+    env: { VITE_DATA_MODE: 'local', VITE_API_BASE_URL: '' },
     // 다른 앱이 같은 포트를 점유하고 있어도 재사용하지 않고 항상 새로 띄웁니다.
     reuseExistingServer: false,
     timeout: 180 * 1000,

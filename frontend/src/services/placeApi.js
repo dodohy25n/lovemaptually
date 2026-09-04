@@ -36,6 +36,15 @@ export function setPlaceRepository(next) {
   repository = next
 }
 
+/**
+ * 지도 핀은 그룹 단위라, 로그인 후 그룹을 알아내면 Repository에 알려줍니다.
+ * 로컬 모드에는 그룹 개념이 없어 아무 일도 하지 않습니다.
+ */
+export function setActiveGroupId(groupId) {
+  const repo = getPlaceRepository()
+  if (typeof repo.setGroupId === 'function') repo.setGroupId(groupId)
+}
+
 export function fetchPlaces() {
   return getPlaceRepository().list()
 }

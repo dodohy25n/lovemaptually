@@ -51,8 +51,8 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKeydown))
       <button class="close" type="button" aria-label="기억 팝업 닫기" @click="emit('close')"><BaseIcon name="close" :size="20" /></button>
       <header class="viewer__head">
         <div class="tabs" role="tablist" aria-label="기억 작성자">
-          <button role="tab" :aria-selected="role==='him'" :class="{active:role==='him'}" @click="selectRole('him')">그의 기억</button>
-          <button role="tab" :aria-selected="role==='her'" :class="{active:role==='her'}" @click="selectRole('her')">그녀의 기억</button>
+          <button role="tab" :aria-selected="role==='him'" :class="{active:role==='him'}" @click="selectRole('him')">{{ COUPLE.him.label }}</button>
+          <button role="tab" :aria-selected="role==='her'" :class="{active:role==='her'}" @click="selectRole('her')">{{ COUPLE.her.label }}</button>
         </div>
         <h2>{{ member.label }} ♡</h2>
         <p>{{ member.userName }}의 시선으로 바라본 우리의 데이트</p>

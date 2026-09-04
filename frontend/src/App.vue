@@ -5,11 +5,14 @@ import ChatbotPanel from '@/components/ChatbotPanel.vue'
 import { computed } from 'vue'
 import { useRoute } from 'vue-router'
 import { useChatbotStore } from '@/stores/chatbot.js'
+import { isLocalMode } from '@/services/config.js'
 
 /** 챗봇은 모든 화면에서 쓰이므로 앱 껍데기에 둡니다. */
 const chatbot = useChatbotStore()
 const route = useRoute()
-const showChrome = computed(() => !route.meta.authLayout)
+// 챗봇은 아직 붙은 백엔드가 없어 api 모드에서는 아예 숨깁니다.
+const chatbotEnabled = isLocalMode()
+const showChrome = computed(() => chatbotEnabled && !route.meta.authLayout)
 const isMap = computed(() => route.name === 'home')
 const { isOpen, messages, pending, error } = storeToRefs(chatbot)
 </script>

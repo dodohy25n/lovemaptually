@@ -7,7 +7,7 @@ import { memberOf } from '@/utils/users.js'
 import photoPlaceholder from '@/assets/photo-placeholder.svg'
 
 /**
- * '그의 리뷰' / '그녀의 리뷰' 종이 카드.
+ * 구성원 한 사람의 리뷰를 담는 종이 카드.
  *
  * 두 카드는 구조와 크기가 완전히 같고 강조 색만 다릅니다(role 값으로 전환).
  * 장식(테이프)은 pointer-events가 없고 카드 바깥 여백에만 놓여 본문을 가리지 않습니다.
@@ -116,7 +116,7 @@ const photos = computed(() => {
   display: flex;
   flex-direction: column;
   gap: var(--lm-space-3);
-  /* 두 카드의 크기를 강제로 맞춥니다 (그의/그녀의 리뷰가 나란히 놓입니다). */
+  /* 두 카드의 크기를 강제로 맞춥니다 (두 사람의 리뷰가 나란히 놓입니다). */
   min-height: 560px;
   padding: var(--lm-space-5);
   background: var(--lm-card);

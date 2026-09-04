@@ -21,19 +21,22 @@ const routes = [
     meta: { title: '회원가입', authLayout: true },
   },
   {
-    path: '/reviews/him',
-    name: 'reviews-him',
+    path: '/reviews/me',
+    name: 'reviews-me',
     component: () => import('@/views/ReviewsView.vue'),
     props: { role: 'him' },
-    meta: { title: '그의 기억' },
+    meta: { title: '나의 기억' },
   },
   {
-    path: '/reviews/her',
-    name: 'reviews-her',
+    path: '/reviews/partner',
+    name: 'reviews-partner',
     component: () => import('@/views/ReviewsView.vue'),
     props: { role: 'her' },
-    meta: { title: '그녀의 기억' },
+    meta: { title: '상대의 기억' },
   },
+  // 옛 주소는 새 주소로 넘겨 북마크와 기존 링크가 깨지지 않게 합니다.
+  { path: '/reviews/him', redirect: '/reviews/me' },
+  { path: '/reviews/her', redirect: '/reviews/partner' },
   {
     path: '/memories',
     name: 'memories',

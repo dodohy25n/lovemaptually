@@ -92,7 +92,7 @@ test.describe('4. 점수별 하트 변경', () => {
 
     const stored = await readStoredPlaces(page)
     const cafe = stored.find((place) => place.id === 'place_seed_dear_moment')
-    // 그의 리뷰 0.5 + 그녀의 리뷰 4.5 → 평균 2.5 (보통이에요)
+    // 한 사람 0.5 + 다른 사람 4.5 → 평균 2.5 (보통이에요)
     expect(cafe.coupleScore).toBeCloseTo(2.5, 1)
     expect(cafe.heartGrade).toBe('normal')
 

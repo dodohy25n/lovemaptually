@@ -2,9 +2,13 @@
 
 커플이 함께 방문한 장소를 지도에 기록하고, 각자 점수와 리뷰를 남기는 서비스의 프론트엔드입니다.
 
-> **백엔드는 아직 구현 전입니다.**
-> 지금은 모든 데이터가 브라우저 `localStorage`에 저장되며, 챗봇은 정해진 mock 응답을 돌려줍니다.
-> 백엔드가 완성되면 **저장소 계층(Repository)만 교체**하면 화면 코드는 그대로 동작합니다.
+> **두 가지 모드로 돕니다.** `VITE_DATA_MODE` 하나로 갈립니다.
+>
+> - `api` — Spring 백엔드(`http://localhost:8080`)를 그대로 씁니다. 로그인, 그룹, 지도 핀,
+>   장소 검색, 우리 취향, 추천, 월간 리포트가 모두 실제 API를 탑니다.
+> - `local` — 백엔드 없이 브라우저 `localStorage`만으로 돕니다. 데모와 E2E 테스트가 쓰는 모드입니다.
+>
+> 화면 코드는 모드를 알지 못합니다. 모드 판정은 `services/config.js` 한 곳에서만 합니다.
 
 ## 실행
 
@@ -31,22 +35,30 @@ npm run dev            # 개발 서버 (http://localhost:5173)
 
 E2E는 실행할 때마다 빌드 후 `127.0.0.1:4399`에 미리보기 서버를 띄웁니다.
 포트를 바꾸려면 `PLAYWRIGHT_PORT=4500 npm run test:e2e`.
+E2E는 백엔드 없이 도는 것을 검증하므로 `.env` 값과 무관하게 **항상 로컬 모드로 빌드**합니다
+(`playwright.config.js`의 `webServer.env`).
 
 ## 환경 변수
 
-`.env.example`을 복사해 `.env.local`을 만들어 사용하세요. `.env*`는 커밋되지 않습니다
+`.env.example`을 복사해 `.env`를 만들어 사용하세요. `.env*`는 커밋되지 않습니다
 (`.env.example`만 예외).
 
 ```bash
-cp .env.example .env.local
+cp .env.example .env
 ```
 
 | 변수 | 값 | 설명 |
 |---|---|---|
-| `VITE_DATA_MODE` | `local` \| `api` | 장소 데이터 출처. `local`은 localStorage, `api`는 백엔드(미구현) |
+| `VITE_DATA_MODE` | `local` \| `api` | 데이터 출처. `local`은 localStorage, `api`는 백엔드 |
+| `VITE_API_BASE_URL` | URL | 백엔드 base URL. 로컬 개발은 `http://localhost:8080` |
 | `VITE_KAKAO_JS_KEY` | 문자열 | 카카오 **JavaScript 키**. 지도와 가게 검색이 함께 씁니다 |
-| `VITE_AI_MODE` | `mock` \| `api` | 챗봇 응답 출처 |
-| `VITE_API_BASE_URL` | URL | 백엔드 base URL (`VITE_DATA_MODE=api`일 때만) |
+| `VITE_AI_MODE` | `mock` \| `api` | 챗봇 응답 출처. 챗봇 백엔드가 없어 `api` 모드에서는 위젯을 숨깁니다 |
+
+### 개발 서버 포트가 고정입니다
+
+백엔드 CORS가 `http://localhost:5173` 하나만 허용하므로 `vite.config.js`에 `strictPort: true`를
+두었습니다. 5173이 이미 쓰이고 있으면 서버가 다른 포트로 밀리는 대신 **실행이 실패합니다.**
+포트가 밀린 채로 뜨면 모든 API 호출이 preflight에서 막혀 원인을 찾기 어렵기 때문입니다.
 
 ### ⚠️ 키 관련 주의
 
@@ -63,15 +75,69 @@ cp .env.example .env.local
 
 ## 구조
 
-```
-src/
-├─ components/     재사용 컴포넌트 (헤더, 지도, 하트 핀, 리뷰 카드, 챗봇 …)
-├─ views/          라우트 단위 화면
-├─ stores/         Pinia 스토어 (places, chatbot)
-├─ services/       저장소·API 어댑터 계층  ← 백엔드 교체 지점
-├─ utils/          순수 함수 (하트 등급, 좌표 검증, 사용자 정보)
-└─ styles/         디자인 토큰과 공통 스타일
-```
+화면은 뷰 파일 6개(404 제외 실제 화면 5개), 컴포넌트 25개, 서비스 모듈 19개입니다.
+
+| 폴더 | 담는 것 |
+|---|---|
+| `src/views/` | 라우트 단위 화면 6개 (지도, 로그인, 회원가입, 기억, 추억 저장소, 404) |
+| `src/components/` | 화면을 이루는 조각 25개 (지도 캔버스, 하트 핀, 리뷰 카드, 모달, 챗봇) |
+| `src/stores/` | Pinia 스토어 2개 (`places`, `chatbot`) |
+| `src/services/` | 저장소와 API 어댑터 계층. 화면은 이 계층 너머를 알지 못합니다 |
+| `src/utils/` | 순수 함수 (하트 등급, 좌표 검증, 장소 동일성, 구성원 이름) |
+| `src/styles/` | 디자인 토큰(`tokens.css`)과 공통 스타일 |
+| `src/router/` | 라우트 정의 |
+| `src/assets/` | 아이콘과 장식 이미지 |
+
+### 라우트
+
+| 경로 | 화면 |
+|---|---|
+| `/` | `/login` 으로 이동 |
+| `/login` | 로그인 |
+| `/signup` | 회원가입 |
+| `/map` | 메인 지도 (우리 취향, 추천 모달이 여기에 붙습니다) |
+| `/reviews/me` | 로그인한 사용자가 남긴 리뷰 |
+| `/reviews/partner` | 함께 기록하는 구성원이 남긴 리뷰 |
+| `/memories` | 추억 저장소 (월간 리포트가 여기에 있습니다) |
+| `/reviews/him`, `/reviews/her` | 옛 주소. 각각 `/reviews/me`, `/reviews/partner` 로 넘깁니다 |
+
+### 서비스 모듈과 API 대응
+
+| 모듈 | 호출하는 엔드포인트 |
+|---|---|
+| `authApi.js` | `POST /api/auth/login`, `POST /api/auth/signup` |
+| `groupApi.js` | `GET /api/groups/me`, `POST /api/groups` |
+| `placeRepository.js` | `GET /api/groups/{groupId}/places` (지도 핀), `GET /api/places` (검색), `GET /api/places/{id}` |
+| `placeApi.js` | 모드에 따라 Repository를 고르고 활성 그룹을 알려줍니다 |
+| `reviewApi.js` | `POST /api/reviews` |
+| `preferenceApi.js` | `GET /api/groups/{groupId}/preferences` |
+| `recommendationApi.js` | `POST /api/groups/{groupId}/recommendation-requests`, `GET /api/recommendation-requests/{id}` |
+| `reportApi.js` | `GET`·`POST /api/groups/{groupId}/reports`, `GET /api/reports/{id}`, `POST /api/groups/{groupId}/subscriptions` |
+| `placeSearchApi.js` | 카카오 JS SDK (백엔드 아님) |
+| `tagApi.js` | `GET /api/tags` — 백엔드에 아직 없어 실패 시 기본 키워드로 물러납니다 |
+| `chatbotApi.js` | 없음. 백엔드가 없어 `api` 모드에서는 챗봇 위젯을 숨깁니다 |
+
+### 비동기 작업 두 가지
+
+추천과 월간 리포트는 요청하면 `202 PENDING` 이 오고 결과는 나중에 채워집니다.
+두 모듈 모두 **0.5초 간격으로 최대 20회 폴링**하고, 그 안에 끝나지 않으면 안내 문구와 함께
+`timeout` 으로 실패합니다. 화면이 분기할 수 있도록 오류에 코드를 실어 보냅니다.
+
+| 코드 | 화면 처리 |
+|---|---|
+| `REGION_NOT_FOUND` | 오류가 아니라 "어느 동네인지" 되묻는 안내로 보여줍니다 |
+| `plan_required` (402) | 자물쇠와 '프리미엄으로 열기' 버튼. 구독 후 곧바로 다시 시도합니다 |
+| `report_already_exists` (409) | 새로 만들지 않고 응답에 담긴 기존 리포트를 엽니다 |
+| `no_visits_in_month` (422) | 그 달에 기록이 없다고 안내합니다 |
+
+### 지금 화면에 쓰이지 않는 파일
+
+지우지 않고 남겨 둔 것들입니다. 정리하려면 확인 후 지우세요.
+
+- `src/components/AppHeader.vue`
+- `src/components/HeartGradeLegend.vue`
+- `src/components/MemoryCard.vue`
+- `src/components/PlaceDetailPanel.vue`
 
 ### 저장소 계층
 
@@ -126,10 +192,10 @@ PlaceRepository (인터페이스)
 
 | 파일 | 현재 | 연결 후 |
 |---|---|---|
-| `services/placeRepository.js` | `LocalPlaceRepository` | `ApiPlaceRepository`의 메서드에 fetch 구현 |
-| `services/placeApi.js` | 모드에 따라 Repository 선택 | 수정 불필요 |
-| `services/reviewApi.js` | 장소 Repository 경유 | `/places/:id/reviews` 호출로 교체 |
+| `services/placeRepository.js` | 목록·상세 연결 완료 | 등록·수정·삭제는 아직 미구현 |
+| `services/reviewApi.js` | `POST /api/reviews` 연결 완료 | 조회는 아직 장소 Repository 경유 |
 | `services/chatbotApi.js` | 키워드 기반 mock 응답 | `sendToAi()`에 실제 AI 호출 구현 |
+| `services/tagApi.js` | `GET /api/tags` 호출 | 백엔드에 엔드포인트가 생기면 그대로 동작 |
 | `services/placeSearchApi.js` | 카카오 JS SDK 직접 호출 | 서버 경유로 옮기면 REST 키를 백엔드에 둘 수 있습니다 |
 
 ## 하트 등급

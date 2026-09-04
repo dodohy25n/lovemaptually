@@ -14,6 +14,9 @@ import ReviewCarouselModal from '@/components/ReviewCarouselModal.vue'
 import FloatingNotebookMenu from '@/components/FloatingNotebookMenu.vue'
 import { usePlacesStore } from '@/stores/places.js'
 import { createGroup, fetchMyGroups } from '@/services/groupApi.js'
+import { setActiveGroupId } from '@/services/placeApi.js'
+import { applyMemberNames } from '@/utils/users.js'
+import { readJson, STORAGE_KEYS } from '@/services/storageService.js'
 import heartFlourish from '../../frontend-assets/decorations/love_maptually_heart_flourish.png'
 import pinkTape from '../../frontend-assets/decorations/love_maptually_pink_tape.png'
 
@@ -50,23 +53,31 @@ const searchedPlace = ref(null)
 const groupName = ref('')
 const groupLoaded = ref(false)
 const hasGroup = ref(false)
+const groupId = ref(null)
 const creatingGroup = ref(false)
 const groupError = ref('')
 
 const hasFilteredResult = computed(() => visiblePlaces.value.length > 0)
 
 onMounted(() => {
-  store.load()
   fetchMyGroups()
     .then((groups) => {
       const primary = groups.find((group) => group.type === 'COUPLE') ?? groups[0]
       hasGroup.value = groups.length > 0
+      groupId.value = primary?.groupId ?? null
       groupName.value = primary?.name ?? ''
       groupLoaded.value = true
+      applyMemberNames(primary?.members, readJson(STORAGE_KEYS.authUser)?.userId)
+      // 지도 핀은 그룹 마커에서 오므로 그룹을 안 뒤에 불러옵니다.
+      setActiveGroupId(groupId.value)
     })
     .catch((err) => {
-      if (err?.code !== 'auth_required') console.warn('그룹 목록을 불러오지 못했습니다.', err)
+      // 로컬 모드에는 그룹 개념이 없어 주소가 비어 있는 것이 정상입니다. 콘솔을 더럽히지 않습니다.
+      if (!['auth_required', 'missing_base_url'].includes(err?.code)) {
+        console.warn('그룹 목록을 불러오지 못했습니다.', err)
+      }
     })
+    .finally(() => store.load())
 })
 
 async function createCoupleGroup() {
@@ -76,7 +87,10 @@ async function createCoupleGroup() {
   try {
     const group = await createGroup({ groupType: 'COUPLE', name: '우리 둘' })
     hasGroup.value = true
+    groupId.value = group.groupId
     groupName.value = group.name
+    setActiveGroupId(group.groupId)
+    await store.load()
   } catch (err) {
     groupError.value = err?.message || '커플 러브맵을 만들지 못했습니다.'
   } finally {
@@ -234,8 +248,8 @@ async function submitForm(draft) {
       @close="closeForm"
       @pick-request="requestPick"
     />
-    <CoupleTasteModal :open="tasteOpen" @close="tasteOpen = false" @recommend="tasteOpen = false; recommendationOpen = true" />
-    <RecommendationModal :open="recommendationOpen" @close="recommendationOpen = false" />
+    <CoupleTasteModal :open="tasteOpen" :group-id="groupId" @close="tasteOpen = false" @recommend="tasteOpen = false; recommendationOpen = true" />
+    <RecommendationModal :open="recommendationOpen" :group-id="groupId" @close="recommendationOpen = false" />
     <ReviewCarouselModal
       :open="reviewOpen"
       :initial-role="reviewRole"

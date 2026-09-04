@@ -1,4 +1,5 @@
 <script setup>
+import { COUPLE } from '@/utils/users.js'
 import { computed } from 'vue'
 import HeartRating from './HeartRating.vue'
 import ReportRouteMap from './ReportRouteMap.vue'
@@ -113,7 +114,7 @@ const pageDecor = computed(() => [heartBurst, loveStamp, pinkCamera, blueCamera,
           <div class="visit-head"><h4>{{ item.place.name }}</h4><b :class="{ no:item.verdict==='비추천' }">{{ item.verdict }}</b></div>
           <p class="visit-date"><strong>1회 방문</strong><span>{{ item.place.visitedAt || '날짜 미정' }}</span></p>
           <p>{{ item.reason }}</p>
-          <p class="score-pair">그의 점수 {{ reviewAverage(item.place.reviews?.[0]).toFixed(1) }} · 그녀의 점수 {{ reviewAverage(item.place.reviews?.[1]).toFixed(1) }}</p>
+          <p class="score-pair">{{ COUPLE.him.userName }} 점수 {{ reviewAverage(item.place.reviews?.[0]).toFixed(1) }} / {{ COUPLE.her.userName }} 점수 {{ reviewAverage(item.place.reviews?.[1]).toFixed(1) }}</p>
         </article>
       </div>
     </section>

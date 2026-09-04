@@ -2,24 +2,24 @@ import { test, expect } from '@playwright/test'
 import { openApp } from './helpers.js'
 
 test.describe('6. 기억 화면', () => {
-  test('그의 기억과 그녀의 기억이 각각 표시된다', async ({ page }) => {
-    await openApp(page, { path: '/reviews/him' })
-    await expect(page.getByRole('heading', { name: '그의 기억', level: 1 })).toBeVisible()
+  test('두 사람의 기억이 각각 표시된다', async ({ page }) => {
+    await openApp(page, { path: '/reviews/me' })
+    await expect(page.getByRole('heading', { name: '도현의 기억', level: 1 })).toBeVisible()
     const dearMoment = page.getByTestId('review-card-him').filter({ hasText: '디어 모먼트' })
     await expect(dearMoment).toContainText('창가 자리에서')
 
-    await page.getByRole('link', { name: '그녀의 기억' }).click()
-    await expect(page.getByRole('heading', { name: '그녀의 기억', level: 1 })).toBeVisible()
+    await page.getByRole('link', { name: '지우의 기억' }).click()
+    await expect(page.getByRole('heading', { name: '지우의 기억', level: 1 })).toBeVisible()
     await expect(
       page.getByTestId('review-card-her').filter({ hasText: '디어 모먼트' }),
     ).toContainText('햇빛 들어오는 자리')
   })
 
   test('두 리뷰 카드의 크기가 일치한다', async ({ page }) => {
-    await openApp(page, { path: '/reviews/him' })
+    await openApp(page, { path: '/reviews/me' })
     const himBox = await page.getByTestId('review-card-him').first().boundingBox()
 
-    await page.goto('/reviews/her')
+    await page.goto('/reviews/partner')
     await expect(page.getByTestId('review-card-her').first()).toBeVisible()
     const herBox = await page.getByTestId('review-card-her').first().boundingBox()
 
@@ -28,7 +28,7 @@ test.describe('6. 기억 화면', () => {
   })
 
   test('분위기·맛·가성비·서비스 점수와 사진 6칸이 모두 있다', async ({ page }) => {
-    await openApp(page, { path: '/reviews/him' })
+    await openApp(page, { path: '/reviews/me' })
     const card = page.getByTestId('review-card-him').first()
 
     for (const label of ['분위기', '맛', '가성비', '서비스']) {
@@ -38,7 +38,7 @@ test.describe('6. 기억 화면', () => {
   })
 
   test('장식(테이프)이 텍스트를 가리지 않는다', async ({ page }) => {
-    await openApp(page, { path: '/reviews/him' })
+    await openApp(page, { path: '/reviews/me' })
     const card = page.getByTestId('review-card-him').first()
 
     // 장식은 클릭을 가로채지 않아야 합니다.

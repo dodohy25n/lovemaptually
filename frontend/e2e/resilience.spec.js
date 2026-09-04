@@ -70,7 +70,7 @@ test.describe('8. 오류 및 빈 상태', () => {
   test('빈 상태에서 리뷰·기억 화면도 정상 동작한다', async ({ page }) => {
     await openApp(page, { storage: '[]' })
 
-    await page.goto('/reviews/him')
+    await page.goto('/reviews/me')
     await expect(page.getByTestId('empty-state')).toBeVisible()
 
     await page.goto('/memories')

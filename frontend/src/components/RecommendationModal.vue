@@ -2,11 +2,12 @@
 import { ref } from 'vue'
 import BaseIcon from './BaseIcon.vue'
 import { recommendPlaces } from '@/services/aiReadyMock.js'
-defineProps({ open:{type:Boolean,default:false} })
+import { createRecommendationRequest } from '@/services/recommendationApi.js'
+const props=defineProps({ open:{type:Boolean,default:false},groupId:{type:[String,Number],default:null} })
 const emit=defineEmits(['close'])
 const query=ref('오늘 인사동 갈 건데 3곳 정도 추천해줘'),loading=ref(false),result=ref(null)
 const photos=['/samples/window.jpg','/samples/salad.jpg','/samples/pasta.jpg']
-async function submit(){loading.value=true;try{result.value=await recommendPlaces(query.value)}finally{loading.value=false}}
+async function submit(){loading.value=true;try{if(props.groupId){const request=await createRecommendationRequest(props.groupId,query.value);result.value={...request,message:'추천을 준비하고 있어요. 잠시 후 결과를 확인해 주세요.'}}else{result.value=await recommendPlaces(query.value)}}catch(error){result.value={status:'FAILED',message:error?.message||'추천 요청에 실패했습니다.'}}finally{loading.value=false}}
 </script>
 
 <template>

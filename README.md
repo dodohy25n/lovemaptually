@@ -50,7 +50,7 @@ Spring Boot 3.5 (Controller - Service - Repository)
       |                            협업 필터링, 태그 매칭, 그룹 합의
       |                            엔진이 없으면 규칙 폴백
       |
-PostgreSQL 17 (18개 테이블, Flyway)
+PostgreSQL 17 (17개 테이블, Flyway)
 ```
 
 ## 실행

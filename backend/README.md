@@ -1,7 +1,7 @@
 # 러브맵츄얼리 백엔드
 
 Java 21, Spring Boot 3.5, JPA, Flyway, PostgreSQL 17입니다.
-ERD v3.2(18개 테이블)와 REST API 명세 v3.3을 따릅니다.
+ERD v3.2(17개 테이블)와 REST API 명세 v3.3을 따릅니다.
 
 ## 실행
 
@@ -13,7 +13,7 @@ createdb -O lovemaptually lovemaptually
 ```
 
 Flyway가 기동 때 세 개의 마이그레이션을 적용합니다.
-V1이 15개 테이블, V2가 태그 사전 33행, V3이 월간 리포트용 3종입니다.
+V1이 15개 테이블, V2가 태그 사전 33행, V3이 리포트 테이블 2종과 plan 컬럼입니다.
 `ddl-auto: validate`라 엔티티가 스키마와 어긋나면 기동이 실패합니다. 의도한 안전장치입니다.
 
 Swagger는 `http://localhost:8080/swagger-ui.html`입니다.

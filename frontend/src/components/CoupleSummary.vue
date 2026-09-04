@@ -5,13 +5,14 @@ import coupleProfile from '@/assets/couple-profile.jpeg'
 /** '우리의 러브맵' 요약 카드 — 커플 일러스트와 함께한 장소 수. */
 defineProps({
   count: { type: Number, default: 0 },
+  groupName: { type: String, default: '' },
 })
 </script>
 
 <template>
   <section class="summary lm-card" aria-labelledby="summary-title">
     <h2 id="summary-title" class="summary__title">
-      <span aria-hidden="true">♡</span> 우리의 러브맵 <span aria-hidden="true">♡</span>
+      <span aria-hidden="true">♡</span> {{ groupName ? `${groupName} 러브맵` : '우리의 러브맵' }} <span aria-hidden="true">♡</span>
     </h2>
 
     <ProfilePlaceholder

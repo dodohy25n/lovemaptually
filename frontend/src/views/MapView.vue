@@ -13,6 +13,7 @@ import RecommendationModal from '@/components/RecommendationModal.vue'
 import ReviewCarouselModal from '@/components/ReviewCarouselModal.vue'
 import FloatingNotebookMenu from '@/components/FloatingNotebookMenu.vue'
 import { usePlacesStore } from '@/stores/places.js'
+import { fetchMyGroups } from '@/services/groupApi.js'
 import heartFlourish from '../../frontend-assets/decorations/love_maptually_heart_flourish.png'
 import pinkTape from '../../frontend-assets/decorations/love_maptually_pink_tape.png'
 
@@ -46,10 +47,21 @@ const recommendationOpen = ref(false)
 const reviewOpen = ref(false)
 const reviewRole = ref('him')
 const searchedPlace = ref(null)
+const groupName = ref('')
 
 const hasFilteredResult = computed(() => visiblePlaces.value.length > 0)
 
-onMounted(() => store.load())
+onMounted(() => {
+  store.load()
+  fetchMyGroups()
+    .then((groups) => {
+      const primary = groups.find((group) => group.type === 'COUPLE') ?? groups[0]
+      groupName.value = primary?.name ?? ''
+    })
+    .catch((err) => {
+      if (err?.code !== 'auth_required') console.warn('그룹 목록을 불러오지 못했습니다.', err)
+    })
+})
 
 function selectPlace(id) {
   store.select(id)
@@ -137,7 +149,7 @@ async function submitForm(draft) {
         @pick="onMapPick"
       >
         <aside class="mapview__side" aria-label="러브맵 정보">
-        <CoupleSummary :count="totalCount" />
+        <CoupleSummary :count="totalCount" :group-name="groupName" />
         <RecentPlaces
           :places="recentPlaces"
           :selected-id="selectedId"

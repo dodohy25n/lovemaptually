@@ -10,7 +10,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-@Tag(name = "3. 초대 코드", description = "인증 전에 그룹 정보를 확인하는 공개 Mock API")
+@Tag(name = "3. 초대 코드", description = "인증 전에 그룹 정보를 확인하는 공개 API")
 @RestController
 @RequestMapping("/api/invites")
 public class InviteController {
@@ -21,7 +21,7 @@ public class InviteController {
         this.groupUseCase = groupUseCase;
     }
 
-    @Operation(summary = "초대 코드 확인", description = "참여할 그룹과 코드 사용 가능 여부를 인증 없이 확인합니다. [Mock]")
+    @Operation(summary = "초대 코드 확인", description = "참여할 그룹과 코드 사용 가능 여부를 인증 없이 확인합니다. ")
     @GetMapping("/{code}")
     public ApiResponse<InvitePreviewResponse> preview(@PathVariable String code) {
         return ApiResponse.of(200, "조회했습니다", groupUseCase.previewInvite(code));

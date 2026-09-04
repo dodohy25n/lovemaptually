@@ -24,7 +24,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-@Tag(name = "2. 그룹", description = "재현 가능한 인메모리 Mock 그룹 API")
+@Tag(name = "2. 그룹", description = "그룹과 초대 코드")
 @SecurityRequirement(name = "bearerAuth")
 @RestController
 @RequestMapping("/api/groups")
@@ -36,7 +36,7 @@ public class GroupController {
         this.groupUseCase = groupUseCase;
     }
 
-    @Operation(summary = "그룹 생성", description = "그룹과 OWNER 구성원을 생성합니다. [Mock]")
+    @Operation(summary = "그룹 생성", description = "그룹과 OWNER 구성원을 생성합니다. ")
     @PostMapping
     public ResponseEntity<ApiResponse<GroupResponse>> create(
             @AuthenticationPrincipal Jwt jwt,
@@ -48,13 +48,13 @@ public class GroupController {
         ));
     }
 
-    @Operation(summary = "내 그룹 목록", description = "현재 사용자가 참여 중인 그룹을 조회합니다. [Mock]")
+    @Operation(summary = "내 그룹 목록", description = "현재 사용자가 참여 중인 그룹을 조회합니다. ")
     @GetMapping("/me")
     public ApiResponse<MyGroupsResponse> mine(@AuthenticationPrincipal Jwt jwt) {
         return ApiResponse.of(200, "조회했습니다", groupUseCase.getMyGroups(AuthenticatedUser.id(jwt)));
     }
 
-    @Operation(summary = "초대 코드 발급", description = "그룹 OWNER가 초대 코드를 발급합니다. [Mock]")
+    @Operation(summary = "초대 코드 발급", description = "그룹 OWNER가 초대 코드를 발급합니다. ")
     @PostMapping("/{groupId}/invites")
     public ResponseEntity<ApiResponse<InviteResponse>> createInvite(
             @AuthenticationPrincipal Jwt jwt,
@@ -68,7 +68,7 @@ public class GroupController {
         ));
     }
 
-    @Operation(summary = "그룹 참여", description = "초대 코드로 그룹 구성원이 됩니다. [Mock]")
+    @Operation(summary = "그룹 참여", description = "초대 코드로 그룹 구성원이 됩니다. ")
     @PostMapping("/members")
     public ResponseEntity<ApiResponse<GroupResponse>> join(
             @AuthenticationPrincipal Jwt jwt,

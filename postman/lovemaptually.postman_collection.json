@@ -1,0 +1,3808 @@
+{
+  "info": {
+    "_postman_id": "9f2c4a10-7b6d-4c31-9d55-lovemap000001",
+    "name": "러브맵츄얼리 API 전수 테스트",
+    "description": "러브맵츄얼리 백엔드의 엔드포인트 22개를 성공 경로와 오류 경로로 모두 훑는 모음입니다.\n\n판정 기준은 API 명세 v3.4 의 2장 엔드포인트 표와 4장 상태 코드 표입니다. 요청마다 HTTP 상태 코드와 응답 봉투를 함께 검사하고, 오류 응답은 error.code 까지 정확히 맞춥니다.\n\n두 번 이상 돌려도 결과가 같도록 설계했습니다. 계정은 실행 시각으로 새로 만들고, 중복 409 검사는 이 실행이 방금 만든 데이터에서 끌어옵니다. 시드 DB 의 고정 식별자에 기대지 않습니다.\n\n예외는 FREE 그룹 402 하나입니다. 이 실행이 만든 그룹은 도중에 PREMIUM 으로 올라가므로 402 만 시드 데모 계정을 씁니다.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{accessToken}}",
+        "type": "string"
+      }
+    ]
+  },
+  "item": [
+    {
+      "name": "1. 인증",
+      "description": "명세 2장 인증 표. 회원가입과 로그인, 그리고 토큰 없는 접근이 401 로 막히는지까지 봅니다.",
+      "item": [
+        {
+          "name": "회원가입 201",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/signup",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "signup"
+              ]
+            },
+            "description": "명세 2장 인증 표의 회원가입 규칙을 확인합니다. 201 과 함께 accessToken 이 내려오는지 봅니다. 재실행해도 201 이 나오도록 사전 스크립트가 실행 시각으로 새 이메일을 만듭니다.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{userAEmail}}\",\n  \"password\": \"{{testPassword}}\",\n  \"nickname\": \"포스트맨A\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// 두 번 돌려도 회원가입 201 이 나오도록 실행 시각으로 계정을 새로 만듭니다.",
+                  "const stamp = Date.now().toString(36);",
+                  "pm.collectionVariables.set('runStamp', stamp);",
+                  "pm.collectionVariables.set('userAEmail', 'pm-a-' + stamp + '@lovemap.test');",
+                  "pm.collectionVariables.set('userBEmail', 'pm-b-' + stamp + '@lovemap.test');",
+                  "pm.collectionVariables.set('outsiderEmail', 'pm-c-' + stamp + '@lovemap.test');"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "",
+                  "pm.test('상태 코드 201 입니다', function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "",
+                  "pm.test('성공 봉투의 status 가 201 입니다', function () {",
+                  "    pm.expect(body.status).to.eql(201);",
+                  "});",
+                  "",
+                  "pm.test('성공 봉투에 message 와 data 가 있습니다', function () {",
+                  "    pm.expect(body).to.have.property('message');",
+                  "    pm.expect(body).to.have.property('data');",
+                  "    pm.expect(body).to.not.have.property('error');",
+                  "});",
+                  "",
+                  "pm.test('data 에 userId 와 accessToken 이 있습니다', function () {",
+                  "    pm.expect(body.data.userId).to.be.a('number');",
+                  "    pm.expect(body.data.accessToken).to.be.a('string').and.not.empty;",
+                  "    pm.expect(body.data.tokenType).to.eql('Bearer');",
+                  "});",
+                  "",
+                  "pm.collectionVariables.set('accessToken', body.data.accessToken);",
+                  "pm.collectionVariables.set('userAId', body.data.userId);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "회원가입 이메일 중복 409",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/signup",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "signup"
+              ]
+            },
+            "description": "명세 4장 오류 코드 목록의 EMAIL_ALREADY_EXISTS 를 확인합니다. 바로 앞 요청이 만든 계정을 그대로 다시 보내므로 시드 데이터에 기대지 않습니다.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{userAEmail}}\",\n  \"password\": \"{{testPassword}}\",\n  \"nickname\": \"포스트맨A중복\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "",
+                  "pm.test('상태 코드 409 입니다', function () {",
+                  "    pm.response.to.have.status(409);",
+                  "});",
+                  "",
+                  "pm.test('오류 봉투의 status 가 409 입니다', function () {",
+                  "    pm.expect(body.status).to.eql(409);",
+                  "});",
+                  "",
+                  "pm.test('error.code 가 EMAIL_ALREADY_EXISTS 입니다', function () {",
+                  "    pm.expect(body.error.code).to.eql('EMAIL_ALREADY_EXISTS');",
+                  "});",
+                  "",
+                  "pm.test('오류 봉투에 message 가 있고 details 가 배열입니다', function () {",
+                  "    pm.expect(body.message).to.be.a('string');",
+                  "    pm.expect(body.error.details).to.be.an('array');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "회원가입 입력값 오류 400",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/signup",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "signup"
+              ]
+            },
+            "description": "명세 4장의 VALIDATION_ERROR 를 확인합니다. 이메일 형식, 비밀번호 길이, 닉네임 누락 세 가지가 한꺼번에 틀리므로 error.details 가 3건이어야 합니다.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"bad\",\n  \"password\": \"x\",\n  \"nickname\": \"\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "",
+                  "pm.test('상태 코드 400 입니다', function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});",
+                  "",
+                  "pm.test('오류 봉투의 status 가 400 입니다', function () {",
+                  "    pm.expect(body.status).to.eql(400);",
+                  "});",
+                  "",
+                  "pm.test('error.code 가 VALIDATION_ERROR 입니다', function () {",
+                  "    pm.expect(body.error.code).to.eql('VALIDATION_ERROR');",
+                  "});",
+                  "",
+                  "pm.test('오류 봉투에 message 가 있고 details 가 배열입니다', function () {",
+                  "    pm.expect(body.message).to.be.a('string');",
+                  "    pm.expect(body.error.details).to.be.an('array');",
+                  "});",
+                  "",
+                  "pm.test('details 가 3건이고 필드별 사유가 붙습니다', function () {",
+                  "    pm.expect(body.error.details).to.have.lengthOf(3);",
+                  "    const fields = body.error.details.map(function (d) { return d.field; });",
+                  "    pm.expect(fields).to.have.members(['email', 'nickname', 'password']);",
+                  "    body.error.details.forEach(function (d) {",
+                  "        pm.expect(d.reason).to.be.a('string').and.not.empty;",
+                  "    });",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "짝 회원가입 201",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/signup",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "signup"
+              ]
+            },
+            "description": "그룹 참여 201 을 확인하려면 초대를 받을 두 번째 사용자가 필요합니다. 이 실행이 만든 계정만 쓰므로 시드 계정을 건드리지 않습니다.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{userBEmail}}\",\n  \"password\": \"{{testPassword}}\",\n  \"nickname\": \"포스트맨B\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "",
+                  "pm.test('상태 코드 201 입니다', function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "",
+                  "pm.test('성공 봉투의 status 가 201 입니다', function () {",
+                  "    pm.expect(body.status).to.eql(201);",
+                  "});",
+                  "",
+                  "pm.test('성공 봉투에 message 와 data 가 있습니다', function () {",
+                  "    pm.expect(body).to.have.property('message');",
+                  "    pm.expect(body).to.have.property('data');",
+                  "    pm.expect(body).to.not.have.property('error');",
+                  "});",
+                  "",
+                  "pm.collectionVariables.set('tokenB', body.data.accessToken);",
+                  "pm.collectionVariables.set('userBId', body.data.userId);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "외부 사용자 회원가입 201",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/signup",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "signup"
+              ]
+            },
+            "description": "403 을 확인하려면 어느 그룹에도 속하지 않은 사용자가 필요합니다. 이 계정은 끝까지 그룹에 들어가지 않으므로 모든 403 검사에 그대로 씁니다.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{outsiderEmail}}\",\n  \"password\": \"{{testPassword}}\",\n  \"nickname\": \"포스트맨외부인\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "",
+                  "pm.test('상태 코드 201 입니다', function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "",
+                  "pm.test('성공 봉투의 status 가 201 입니다', function () {",
+                  "    pm.expect(body.status).to.eql(201);",
+                  "});",
+                  "",
+                  "pm.test('성공 봉투에 message 와 data 가 있습니다', function () {",
+                  "    pm.expect(body).to.have.property('message');",
+                  "    pm.expect(body).to.have.property('data');",
+                  "    pm.expect(body).to.not.have.property('error');",
+                  "});",
+                  "",
+                  "pm.collectionVariables.set('tokenOutsider', body.data.accessToken);",
+                  "pm.collectionVariables.set('outsiderId', body.data.userId);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "로그인 200",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "login"
+              ]
+            },
+            "description": "명세 2장 인증 표의 로그인 규칙을 확인합니다. 앞에서 가입한 계정으로 다시 토큰을 받아 이후 요청이 쓰는 accessToken 을 갱신합니다.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{userAEmail}}\",\n  \"password\": \"{{testPassword}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "",
+                  "pm.test('상태 코드 200 입니다', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('성공 봉투의 status 가 200 입니다', function () {",
+                  "    pm.expect(body.status).to.eql(200);",
+                  "});",
+                  "",
+                  "pm.test('성공 봉투에 message 와 data 가 있습니다', function () {",
+                  "    pm.expect(body).to.have.property('message');",
+                  "    pm.expect(body).to.have.property('data');",
+                  "    pm.expect(body).to.not.have.property('error');",
+                  "});",
+                  "",
+                  "pm.test('data 에 accessToken 과 만료 시간이 있습니다', function () {",
+                  "    pm.expect(body.data.accessToken).to.be.a('string').and.not.empty;",
+                  "    pm.expect(body.data.expiresIn).to.be.a('number');",
+                  "    pm.expect(body.data.email).to.eql(pm.collectionVariables.get('userAEmail'));",
+                  "});",
+                  "",
+                  "pm.collectionVariables.set('accessToken', body.data.accessToken);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "로그인 실패 401",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "login"
+              ]
+            },
+            "description": "명세 4장의 AUTHENTICATION_FAILED 를 확인합니다. 어느 쪽이 틀렸는지 밝히지 않는다는 규칙에 따라 메시지가 이메일과 비밀번호를 구분해 말하지 않는지도 함께 봅니다.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{userAEmail}}\",\n  \"password\": \"wrong-password-0000\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "",
+                  "pm.test('상태 코드 401 입니다', function () {",
+                  "    pm.response.to.have.status(401);",
+                  "});",
+                  "",
+                  "pm.test('오류 봉투의 status 가 401 입니다', function () {",
+                  "    pm.expect(body.status).to.eql(401);",
+                  "});",
+                  "",
+                  "pm.test('error.code 가 AUTHENTICATION_FAILED 입니다', function () {",
+                  "    pm.expect(body.error.code).to.eql('AUTHENTICATION_FAILED');",
+                  "});",
+                  "",
+                  "pm.test('오류 봉투에 message 가 있고 details 가 배열입니다', function () {",
+                  "    pm.expect(body.message).to.be.a('string');",
+                  "    pm.expect(body.error.details).to.be.an('array');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "토큰 없이 보호된 자원 401",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/groups/me",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "groups",
+                "me"
+              ]
+            },
+            "description": "명세 4장의 UNAUTHORIZED 를 확인합니다. Authorization 헤더를 아예 붙이지 않아 인증이 필요한 자원이 401 로 막히는지 봅니다.",
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "",
+                  "pm.test('상태 코드 401 입니다', function () {",
+                  "    pm.response.to.have.status(401);",
+                  "});",
+                  "",
+                  "pm.test('오류 봉투의 status 가 401 입니다', function () {",
+                  "    pm.expect(body.status).to.eql(401);",
+                  "});",
+                  "",
+                  "pm.test('error.code 가 UNAUTHORIZED 입니다', function () {",
+                  "    pm.expect(body.error.code).to.eql('UNAUTHORIZED');",
+                  "});",
+                  "",
+                  "pm.test('오류 봉투에 message 가 있고 details 가 배열입니다', function () {",
+                  "    pm.expect(body.message).to.be.a('string');",
+                  "    pm.expect(body.error.details).to.be.an('array');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "2. 그룹과 초대",
+      "description": "명세 2장 UC-01 그룹 참여 표. 그룹 생성부터 초대 코드 발급, 확인, 참여, 소진까지 한 줄로 잇습니다.",
+      "item": [
+        {
+          "name": "그룹 생성 201",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/groups",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "groups"
+              ]
+            },
+            "description": "명세 2장 UC-01 표의 그룹 생성 규칙을 확인합니다. 생성자가 OWNER 구성원으로 함께 만들어지는지 봅니다.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"groupType\": \"COUPLE\",\n  \"name\": \"포스트맨 커플\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "",
+                  "pm.test('상태 코드 201 입니다', function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "",
+                  "pm.test('성공 봉투의 status 가 201 입니다', function () {",
+                  "    pm.expect(body.status).to.eql(201);",
+                  "});",
+                  "",
+                  "pm.test('성공 봉투에 message 와 data 가 있습니다', function () {",
+                  "    pm.expect(body).to.have.property('message');",
+                  "    pm.expect(body).to.have.property('data');",
+                  "    pm.expect(body).to.not.have.property('error');",
+                  "});",
+                  "",
+                  "pm.test('data 에 groupId 와 OWNER 구성원이 있습니다', function () {",
+                  "    pm.expect(body.data.groupId).to.be.a('number');",
+                  "    pm.expect(body.data.groupType).to.eql('COUPLE');",
+                  "    pm.expect(body.data.members).to.be.an('array').that.is.not.empty;",
+                  "    pm.expect(body.data.members[0].role).to.eql('OWNER');",
+                  "});",
+                  "",
+                  "pm.collectionVariables.set('groupId', body.data.groupId);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "이미 커플 소속 409",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/groups",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "groups"
+              ]
+            },
+            "description": "명세 4장의 COUPLE_GROUP_ALREADY_EXISTS 를 확인합니다. 한 사람이 커플 그룹 두 개에 속할 수 없다는 규칙이 애플리케이션에서 걸립니다.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"groupType\": \"COUPLE\",\n  \"name\": \"두 번째 커플\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "",
+                  "pm.test('상태 코드 409 입니다', function () {",
+                  "    pm.response.to.have.status(409);",
+                  "});",
+                  "",
+                  "pm.test('오류 봉투의 status 가 409 입니다', function () {",
+                  "    pm.expect(body.status).to.eql(409);",
+                  "});",
+                  "",
+                  "pm.test('error.code 가 COUPLE_GROUP_ALREADY_EXISTS 입니다', function () {",
+                  "    pm.expect(body.error.code).to.eql('COUPLE_GROUP_ALREADY_EXISTS');",
+                  "});",
+                  "",
+                  "pm.test('오류 봉투에 message 가 있고 details 가 배열입니다', function () {",
+                  "    pm.expect(body.message).to.be.a('string');",
+                  "    pm.expect(body.error.details).to.be.an('array');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "내 그룹 목록 200",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/groups/me",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "groups",
+                "me"
+              ]
+            },
+            "description": "명세 2장 UC-01 표의 내 그룹 목록을 확인합니다. 방금 만든 그룹이 목록에 들어 있는지 봅니다."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "",
+                  "pm.test('상태 코드 200 입니다', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('성공 봉투의 status 가 200 입니다', function () {",
+                  "    pm.expect(body.status).to.eql(200);",
+                  "});",
+                  "",
+                  "pm.test('성공 봉투에 message 와 data 가 있습니다', function () {",
+                  "    pm.expect(body).to.have.property('message');",
+                  "    pm.expect(body).to.have.property('data');",
+                  "    pm.expect(body).to.not.have.property('error');",
+                  "});",
+                  "",
+                  "pm.test('groups 에 방금 만든 그룹이 있습니다', function () {",
+                  "    pm.expect(body.data.groups).to.be.an('array');",
+                  "    const target = Number(pm.collectionVariables.get('groupId'));",
+                  "    const ids = body.data.groups.map(function (g) { return g.groupId; });",
+                  "    pm.expect(ids).to.include(target);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "초대 코드 발급 201",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/groups/{{groupId}}/invites",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "groups",
+                "{{groupId}}",
+                "invites"
+              ]
+            },
+            "description": "명세 2장 UC-01 표의 초대 코드 발급을 확인합니다. maxUses 를 1 로 두어 뒤에서 소진 410 을 이 실행이 만든 코드로 그대로 확인할 수 있게 합니다.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"maxUses\": 1,\n  \"expiresInHours\": 24\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "",
+                  "pm.test('상태 코드 201 입니다', function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "",
+                  "pm.test('성공 봉투의 status 가 201 입니다', function () {",
+                  "    pm.expect(body.status).to.eql(201);",
+                  "});",
+                  "",
+                  "pm.test('성공 봉투에 message 와 data 가 있습니다', function () {",
+                  "    pm.expect(body).to.have.property('message');",
+                  "    pm.expect(body).to.have.property('data');",
+                  "    pm.expect(body).to.not.have.property('error');",
+                  "});",
+                  "",
+                  "pm.test('code 와 사용 한도가 내려옵니다', function () {",
+                  "    pm.expect(body.data.code).to.be.a('string').and.not.empty;",
+                  "    pm.expect(body.data.maxUses).to.eql(1);",
+                  "    pm.expect(body.data.useCount).to.eql(0);",
+                  "    pm.expect(body.data.status).to.eql('ACTIVE');",
+                  "});",
+                  "",
+                  "pm.collectionVariables.set('inviteCode', body.data.code);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "남의 그룹에 초대 코드 발급 403",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/groups/{{groupId}}/invites",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "groups",
+                "{{groupId}}",
+                "invites"
+              ]
+            },
+            "description": "명세 4장의 GROUP_ACCESS_DENIED 를 확인합니다. 초대 코드 발급은 OWNER 만 할 수 있어 구성원이 아닌 사용자는 403 입니다.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"maxUses\": 1\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenOutsider}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "",
+                  "pm.test('상태 코드 403 입니다', function () {",
+                  "    pm.response.to.have.status(403);",
+                  "});",
+                  "",
+                  "pm.test('오류 봉투의 status 가 403 입니다', function () {",
+                  "    pm.expect(body.status).to.eql(403);",
+                  "});",
+                  "",
+                  "pm.test('error.code 가 GROUP_ACCESS_DENIED 입니다', function () {",
+                  "    pm.expect(body.error.code).to.eql('GROUP_ACCESS_DENIED');",
+                  "});",
+                  "",
+                  "pm.test('오류 봉투에 message 가 있고 details 가 배열입니다', function () {",
+                  "    pm.expect(body.message).to.be.a('string');",
+                  "    pm.expect(body.error.details).to.be.an('array');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "초대 코드 확인 200",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/invites/{{inviteCode}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "invites",
+                "{{inviteCode}}"
+              ]
+            },
+            "description": "명세 2장 UC-01 표의 코드 확인을 확인합니다. 어느 그룹에 들어가는지 수락 전에 알기 위한 공개 엔드포인트라 Authorization 헤더 없이 보냅니다.",
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "",
+                  "pm.test('상태 코드 200 입니다', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('성공 봉투의 status 가 200 입니다', function () {",
+                  "    pm.expect(body.status).to.eql(200);",
+                  "});",
+                  "",
+                  "pm.test('성공 봉투에 message 와 data 가 있습니다', function () {",
+                  "    pm.expect(body).to.have.property('message');",
+                  "    pm.expect(body).to.have.property('data');",
+                  "    pm.expect(body).to.not.have.property('error');",
+                  "});",
+                  "",
+                  "pm.test('들어갈 그룹과 사용 가능 여부가 내려옵니다', function () {",
+                  "    pm.expect(body.data.groupId).to.eql(Number(pm.collectionVariables.get('groupId')));",
+                  "    pm.expect(body.data.available).to.eql(true);",
+                  "    pm.expect(body.data.memberCount).to.be.a('number');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "없는 초대 코드 404",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/invites/{{missingInviteCode}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "invites",
+                "{{missingInviteCode}}"
+              ]
+            },
+            "description": "명세 4장의 INVITE_NOT_FOUND 를 확인합니다. 존재하지 않는 코드는 410 이 아니라 404 입니다.",
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "",
+                  "pm.test('상태 코드 404 입니다', function () {",
+                  "    pm.response.to.have.status(404);",
+                  "});",
+                  "",
+                  "pm.test('오류 봉투의 status 가 404 입니다', function () {",
+                  "    pm.expect(body.status).to.eql(404);",
+                  "});",
+                  "",
+                  "pm.test('error.code 가 INVITE_NOT_FOUND 입니다', function () {",
+                  "    pm.expect(body.error.code).to.eql('INVITE_NOT_FOUND');",
+                  "});",
+                  "",
+                  "pm.test('오류 봉투에 message 가 있고 details 가 배열입니다', function () {",
+                  "    pm.expect(body.message).to.be.a('string');",
+                  "    pm.expect(body.error.details).to.be.an('array');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "그룹 참여 201",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/groups/members",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "groups",
+                "members"
+              ]
+            },
+            "description": "명세 2장 UC-01 표의 그룹 참여를 확인합니다. 경로에 동사를 넣지 않고 구성원 리소스를 만드는 설계라 POST /api/groups/members 입니다.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"inviteCode\": \"{{inviteCode}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenB}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "",
+                  "pm.test('상태 코드 201 입니다', function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "",
+                  "pm.test('성공 봉투의 status 가 201 입니다', function () {",
+                  "    pm.expect(body.status).to.eql(201);",
+                  "});",
+                  "",
+                  "pm.test('성공 봉투에 message 와 data 가 있습니다', function () {",
+                  "    pm.expect(body).to.have.property('message');",
+                  "    pm.expect(body).to.have.property('data');",
+                  "    pm.expect(body).to.not.have.property('error');",
+                  "});",
+                  "",
+                  "pm.test('구성원이 두 명이 됩니다', function () {",
+                  "    pm.expect(body.data.groupId).to.eql(Number(pm.collectionVariables.get('groupId')));",
+                  "    pm.expect(body.data.members).to.have.lengthOf(2);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "소진된 코드 확인 410",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/invites/{{inviteCode}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "invites",
+                "{{inviteCode}}"
+              ]
+            },
+            "description": "명세 4장의 INVITE_UNAVAILABLE 을 확인합니다. 코드는 있지만 더 쓸 수 없다는 뜻이라 404 도 409 도 아닌 410 입니다. 바로 앞 참여가 maxUses 1 을 소진시켰습니다.",
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "",
+                  "pm.test('상태 코드 410 입니다', function () {",
+                  "    pm.response.to.have.status(410);",
+                  "});",
+                  "",
+                  "pm.test('오류 봉투의 status 가 410 입니다', function () {",
+                  "    pm.expect(body.status).to.eql(410);",
+                  "});",
+                  "",
+                  "pm.test('error.code 가 INVITE_UNAVAILABLE 입니다', function () {",
+                  "    pm.expect(body.error.code).to.eql('INVITE_UNAVAILABLE');",
+                  "});",
+                  "",
+                  "pm.test('오류 봉투에 message 가 있고 details 가 배열입니다', function () {",
+                  "    pm.expect(body.message).to.be.a('string');",
+                  "    pm.expect(body.error.details).to.be.an('array');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "소진된 코드로 참여 410",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/groups/members",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "groups",
+                "members"
+              ]
+            },
+            "description": "참여 엔드포인트에서도 소진된 코드가 410 인지 확인합니다. 이 요청은 실패하므로 외부 사용자는 그룹 밖에 남고, 뒤의 403 검사가 그대로 성립합니다.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"inviteCode\": \"{{inviteCode}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenOutsider}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "",
+                  "pm.test('상태 코드 410 입니다', function () {",
+                  "    pm.response.to.have.status(410);",
+                  "});",
+                  "",
+                  "pm.test('오류 봉투의 status 가 410 입니다', function () {",
+                  "    pm.expect(body.status).to.eql(410);",
+                  "});",
+                  "",
+                  "pm.test('error.code 가 INVITE_UNAVAILABLE 입니다', function () {",
+                  "    pm.expect(body.error.code).to.eql('INVITE_UNAVAILABLE');",
+                  "});",
+                  "",
+                  "pm.test('오류 봉투에 message 가 있고 details 가 배열입니다', function () {",
+                  "    pm.expect(body.message).to.be.a('string');",
+                  "    pm.expect(body.error.details).to.be.an('array');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "3. 장소와 우리 지도",
+      "description": "명세 2장 UC-03 장소와 UC-07 우리 지도 표. 검색으로 얻은 placeId 를 담고 조회합니다.",
+      "item": [
+        {
+          "name": "장소 검색 200",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/places?query={{searchKeyword}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "places"
+              ],
+              "query": [
+                {
+                  "key": "query",
+                  "value": "{{searchKeyword}}"
+                }
+              ]
+            },
+            "description": "명세 2장 UC-03 표의 장소 검색을 확인합니다. 이름과 주소를 함께 훑는 검색이라 지역명으로도 결과가 나옵니다. 뒤 요청이 쓸 placeId 를 여기서 뽑아 하드코딩한 식별자를 없앱니다."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "",
+                  "pm.test('상태 코드 200 입니다', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('성공 봉투의 status 가 200 입니다', function () {",
+                  "    pm.expect(body.status).to.eql(200);",
+                  "});",
+                  "",
+                  "pm.test('성공 봉투에 message 와 data 가 있습니다', function () {",
+                  "    pm.expect(body).to.have.property('message');",
+                  "    pm.expect(body).to.have.property('data');",
+                  "    pm.expect(body).to.not.have.property('error');",
+                  "});",
+                  "",
+                  "pm.test('페이지 정보와 결과가 내려옵니다', function () {",
+                  "    pm.expect(body.data.content).to.be.an('array').that.is.not.empty;",
+                  "    pm.expect(body.data.page).to.be.a('number');",
+                  "    pm.expect(body.data.totalElements).to.be.a('number');",
+                  "});",
+                  "",
+                  "pm.test('결과 항목에 좌표와 지역이 있습니다', function () {",
+                  "    const first = body.data.content[0];",
+                  "    pm.expect(first.placeId).to.be.a('number');",
+                  "    pm.expect(first.latitude).to.be.a('number');",
+                  "    pm.expect(first.longitude).to.be.a('number');",
+                  "});",
+                  "",
+                  "pm.collectionVariables.set('placeId', body.data.content[0].placeId);",
+                  "pm.collectionVariables.set('placeName', body.data.content[0].name);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "검색어 누락 400",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/places",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "places"
+              ]
+            },
+            "description": "명세 4장의 SEARCH_QUERY_REQUIRED 를 확인합니다. query 파라미터가 비면 검색을 시작하지 않습니다."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "",
+                  "pm.test('상태 코드 400 입니다', function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});",
+                  "",
+                  "pm.test('오류 봉투의 status 가 400 입니다', function () {",
+                  "    pm.expect(body.status).to.eql(400);",
+                  "});",
+                  "",
+                  "pm.test('error.code 가 SEARCH_QUERY_REQUIRED 입니다', function () {",
+                  "    pm.expect(body.error.code).to.eql('SEARCH_QUERY_REQUIRED');",
+                  "});",
+                  "",
+                  "pm.test('오류 봉투에 message 가 있고 details 가 배열입니다', function () {",
+                  "    pm.expect(body.message).to.be.a('string');",
+                  "    pm.expect(body.error.details).to.be.an('array');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "장소 상세 200",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/places/{{placeId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "places",
+                "{{placeId}}"
+              ]
+            },
+            "description": "명세 2장 UC-03 표의 장소 상세를 확인합니다. 검색 결과 항목에 태그 집계가 더 붙습니다."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "",
+                  "pm.test('상태 코드 200 입니다', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('성공 봉투의 status 가 200 입니다', function () {",
+                  "    pm.expect(body.status).to.eql(200);",
+                  "});",
+                  "",
+                  "pm.test('성공 봉투에 message 와 data 가 있습니다', function () {",
+                  "    pm.expect(body).to.have.property('message');",
+                  "    pm.expect(body).to.have.property('data');",
+                  "    pm.expect(body).to.not.have.property('error');",
+                  "});",
+                  "",
+                  "pm.test('검색 결과 항목에 tags 가 더 붙습니다', function () {",
+                  "    pm.expect(body.data.placeId).to.eql(Number(pm.collectionVariables.get('placeId')));",
+                  "    pm.expect(body.data.tags).to.be.an('array');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "없는 장소 상세 404",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/places/{{missingPlaceId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "places",
+                "{{missingPlaceId}}"
+              ]
+            },
+            "description": "명세 4장의 PLACE_NOT_FOUND 를 확인합니다."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "",
+                  "pm.test('상태 코드 404 입니다', function () {",
+                  "    pm.response.to.have.status(404);",
+                  "});",
+                  "",
+                  "pm.test('오류 봉투의 status 가 404 입니다', function () {",
+                  "    pm.expect(body.status).to.eql(404);",
+                  "});",
+                  "",
+                  "pm.test('error.code 가 PLACE_NOT_FOUND 입니다', function () {",
+                  "    pm.expect(body.error.code).to.eql('PLACE_NOT_FOUND');",
+                  "});",
+                  "",
+                  "pm.test('오류 봉투에 message 가 있고 details 가 배열입니다', function () {",
+                  "    pm.expect(body.message).to.be.a('string');",
+                  "    pm.expect(body.error.details).to.be.an('array');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "우리 지도에 담기 201",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/groups/{{groupId}}/places",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "groups",
+                "{{groupId}}",
+                "places"
+              ]
+            },
+            "description": "명세 2장 UC-03 표의 우리 지도에 담기를 확인합니다. 담는 것과 리뷰를 쓰는 것은 별개 단계라 담기만 하면 label 이 null 이어야 합니다. 이 검사가 그 규칙을 직접 겨냥합니다.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"placeId\": {{placeId}}\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "",
+                  "pm.test('상태 코드 201 입니다', function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "",
+                  "pm.test('성공 봉투의 status 가 201 입니다', function () {",
+                  "    pm.expect(body.status).to.eql(201);",
+                  "});",
+                  "",
+                  "pm.test('성공 봉투에 message 와 data 가 있습니다', function () {",
+                  "    pm.expect(body).to.have.property('message');",
+                  "    pm.expect(body).to.have.property('data');",
+                  "    pm.expect(body).to.not.have.property('error');",
+                  "});",
+                  "",
+                  "pm.test('담기만 했으므로 label 이 null 입니다', function () {",
+                  "    pm.expect(body.data.groupPlaceId).to.be.a('number');",
+                  "    pm.expect(body.data.placeId).to.eql(Number(pm.collectionVariables.get('placeId')));",
+                  "    pm.expect(body.data.label).to.eql(null);",
+                  "});",
+                  "",
+                  "pm.collectionVariables.set('groupPlaceId', body.data.groupPlaceId);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "이미 담은 장소 409",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/groups/{{groupId}}/places",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "groups",
+                "{{groupId}}",
+                "places"
+              ]
+            },
+            "description": "명세 4장의 PLACE_ALREADY_ADDED 를 확인합니다. UQ (group_id, place_id) 제약에서 나오는 409 입니다.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"placeId\": {{placeId}}\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "",
+                  "pm.test('상태 코드 409 입니다', function () {",
+                  "    pm.response.to.have.status(409);",
+                  "});",
+                  "",
+                  "pm.test('오류 봉투의 status 가 409 입니다', function () {",
+                  "    pm.expect(body.status).to.eql(409);",
+                  "});",
+                  "",
+                  "pm.test('error.code 가 PLACE_ALREADY_ADDED 입니다', function () {",
+                  "    pm.expect(body.error.code).to.eql('PLACE_ALREADY_ADDED');",
+                  "});",
+                  "",
+                  "pm.test('오류 봉투에 message 가 있고 details 가 배열입니다', function () {",
+                  "    pm.expect(body.message).to.be.a('string');",
+                  "    pm.expect(body.error.details).to.be.an('array');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "우리 지도 조회 200",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/groups/{{groupId}}/places",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "groups",
+                "{{groupId}}",
+                "places"
+              ]
+            },
+            "description": "명세 2장 UC-07 표의 지도 조회를 확인합니다. 방금 담은 장소가 마커로 나오는지 봅니다."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "",
+                  "pm.test('상태 코드 200 입니다', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('성공 봉투의 status 가 200 입니다', function () {",
+                  "    pm.expect(body.status).to.eql(200);",
+                  "});",
+                  "",
+                  "pm.test('성공 봉투에 message 와 data 가 있습니다', function () {",
+                  "    pm.expect(body).to.have.property('message');",
+                  "    pm.expect(body).to.have.property('data');",
+                  "    pm.expect(body).to.not.have.property('error');",
+                  "});",
+                  "",
+                  "pm.test('markers 에 방금 담은 장소가 있습니다', function () {",
+                  "    pm.expect(body.data.markers).to.be.an('array').that.is.not.empty;",
+                  "    const ids = body.data.markers.map(function (m) { return m.placeId; });",
+                  "    pm.expect(ids).to.include(Number(pm.collectionVariables.get('placeId')));",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "핀 상세 200",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/groups/{{groupId}}/places/{{placeId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "groups",
+                "{{groupId}}",
+                "places",
+                "{{placeId}}"
+              ]
+            },
+            "description": "명세 2장 UC-07 표의 핀 상세를 확인합니다. 아직 리뷰가 없으므로 label 이 null 이고 visits 와 reviews 가 배열로 내려옵니다."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "",
+                  "pm.test('상태 코드 200 입니다', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('성공 봉투의 status 가 200 입니다', function () {",
+                  "    pm.expect(body.status).to.eql(200);",
+                  "});",
+                  "",
+                  "pm.test('성공 봉투에 message 와 data 가 있습니다', function () {",
+                  "    pm.expect(body).to.have.property('message');",
+                  "    pm.expect(body).to.have.property('data');",
+                  "    pm.expect(body).to.not.have.property('error');",
+                  "});",
+                  "",
+                  "pm.test('핀 상세에 방문 이력과 리뷰 배열이 있습니다', function () {",
+                  "    pm.expect(body.data.groupPlaceId).to.be.a('number');",
+                  "    pm.expect(body.data.place).to.be.an('object');",
+                  "    pm.expect(body.data.visits).to.be.an('array');",
+                  "    pm.expect(body.data.reviews).to.be.an('array');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "내 그룹 아닌 지도 조회 403",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/groups/{{groupId}}/places",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "groups",
+                "{{groupId}}",
+                "places"
+              ]
+            },
+            "description": "명세 4장의 NOT_GROUP_MEMBER 를 확인합니다. 경로의 groupId 가 요청자의 그룹인지 매 요청 확인한다는 1장 규칙이 여기서 드러납니다.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenOutsider}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "",
+                  "pm.test('상태 코드 403 입니다', function () {",
+                  "    pm.response.to.have.status(403);",
+                  "});",
+                  "",
+                  "pm.test('오류 봉투의 status 가 403 입니다', function () {",
+                  "    pm.expect(body.status).to.eql(403);",
+                  "});",
+                  "",
+                  "pm.test('error.code 가 NOT_GROUP_MEMBER 입니다', function () {",
+                  "    pm.expect(body.error.code).to.eql('NOT_GROUP_MEMBER');",
+                  "});",
+                  "",
+                  "pm.test('오류 봉투에 message 가 있고 details 가 배열입니다', function () {",
+                  "    pm.expect(body.message).to.be.a('string');",
+                  "    pm.expect(body.error.details).to.be.an('array');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "4. 리뷰",
+      "description": "명세 2장 UC-04 리뷰 표. 저장과 조회, 그리고 중복과 범위 밖 별점을 봅니다.",
+      "item": [
+        {
+          "name": "리뷰 저장 201",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/reviews",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "reviews"
+              ]
+            },
+            "description": "명세 2장 UC-04 표의 리뷰 저장을 확인합니다. 태그 추출이 같은 트랜잭션에서 끝나므로 tagStatus 가 COMPLETED 이고, 3장 예시대로 각 태그에 사실(fact)과 바람(want)이 함께 붙습니다. 중복 409 검사에 쓸 visitedOn 을 응답에서 그대로 저장합니다.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"placeId\": {{placeId}},\n  \"withGroupId\": {{groupId}},\n  \"visitedOn\": \"{{visitedOn}}\",\n  \"rating\": 4,\n  \"content\": \"조용해서 얘기하기 좋았는데 웨이팅이 40분이었어요\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// 재실행을 대비해 오늘 날짜로 씁니다. 사용자 계정이 매번 새로 만들어지므로 중복되지 않습니다.",
+                  "const now = new Date();",
+                  "const pad = function (n) { return String(n).padStart(2, '0'); };",
+                  "pm.collectionVariables.set('visitedOn',",
+                  "    now.getFullYear() + '-' + pad(now.getMonth() + 1) + '-' + pad(now.getDate()));"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "",
+                  "pm.test('상태 코드 201 입니다', function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "",
+                  "pm.test('성공 봉투의 status 가 201 입니다', function () {",
+                  "    pm.expect(body.status).to.eql(201);",
+                  "});",
+                  "",
+                  "pm.test('성공 봉투에 message 와 data 가 있습니다', function () {",
+                  "    pm.expect(body).to.have.property('message');",
+                  "    pm.expect(body).to.have.property('data');",
+                  "    pm.expect(body).to.not.have.property('error');",
+                  "});",
+                  "",
+                  "pm.test('tagStatus 가 COMPLETED 입니다', function () {",
+                  "    pm.expect(body.data.reviewId).to.be.a('number');",
+                  "    pm.expect(body.data.tagStatus).to.eql('COMPLETED');",
+                  "});",
+                  "",
+                  "pm.test('tags 의 모든 항목에 fact 와 want 가 있습니다', function () {",
+                  "    pm.expect(body.data.tags).to.be.an('array').that.is.not.empty;",
+                  "    body.data.tags.forEach(function (t) {",
+                  "        pm.expect(t).to.have.property('fact');",
+                  "        pm.expect(t).to.have.property('want');",
+                  "        pm.expect(t.fact, 'fact 가 비어 있습니다: ' + t.tag).to.not.eql(null);",
+                  "        pm.expect(t.want, 'want 가 비어 있습니다: ' + t.tag).to.not.eql(null);",
+                  "    });",
+                  "});",
+                  "",
+                  "pm.test('placeLabel 에 몇 명 기준인지가 함께 옵니다', function () {",
+                  "    pm.expect(body.data.placeLabel.reviewedCount).to.be.a('number');",
+                  "    pm.expect(body.data.placeLabel.likedCount).to.be.a('number');",
+                  "});",
+                  "",
+                  "pm.collectionVariables.set('reviewId', body.data.reviewId);",
+                  "pm.collectionVariables.set('visitedOn', body.data.visitedOn);",
+                  "pm.collectionVariables.set('reportMonth', String(body.data.visitedOn).slice(0, 7));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "같은 날 같은 장소 중복 409",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/reviews",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "reviews"
+              ]
+            },
+            "description": "명세 4장의 REVIEW_DUPLICATED 를 확인합니다. UQ (user_id, place_id, visited_on) 제약에서 나오는 409 입니다. 앞 요청이 저장한 visitedOn 을 그대로 다시 보내므로 시드 날짜에 기대지 않습니다.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"placeId\": {{placeId}},\n  \"withGroupId\": {{groupId}},\n  \"visitedOn\": \"{{visitedOn}}\",\n  \"rating\": 5,\n  \"content\": \"같은 날 같은 장소에 한 번 더 씁니다\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "",
+                  "pm.test('상태 코드 409 입니다', function () {",
+                  "    pm.response.to.have.status(409);",
+                  "});",
+                  "",
+                  "pm.test('오류 봉투의 status 가 409 입니다', function () {",
+                  "    pm.expect(body.status).to.eql(409);",
+                  "});",
+                  "",
+                  "pm.test('error.code 가 REVIEW_DUPLICATED 입니다', function () {",
+                  "    pm.expect(body.error.code).to.eql('REVIEW_DUPLICATED');",
+                  "});",
+                  "",
+                  "pm.test('오류 봉투에 message 가 있고 details 가 배열입니다', function () {",
+                  "    pm.expect(body.message).to.be.a('string');",
+                  "    pm.expect(body.error.details).to.be.an('array');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "별점 범위 밖 422",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/reviews",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "reviews"
+              ]
+            },
+            "description": "명세 4장의 RATING_OUT_OF_RANGE 를 확인합니다. CHECK (rating BETWEEN 1 AND 5) 에서 나오며, 형식은 맞고 값이 처리 불가라 400 이 아니라 422 입니다.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"placeId\": {{placeId}},\n  \"withGroupId\": {{groupId}},\n  \"visitedOn\": \"2026-12-25\",\n  \"rating\": 9,\n  \"content\": \"별점을 범위 밖으로 보냅니다\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "",
+                  "pm.test('상태 코드 422 입니다', function () {",
+                  "    pm.response.to.have.status(422);",
+                  "});",
+                  "",
+                  "pm.test('오류 봉투의 status 가 422 입니다', function () {",
+                  "    pm.expect(body.status).to.eql(422);",
+                  "});",
+                  "",
+                  "pm.test('error.code 가 RATING_OUT_OF_RANGE 입니다', function () {",
+                  "    pm.expect(body.error.code).to.eql('RATING_OUT_OF_RANGE');",
+                  "});",
+                  "",
+                  "pm.test('오류 봉투에 message 가 있고 details 가 배열입니다', function () {",
+                  "    pm.expect(body.message).to.be.a('string');",
+                  "    pm.expect(body.error.details).to.be.an('array');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "없는 장소에 리뷰 404",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/reviews",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "reviews"
+              ]
+            },
+            "description": "명세 2장 UC-04 표의 404 장소 없음을 확인합니다. 오류 코드는 PLACE_NOT_FOUND 입니다.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"placeId\": {{missingPlaceId}},\n  \"withGroupId\": {{groupId}},\n  \"visitedOn\": \"2026-12-25\",\n  \"rating\": 4,\n  \"content\": \"없는 장소에 리뷰를 씁니다\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "",
+                  "pm.test('상태 코드 404 입니다', function () {",
+                  "    pm.response.to.have.status(404);",
+                  "});",
+                  "",
+                  "pm.test('오류 봉투의 status 가 404 입니다', function () {",
+                  "    pm.expect(body.status).to.eql(404);",
+                  "});",
+                  "",
+                  "pm.test('error.code 가 PLACE_NOT_FOUND 입니다', function () {",
+                  "    pm.expect(body.error.code).to.eql('PLACE_NOT_FOUND');",
+                  "});",
+                  "",
+                  "pm.test('오류 봉투에 message 가 있고 details 가 배열입니다', function () {",
+                  "    pm.expect(body.message).to.be.a('string');",
+                  "    pm.expect(body.error.details).to.be.an('array');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "내 그룹 아닌 곳에 리뷰 403",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/reviews",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "reviews"
+              ]
+            },
+            "description": "명세 2장 UC-04 표의 403 내 그룹 아님을 확인합니다. withGroupId 가 내 그룹인지 확인하므로 외부 사용자는 NOT_GROUP_MEMBER 입니다.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"placeId\": {{placeId}},\n  \"withGroupId\": {{groupId}},\n  \"visitedOn\": \"2026-12-25\",\n  \"rating\": 4,\n  \"content\": \"남의 그룹에 리뷰를 씁니다\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenOutsider}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "",
+                  "pm.test('상태 코드 403 입니다', function () {",
+                  "    pm.response.to.have.status(403);",
+                  "});",
+                  "",
+                  "pm.test('오류 봉투의 status 가 403 입니다', function () {",
+                  "    pm.expect(body.status).to.eql(403);",
+                  "});",
+                  "",
+                  "pm.test('error.code 가 NOT_GROUP_MEMBER 입니다', function () {",
+                  "    pm.expect(body.error.code).to.eql('NOT_GROUP_MEMBER');",
+                  "});",
+                  "",
+                  "pm.test('오류 봉투에 message 가 있고 details 가 배열입니다', function () {",
+                  "    pm.expect(body.message).to.be.a('string');",
+                  "    pm.expect(body.error.details).to.be.an('array');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "리뷰 조회 200",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/reviews/{{reviewId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "reviews",
+                "{{reviewId}}"
+              ]
+            },
+            "description": "명세 2장 UC-04 표의 리뷰 조회를 확인합니다. 저장 응답과 같은 모양이 나오는지 봅니다."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "",
+                  "pm.test('상태 코드 200 입니다', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('성공 봉투의 status 가 200 입니다', function () {",
+                  "    pm.expect(body.status).to.eql(200);",
+                  "});",
+                  "",
+                  "pm.test('성공 봉투에 message 와 data 가 있습니다', function () {",
+                  "    pm.expect(body).to.have.property('message');",
+                  "    pm.expect(body).to.have.property('data');",
+                  "    pm.expect(body).to.not.have.property('error');",
+                  "});",
+                  "",
+                  "pm.test('저장 응답과 같은 모양입니다', function () {",
+                  "    pm.expect(body.data.reviewId).to.eql(Number(pm.collectionVariables.get('reviewId')));",
+                  "    pm.expect(body.data.visitedOn).to.eql(pm.collectionVariables.get('visitedOn'));",
+                  "    pm.expect(body.data.tags).to.be.an('array');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "남의 리뷰 조회 403",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/reviews/{{reviewId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "reviews",
+                "{{reviewId}}"
+              ]
+            },
+            "description": "명세 4장의 REVIEW_ACCESS_DENIED 를 확인합니다. 리뷰 조회는 내가 쓴 것만 열립니다.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenOutsider}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "",
+                  "pm.test('상태 코드 403 입니다', function () {",
+                  "    pm.response.to.have.status(403);",
+                  "});",
+                  "",
+                  "pm.test('오류 봉투의 status 가 403 입니다', function () {",
+                  "    pm.expect(body.status).to.eql(403);",
+                  "});",
+                  "",
+                  "pm.test('error.code 가 REVIEW_ACCESS_DENIED 입니다', function () {",
+                  "    pm.expect(body.error.code).to.eql('REVIEW_ACCESS_DENIED');",
+                  "});",
+                  "",
+                  "pm.test('오류 봉투에 message 가 있고 details 가 배열입니다', function () {",
+                  "    pm.expect(body.message).to.be.a('string');",
+                  "    pm.expect(body.error.details).to.be.an('array');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "없는 리뷰 조회 404",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/reviews/{{missingReviewId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "reviews",
+                "{{missingReviewId}}"
+              ]
+            },
+            "description": "명세 4장의 REVIEW_NOT_FOUND 를 확인합니다."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "",
+                  "pm.test('상태 코드 404 입니다', function () {",
+                  "    pm.response.to.have.status(404);",
+                  "});",
+                  "",
+                  "pm.test('오류 봉투의 status 가 404 입니다', function () {",
+                  "    pm.expect(body.status).to.eql(404);",
+                  "});",
+                  "",
+                  "pm.test('error.code 가 REVIEW_NOT_FOUND 입니다', function () {",
+                  "    pm.expect(body.error.code).to.eql('REVIEW_NOT_FOUND');",
+                  "});",
+                  "",
+                  "pm.test('오류 봉투에 message 가 있고 details 가 배열입니다', function () {",
+                  "    pm.expect(body.message).to.be.a('string');",
+                  "    pm.expect(body.error.details).to.be.an('array');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "장소의 그룹 리뷰 200",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/groups/{{groupId}}/places/{{placeId}}/reviews",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "groups",
+                "{{groupId}}",
+                "places",
+                "{{placeId}}",
+                "reviews"
+              ]
+            },
+            "description": "명세 2장 UC-04 표의 장소의 그룹 리뷰를 확인합니다. 남의 리뷰가 안 보이는 것은 권한이 아니라 상태라 403 이 아니라 200 이고, otherReviewsLocked 가 그 상태를 알립니다."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "",
+                  "pm.test('상태 코드 200 입니다', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('성공 봉투의 status 가 200 입니다', function () {",
+                  "    pm.expect(body.status).to.eql(200);",
+                  "});",
+                  "",
+                  "pm.test('성공 봉투에 message 와 data 가 있습니다', function () {",
+                  "    pm.expect(body).to.have.property('message');",
+                  "    pm.expect(body).to.have.property('data');",
+                  "    pm.expect(body).to.not.have.property('error');",
+                  "});",
+                  "",
+                  "pm.test('otherReviewsLocked 가 boolean 입니다', function () {",
+                  "    pm.expect(body.data.otherReviewsLocked).to.be.a('boolean');",
+                  "    pm.expect(body.data.otherReviews).to.be.an('array');",
+                  "});",
+                  "",
+                  "pm.test('내 리뷰와 집계 카운트가 함께 옵니다', function () {",
+                  "    pm.expect(body.data.myReview).to.be.an('object');",
+                  "    pm.expect(body.data.reviewedCount).to.be.a('number');",
+                  "    pm.expect(body.data.likedCount).to.be.a('number');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "5. 우리 취향",
+      "description": "명세 2장 UC-05 우리 취향 표. 판정 분모인 judgedMemberCount 가 함께 오는지 봅니다.",
+      "item": [
+        {
+          "name": "그룹 취향 조회 200",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/groups/{{groupId}}/preferences",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "groups",
+                "{{groupId}}",
+                "preferences"
+              ]
+            },
+            "description": "명세 2장 UC-05 표의 그룹 취향 조회를 확인합니다. 판정이 난 구성원 수를 분모로 삼는 설계라 각 항목에 judgedMemberCount 가 함께 내려와야 합니다."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "",
+                  "pm.test('상태 코드 200 입니다', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('성공 봉투의 status 가 200 입니다', function () {",
+                  "    pm.expect(body.status).to.eql(200);",
+                  "});",
+                  "",
+                  "pm.test('성공 봉투에 message 와 data 가 있습니다', function () {",
+                  "    pm.expect(body).to.have.property('message');",
+                  "    pm.expect(body).to.have.property('data');",
+                  "    pm.expect(body).to.not.have.property('error');",
+                  "});",
+                  "",
+                  "pm.test('preferences 가 배열입니다', function () {",
+                  "    pm.expect(body.data.groupId).to.eql(Number(pm.collectionVariables.get('groupId')));",
+                  "    pm.expect(body.data.preferences).to.be.an('array');",
+                  "});",
+                  "",
+                  "pm.test('각 항목에 judgedMemberCount 와 label 이 있습니다', function () {",
+                  "    body.data.preferences.forEach(function (p) {",
+                  "        pm.expect(p).to.have.property('judgedMemberCount');",
+                  "        pm.expect(p.judgedMemberCount).to.be.a('number');",
+                  "        pm.expect(['ALL_SAME', 'ONE_SIDED', 'SPLIT']).to.include(p.label);",
+                  "        pm.expect(p.members).to.be.an('array');",
+                  "    });",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "내 그룹 아닌 취향 조회 403",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/groups/{{groupId}}/preferences",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "groups",
+                "{{groupId}}",
+                "preferences"
+              ]
+            },
+            "description": "명세 2장 UC-05 표의 403 을 확인합니다. 오류 코드는 NOT_GROUP_MEMBER 입니다.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenOutsider}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "",
+                  "pm.test('상태 코드 403 입니다', function () {",
+                  "    pm.response.to.have.status(403);",
+                  "});",
+                  "",
+                  "pm.test('오류 봉투의 status 가 403 입니다', function () {",
+                  "    pm.expect(body.status).to.eql(403);",
+                  "});",
+                  "",
+                  "pm.test('error.code 가 NOT_GROUP_MEMBER 입니다', function () {",
+                  "    pm.expect(body.error.code).to.eql('NOT_GROUP_MEMBER');",
+                  "});",
+                  "",
+                  "pm.test('오류 봉투에 message 가 있고 details 가 배열입니다', function () {",
+                  "    pm.expect(body.message).to.be.a('string');",
+                  "    pm.expect(body.error.details).to.be.an('array');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "6. 추천",
+      "description": "명세 2장 UC-06 추천 표. 접수 202 와 결과 조회 200 의 2단계를 봅니다.",
+      "item": [
+        {
+          "name": "추천 요청 202",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/groups/{{groupId}}/recommendation-requests",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "groups",
+                "{{groupId}}",
+                "recommendation-requests"
+              ]
+            },
+            "description": "명세 2장 UC-06 표의 추천 요청을 확인합니다. 요청은 받았지만 결과가 아직 없다는 뜻이라 201 이 아니라 202 이고, 접수 응답의 status 는 PENDING 입니다.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"query\": \"오늘 인사동 갈 건데 3곳 정도 추천해줘\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "",
+                  "pm.test('상태 코드 202 입니다', function () {",
+                  "    pm.response.to.have.status(202);",
+                  "});",
+                  "",
+                  "pm.test('성공 봉투의 status 가 202 입니다', function () {",
+                  "    pm.expect(body.status).to.eql(202);",
+                  "});",
+                  "",
+                  "pm.test('성공 봉투에 message 와 data 가 있습니다', function () {",
+                  "    pm.expect(body).to.have.property('message');",
+                  "    pm.expect(body).to.have.property('data');",
+                  "    pm.expect(body).to.not.have.property('error');",
+                  "});",
+                  "",
+                  "pm.test('접수 응답의 status 가 PENDING 입니다', function () {",
+                  "    pm.expect(body.data.requestId).to.be.a('number');",
+                  "    pm.expect(body.data.status).to.eql('PENDING');",
+                  "    pm.expect(body.data.createdAt).to.be.a('string');",
+                  "});",
+                  "",
+                  "pm.collectionVariables.set('requestId', body.data.requestId);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "지역 해석 실패 422",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/groups/{{groupId}}/recommendation-requests",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "groups",
+                "{{groupId}}",
+                "recommendation-requests"
+              ]
+            },
+            "description": "명세 4장의 REGION_NOT_FOUND 를 확인합니다. 질의 해석 규칙이 region 을 null 로 두면 형식은 맞지만 처리할 수 없다는 뜻이라 400 이 아니라 422 입니다.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"query\": \"세 곳 추천해줘\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "",
+                  "pm.test('상태 코드 422 입니다', function () {",
+                  "    pm.response.to.have.status(422);",
+                  "});",
+                  "",
+                  "pm.test('오류 봉투의 status 가 422 입니다', function () {",
+                  "    pm.expect(body.status).to.eql(422);",
+                  "});",
+                  "",
+                  "pm.test('error.code 가 REGION_NOT_FOUND 입니다', function () {",
+                  "    pm.expect(body.error.code).to.eql('REGION_NOT_FOUND');",
+                  "});",
+                  "",
+                  "pm.test('오류 봉투에 message 가 있고 details 가 배열입니다', function () {",
+                  "    pm.expect(body.message).to.be.a('string');",
+                  "    pm.expect(body.error.details).to.be.an('array');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "추천 결과 조회 200",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/recommendation-requests/{{requestId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "recommendation-requests",
+                "{{requestId}}"
+              ]
+            },
+            "description": "명세 2장 UC-06 표의 추천 결과 조회를 확인합니다. 화면이 status 로 스켈레톤과 결과를 가르고 cfWeight 로 문구를 가르므로 두 값이 모두 있어야 합니다."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "",
+                  "pm.test('상태 코드 200 입니다', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('성공 봉투의 status 가 200 입니다', function () {",
+                  "    pm.expect(body.status).to.eql(200);",
+                  "});",
+                  "",
+                  "pm.test('성공 봉투에 message 와 data 가 있습니다', function () {",
+                  "    pm.expect(body).to.have.property('message');",
+                  "    pm.expect(body).to.have.property('data');",
+                  "    pm.expect(body).to.not.have.property('error');",
+                  "});",
+                  "",
+                  "pm.test('접수한 요청이 그대로 조회됩니다', function () {",
+                  "    pm.expect(body.data.requestId).to.eql(Number(pm.collectionVariables.get('requestId')));",
+                  "    pm.expect(['PENDING', 'COMPLETED', 'FAILED']).to.include(body.data.status);",
+                  "});",
+                  "",
+                  "pm.test('규칙이 읽은 intent 와 후보 수가 옵니다', function () {",
+                  "    pm.expect(body.data.intent).to.be.an('object');",
+                  "    pm.expect(body.data.intent.region).to.eql('인사동');",
+                  "    pm.expect(body.data.candidateCount).to.be.a('number');",
+                  "    pm.expect(body.data.recommendations).to.be.an('array');",
+                  "});",
+                  "",
+                  "pm.test('cfWeight 가 0 과 1 사이입니다', function () {",
+                  "    pm.expect(body.data.cfWeight).to.be.a('number');",
+                  "    pm.expect(body.data.cfWeight).to.be.at.least(0);",
+                  "    pm.expect(body.data.cfWeight).to.be.at.most(1);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "없는 추천 요청 404",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/recommendation-requests/{{missingRequestId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "recommendation-requests",
+                "{{missingRequestId}}"
+              ]
+            },
+            "description": "명세 4장의 RECOMMENDATION_NOT_FOUND 를 확인합니다."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "",
+                  "pm.test('상태 코드 404 입니다', function () {",
+                  "    pm.response.to.have.status(404);",
+                  "});",
+                  "",
+                  "pm.test('오류 봉투의 status 가 404 입니다', function () {",
+                  "    pm.expect(body.status).to.eql(404);",
+                  "});",
+                  "",
+                  "pm.test('error.code 가 RECOMMENDATION_NOT_FOUND 입니다', function () {",
+                  "    pm.expect(body.error.code).to.eql('RECOMMENDATION_NOT_FOUND');",
+                  "});",
+                  "",
+                  "pm.test('오류 봉투에 message 가 있고 details 가 배열입니다', function () {",
+                  "    pm.expect(body.message).to.be.a('string');",
+                  "    pm.expect(body.error.details).to.be.an('array');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "내 그룹 아닌 추천 요청 403",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/groups/{{groupId}}/recommendation-requests",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "groups",
+                "{{groupId}}",
+                "recommendation-requests"
+              ]
+            },
+            "description": "명세 2장 UC-06 표의 403 을 확인합니다. 그룹 확인이 질의 해석보다 먼저라 422 가 아니라 403 입니다.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"query\": \"오늘 인사동 갈 건데 3곳 정도 추천해줘\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenOutsider}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "",
+                  "pm.test('상태 코드 403 입니다', function () {",
+                  "    pm.response.to.have.status(403);",
+                  "});",
+                  "",
+                  "pm.test('오류 봉투의 status 가 403 입니다', function () {",
+                  "    pm.expect(body.status).to.eql(403);",
+                  "});",
+                  "",
+                  "pm.test('error.code 가 NOT_GROUP_MEMBER 입니다', function () {",
+                  "    pm.expect(body.error.code).to.eql('NOT_GROUP_MEMBER');",
+                  "});",
+                  "",
+                  "pm.test('오류 봉투에 message 가 있고 details 가 배열입니다', function () {",
+                  "    pm.expect(body.message).to.be.a('string');",
+                  "    pm.expect(body.error.details).to.be.an('array');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "7. 월간 리포트",
+      "description": "명세 2장 UC-08 월간 리포트 표. 구독 전환과 리포트 2단계, 그리고 402 를 봅니다.",
+      "item": [
+        {
+          "name": "FREE 데모 계정 로그인 200",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "login"
+              ]
+            },
+            "description": "402 는 FREE 그룹에서만 나오는데 이 실행이 만든 그룹은 뒤에서 PREMIUM 으로 올라갑니다. 그래서 402 하나만 시드 데모 계정을 씁니다. 이 계정이 한 번도 프리미엄으로 전환된 적이 없어야 402 가 재현됩니다.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{freeAccountEmail}}\",\n  \"password\": \"{{freeAccountPassword}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "",
+                  "pm.test('상태 코드 200 입니다', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('성공 봉투의 status 가 200 입니다', function () {",
+                  "    pm.expect(body.status).to.eql(200);",
+                  "});",
+                  "",
+                  "pm.test('성공 봉투에 message 와 data 가 있습니다', function () {",
+                  "    pm.expect(body).to.have.property('message');",
+                  "    pm.expect(body).to.have.property('data');",
+                  "    pm.expect(body).to.not.have.property('error');",
+                  "});",
+                  "",
+                  "pm.collectionVariables.set('tokenFree', body.data.accessToken);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "FREE 데모 그룹 목록 200",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/groups/me",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "groups",
+                "me"
+              ]
+            },
+            "description": "402 를 보낼 대상 그룹을 API 로 찾습니다. 시드가 만든 그룹 번호를 하드코딩하지 않기 위한 단계입니다.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenFree}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "",
+                  "pm.test('상태 코드 200 입니다', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('성공 봉투의 status 가 200 입니다', function () {",
+                  "    pm.expect(body.status).to.eql(200);",
+                  "});",
+                  "",
+                  "pm.test('성공 봉투에 message 와 data 가 있습니다', function () {",
+                  "    pm.expect(body).to.have.property('message');",
+                  "    pm.expect(body).to.have.property('data');",
+                  "    pm.expect(body).to.not.have.property('error');",
+                  "});",
+                  "",
+                  "pm.test('FREE 데모 계정에 그룹이 있습니다', function () {",
+                  "    pm.expect(body.data.groups).to.be.an('array').that.is.not.empty;",
+                  "});",
+                  "",
+                  "pm.collectionVariables.set('freeGroupId', body.data.groups[0].groupId);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "FREE 그룹 리포트 요청 402",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/groups/{{freeGroupId}}/reports",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "groups",
+                "{{freeGroupId}}",
+                "reports"
+              ]
+            },
+            "description": "명세 4장의 PLAN_REQUIRED 를 확인합니다. 403 은 내 것이 아니라는 뜻이고 402 는 내 것인데 결제하면 열린다는 뜻이라 화면이 두 안내를 갈라야 해서 코드를 나눴습니다. 이 계정은 한 번도 프리미엄으로 전환하면 안 됩니다. 이미 올라가 있으면 402 대신 다른 코드가 오는데 그때는 실패가 아니라 건너뜀으로 알립니다.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"month\": \"2026-08\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenFree}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "",
+                  "if (pm.response.code === 402) {",
+                  "    pm.test('상태 코드 402 입니다', function () {",
+                  "        pm.response.to.have.status(402);",
+                  "    });",
+                  "    pm.test('오류 봉투의 status 가 402 입니다', function () {",
+                  "        pm.expect(body.status).to.eql(402);",
+                  "    });",
+                  "    pm.test('error.code 가 PLAN_REQUIRED 입니다', function () {",
+                  "        pm.expect(body.error.code).to.eql('PLAN_REQUIRED');",
+                  "    });",
+                  "    pm.test('details[0].field 가 plan 입니다', function () {",
+                  "        pm.expect(body.error.details).to.be.an('array').that.is.not.empty;",
+                  "        pm.expect(body.error.details[0].field).to.eql('plan');",
+                  "        pm.expect(body.error.details[0].reason).to.be.a('string').and.not.empty;",
+                  "    });",
+                  "} else {",
+                  "    console.log('건너뜁니다: ' + pm.collectionVariables.get('freeAccountEmail') +",
+                  "        ' 그룹이 이미 PREMIUM 으로 올라가 402 를 만들 수 없습니다. 응답 코드 ' + pm.response.code);",
+                  "    pm.test('건너뜀 - FREE 계정이 이미 PREMIUM 이라 402 를 만들 수 없습니다', function () {",
+                  "        pm.expect(pm.response.code, 'DB 를 초기화하고 scripts/seed-demo.sh 를 다시 돌리면 402 가 나옵니다')",
+                  "            .to.be.oneOf([402, 409, 202, 422]);",
+                  "    });",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "구독 전환 201",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/groups/{{groupId}}/subscriptions",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "groups",
+                "{{groupId}}",
+                "subscriptions"
+              ]
+            },
+            "description": "명세 2장 UC-08 표의 프리미엄 전환을 확인합니다. Mock 결제가 즉시 승인하므로 paymentRef 가 MOCK- 으로 시작합니다. 실제 PG 로 바꾸면 이 자리에 거래 ID 가 들어오고 모양은 그대로입니다.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"plan\": \"PREMIUM\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "",
+                  "pm.test('상태 코드 201 입니다', function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "",
+                  "pm.test('성공 봉투의 status 가 201 입니다', function () {",
+                  "    pm.expect(body.status).to.eql(201);",
+                  "});",
+                  "",
+                  "pm.test('성공 봉투에 message 와 data 가 있습니다', function () {",
+                  "    pm.expect(body).to.have.property('message');",
+                  "    pm.expect(body).to.have.property('data');",
+                  "    pm.expect(body).to.not.have.property('error');",
+                  "});",
+                  "",
+                  "pm.test('paymentRef 가 MOCK- 으로 시작합니다', function () {",
+                  "    pm.expect(body.data.paymentRef).to.be.a('string');",
+                  "    pm.expect(body.data.paymentRef).to.match(/^MOCK-/);",
+                  "});",
+                  "",
+                  "pm.test('플랜이 PREMIUM 으로 올라갔습니다', function () {",
+                  "    pm.expect(body.data.plan).to.eql('PREMIUM');",
+                  "    pm.expect(body.data.groupId).to.eql(Number(pm.collectionVariables.get('groupId')));",
+                  "    pm.expect(body.data.subscriptionId).to.be.a('number');",
+                  "});",
+                  "",
+                  "pm.collectionVariables.set('subscriptionId', body.data.subscriptionId);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "이미 PREMIUM 409",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/groups/{{groupId}}/subscriptions",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "groups",
+                "{{groupId}}",
+                "subscriptions"
+              ]
+            },
+            "description": "명세 4장의 ALREADY_PREMIUM 을 확인합니다. 중복 결제를 막는 것이 이 코드의 역할입니다.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"plan\": \"PREMIUM\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "",
+                  "pm.test('상태 코드 409 입니다', function () {",
+                  "    pm.response.to.have.status(409);",
+                  "});",
+                  "",
+                  "pm.test('오류 봉투의 status 가 409 입니다', function () {",
+                  "    pm.expect(body.status).to.eql(409);",
+                  "});",
+                  "",
+                  "pm.test('error.code 가 ALREADY_PREMIUM 입니다', function () {",
+                  "    pm.expect(body.error.code).to.eql('ALREADY_PREMIUM');",
+                  "});",
+                  "",
+                  "pm.test('오류 봉투에 message 가 있고 details 가 배열입니다', function () {",
+                  "    pm.expect(body.message).to.be.a('string');",
+                  "    pm.expect(body.error.details).to.be.an('array');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "PREMIUM 외의 플랜 400",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/groups/{{groupId}}/subscriptions",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "groups",
+                "{{groupId}}",
+                "subscriptions"
+              ]
+            },
+            "description": "명세 4장의 INVALID_PLAN 을 확인합니다. 플랜 값 검사가 이미 PREMIUM 인지 검사보다 먼저라 전환이 끝난 그룹에서도 409 가 아니라 400 이 나옵니다.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"plan\": \"BASIC\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "",
+                  "pm.test('상태 코드 400 입니다', function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});",
+                  "",
+                  "pm.test('오류 봉투의 status 가 400 입니다', function () {",
+                  "    pm.expect(body.status).to.eql(400);",
+                  "});",
+                  "",
+                  "pm.test('error.code 가 INVALID_PLAN 입니다', function () {",
+                  "    pm.expect(body.error.code).to.eql('INVALID_PLAN');",
+                  "});",
+                  "",
+                  "pm.test('오류 봉투에 message 가 있고 details 가 배열입니다', function () {",
+                  "    pm.expect(body.message).to.be.a('string');",
+                  "    pm.expect(body.error.details).to.be.an('array');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "그 달 기록 0건 422",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/groups/{{groupId}}/reports",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "groups",
+                "{{groupId}}",
+                "reports"
+              ]
+            },
+            "description": "명세 4장의 NO_VISITS_IN_MONTH 를 확인합니다. 형식은 맞지만 쓸 재료가 없다는 뜻이라 400 과 구분하며 추천의 지역 해석 실패와 같은 자리입니다.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"month\": \"{{emptyMonth}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "",
+                  "pm.test('상태 코드 422 입니다', function () {",
+                  "    pm.response.to.have.status(422);",
+                  "});",
+                  "",
+                  "pm.test('오류 봉투의 status 가 422 입니다', function () {",
+                  "    pm.expect(body.status).to.eql(422);",
+                  "});",
+                  "",
+                  "pm.test('error.code 가 NO_VISITS_IN_MONTH 입니다', function () {",
+                  "    pm.expect(body.error.code).to.eql('NO_VISITS_IN_MONTH');",
+                  "});",
+                  "",
+                  "pm.test('오류 봉투에 message 가 있고 details 가 배열입니다', function () {",
+                  "    pm.expect(body.message).to.be.a('string');",
+                  "    pm.expect(body.error.details).to.be.an('array');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "월 형식 오류 400",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/groups/{{groupId}}/reports",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "groups",
+                "{{groupId}}",
+                "reports"
+              ]
+            },
+            "description": "명세 4장의 INVALID_MONTH 를 확인합니다. YYYY-MM 모양은 맞지만 13월은 날짜로 읽히지 않아 서비스가 INVALID_MONTH 를 던집니다.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"month\": \"2026-13\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "",
+                  "pm.test('상태 코드 400 입니다', function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});",
+                  "",
+                  "pm.test('오류 봉투의 status 가 400 입니다', function () {",
+                  "    pm.expect(body.status).to.eql(400);",
+                  "});",
+                  "",
+                  "pm.test('error.code 가 INVALID_MONTH 입니다', function () {",
+                  "    pm.expect(body.error.code).to.eql('INVALID_MONTH');",
+                  "});",
+                  "",
+                  "pm.test('오류 봉투에 message 가 있고 details 가 배열입니다', function () {",
+                  "    pm.expect(body.message).to.be.a('string');",
+                  "    pm.expect(body.error.details).to.be.an('array');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "월 표기 자체가 틀리면 400",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/groups/{{groupId}}/reports",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "groups",
+                "{{groupId}}",
+                "reports"
+              ]
+            },
+            "description": "같은 400 이라도 오류 코드가 갈리는 자리를 남겨 둡니다. YYYY-MM 모양부터 어긋나면 서비스에 닿기 전 입력값 검증에서 걸려 VALIDATION_ERROR 입니다.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"month\": \"2026년 8월\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "",
+                  "pm.test('상태 코드 400 입니다', function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});",
+                  "",
+                  "pm.test('오류 봉투의 status 가 400 입니다', function () {",
+                  "    pm.expect(body.status).to.eql(400);",
+                  "});",
+                  "",
+                  "pm.test('error.code 가 VALIDATION_ERROR 입니다', function () {",
+                  "    pm.expect(body.error.code).to.eql('VALIDATION_ERROR');",
+                  "});",
+                  "",
+                  "pm.test('오류 봉투에 message 가 있고 details 가 배열입니다', function () {",
+                  "    pm.expect(body.message).to.be.a('string');",
+                  "    pm.expect(body.error.details).to.be.an('array');",
+                  "});",
+                  "",
+                  "pm.test('details 의 필드가 month 입니다', function () {",
+                  "    pm.expect(body.error.details).to.be.an('array').that.is.not.empty;",
+                  "    pm.expect(body.error.details[0].field).to.eql('month');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "리포트 생성 요청 202",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/groups/{{groupId}}/reports",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "groups",
+                "{{groupId}}",
+                "reports"
+              ]
+            },
+            "description": "명세 2장 UC-08 표의 리포트 생성 요청을 확인합니다. 집계는 SQL 로 끝나지만 문장은 시간이 걸려 PENDING 행을 먼저 돌려주는 2단계라 202 입니다. month 는 앞에서 저장한 리뷰의 달을 그대로 씁니다.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"month\": \"{{reportMonth}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "",
+                  "pm.test('상태 코드 202 입니다', function () {",
+                  "    pm.response.to.have.status(202);",
+                  "});",
+                  "",
+                  "pm.test('성공 봉투의 status 가 202 입니다', function () {",
+                  "    pm.expect(body.status).to.eql(202);",
+                  "});",
+                  "",
+                  "pm.test('성공 봉투에 message 와 data 가 있습니다', function () {",
+                  "    pm.expect(body).to.have.property('message');",
+                  "    pm.expect(body).to.have.property('data');",
+                  "    pm.expect(body).to.not.have.property('error');",
+                  "});",
+                  "",
+                  "pm.test('접수 응답에 reportId 와 상태가 있습니다', function () {",
+                  "    pm.expect(body.data.reportId).to.be.a('number');",
+                  "    pm.expect(body.data.groupId).to.eql(Number(pm.collectionVariables.get('groupId')));",
+                  "    pm.expect(body.data.reportMonth).to.be.a('string');",
+                  "    pm.expect(['PENDING', 'COMPLETED']).to.include(body.data.status);",
+                  "});",
+                  "",
+                  "pm.collectionVariables.set('reportId', body.data.reportId);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "같은 달 재요청 409",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/groups/{{groupId}}/reports",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "groups",
+                "{{groupId}}",
+                "reports"
+              ]
+            },
+            "description": "명세 4장의 REPORT_ALREADY_EXISTS 를 확인합니다. UQ (group_id, report_month) 에서 나오고 details 에 기존 reportId 를 실어 보내 화면이 새로 만드는 대신 그 리포트를 엽니다. 앞 요청의 리포트가 FAILED 로 끝난 경우에는 명세대로 재시도가 접수되어 202 가 나옵니다.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"month\": \"{{reportMonth}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "",
+                  "pm.test('상태 코드 409 입니다', function () {",
+                  "    pm.response.to.have.status(409);",
+                  "});",
+                  "",
+                  "pm.test('오류 봉투의 status 가 409 입니다', function () {",
+                  "    pm.expect(body.status).to.eql(409);",
+                  "});",
+                  "",
+                  "pm.test('error.code 가 REPORT_ALREADY_EXISTS 입니다', function () {",
+                  "    pm.expect(body.error.code).to.eql('REPORT_ALREADY_EXISTS');",
+                  "});",
+                  "",
+                  "pm.test('오류 봉투에 message 가 있고 details 가 배열입니다', function () {",
+                  "    pm.expect(body.message).to.be.a('string');",
+                  "    pm.expect(body.error.details).to.be.an('array');",
+                  "});",
+                  "",
+                  "pm.test('details 에 기존 reportId 가 실려 옵니다', function () {",
+                  "    pm.expect(body.error.details).to.be.an('array').that.is.not.empty;",
+                  "    const reason = body.error.details[0].reason;",
+                  "    pm.expect(reason).to.include(String(pm.collectionVariables.get('reportId')));",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "리포트 목록 200",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/groups/{{groupId}}/reports",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "groups",
+                "{{groupId}}",
+                "reports"
+              ]
+            },
+            "description": "명세 2장 UC-08 표의 리포트 목록을 확인합니다. 목록에는 플랜 조건이 없고 현재 플랜이 함께 옵니다."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "",
+                  "pm.test('상태 코드 200 입니다', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('성공 봉투의 status 가 200 입니다', function () {",
+                  "    pm.expect(body.status).to.eql(200);",
+                  "});",
+                  "",
+                  "pm.test('성공 봉투에 message 와 data 가 있습니다', function () {",
+                  "    pm.expect(body).to.have.property('message');",
+                  "    pm.expect(body).to.have.property('data');",
+                  "    pm.expect(body).to.not.have.property('error');",
+                  "});",
+                  "",
+                  "pm.test('plan 과 reports 가 함께 옵니다', function () {",
+                  "    pm.expect(body.data.plan).to.eql('PREMIUM');",
+                  "    pm.expect(body.data.reports).to.be.an('array').that.is.not.empty;",
+                  "    const ids = body.data.reports.map(function (r) { return r.reportId; });",
+                  "    pm.expect(ids).to.include(Number(pm.collectionVariables.get('reportId')));",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "리포트 단건 조회 200",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/reports/{{reportId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "reports",
+                "{{reportId}}"
+              ]
+            },
+            "description": "명세 2장 UC-08 표의 리포트 조회를 확인합니다. status 가 PENDING 이면 content 가 null 이고 COMPLETED 면 제목과 요약이 채워집니다."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "",
+                  "pm.test('상태 코드 200 입니다', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('성공 봉투의 status 가 200 입니다', function () {",
+                  "    pm.expect(body.status).to.eql(200);",
+                  "});",
+                  "",
+                  "pm.test('성공 봉투에 message 와 data 가 있습니다', function () {",
+                  "    pm.expect(body).to.have.property('message');",
+                  "    pm.expect(body).to.have.property('data');",
+                  "    pm.expect(body).to.not.have.property('error');",
+                  "});",
+                  "",
+                  "pm.test('접수한 리포트가 그대로 조회됩니다', function () {",
+                  "    pm.expect(body.data.reportId).to.eql(Number(pm.collectionVariables.get('reportId')));",
+                  "    pm.expect(body.data.groupId).to.eql(Number(pm.collectionVariables.get('groupId')));",
+                  "    pm.expect(['PENDING', 'COMPLETED', 'FAILED']).to.include(body.data.status);",
+                  "});",
+                  "",
+                  "pm.test('상태에 맞는 content 가 옵니다', function () {",
+                  "    if (body.data.status === 'COMPLETED') {",
+                  "        pm.expect(body.data.content).to.be.an('object');",
+                  "        pm.expect(body.data.content.title).to.be.a('string').and.not.empty;",
+                  "        pm.expect(body.data.content.meta).to.be.an('object');",
+                  "    } else if (body.data.status === 'PENDING') {",
+                  "        pm.expect(body.data.content).to.eql(null);",
+                  "    } else {",
+                  "        pm.expect(body.data.content.meta).to.have.property('error');",
+                  "    }",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "없는 리포트 404",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/reports/{{missingReportId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "reports",
+                "{{missingReportId}}"
+              ]
+            },
+            "description": "명세 4장의 REPORT_NOT_FOUND 를 확인합니다."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "",
+                  "pm.test('상태 코드 404 입니다', function () {",
+                  "    pm.response.to.have.status(404);",
+                  "});",
+                  "",
+                  "pm.test('오류 봉투의 status 가 404 입니다', function () {",
+                  "    pm.expect(body.status).to.eql(404);",
+                  "});",
+                  "",
+                  "pm.test('error.code 가 REPORT_NOT_FOUND 입니다', function () {",
+                  "    pm.expect(body.error.code).to.eql('REPORT_NOT_FOUND');",
+                  "});",
+                  "",
+                  "pm.test('오류 봉투에 message 가 있고 details 가 배열입니다', function () {",
+                  "    pm.expect(body.message).to.be.a('string');",
+                  "    pm.expect(body.error.details).to.be.an('array');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "내 그룹 아닌 리포트 목록 403",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/groups/{{groupId}}/reports",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "groups",
+                "{{groupId}}",
+                "reports"
+              ]
+            },
+            "description": "명세 2장 UC-08 표의 403 을 확인합니다. 목록과 조회에는 플랜 조건이 없지만 그룹 확인은 그대로 걸립니다.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenOutsider}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "",
+                  "pm.test('상태 코드 403 입니다', function () {",
+                  "    pm.response.to.have.status(403);",
+                  "});",
+                  "",
+                  "pm.test('오류 봉투의 status 가 403 입니다', function () {",
+                  "    pm.expect(body.status).to.eql(403);",
+                  "});",
+                  "",
+                  "pm.test('error.code 가 NOT_GROUP_MEMBER 입니다', function () {",
+                  "    pm.expect(body.error.code).to.eql('NOT_GROUP_MEMBER');",
+                  "});",
+                  "",
+                  "pm.test('오류 봉투에 message 가 있고 details 가 배열입니다', function () {",
+                  "    pm.expect(body.message).to.be.a('string');",
+                  "    pm.expect(body.error.details).to.be.an('array');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "runStamp",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "accessToken",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "tokenB",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "tokenOutsider",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "tokenFree",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "userAEmail",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "userBEmail",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "outsiderEmail",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "userAId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "userBId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "outsiderId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "groupId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "freeGroupId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "inviteCode",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "placeId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "placeName",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "groupPlaceId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "reviewId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "visitedOn",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "requestId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "subscriptionId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "reportId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "reportMonth",
+      "value": "",
+      "type": "string"
+    }
+  ]
+}

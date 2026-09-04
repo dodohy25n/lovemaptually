@@ -13,7 +13,7 @@ import RecommendationModal from '@/components/RecommendationModal.vue'
 import ReviewCarouselModal from '@/components/ReviewCarouselModal.vue'
 import FloatingNotebookMenu from '@/components/FloatingNotebookMenu.vue'
 import { usePlacesStore } from '@/stores/places.js'
-import { fetchMyGroups } from '@/services/groupApi.js'
+import { createGroup, fetchMyGroups } from '@/services/groupApi.js'
 import heartFlourish from '../../frontend-assets/decorations/love_maptually_heart_flourish.png'
 import pinkTape from '../../frontend-assets/decorations/love_maptually_pink_tape.png'
 
@@ -48,6 +48,10 @@ const reviewOpen = ref(false)
 const reviewRole = ref('him')
 const searchedPlace = ref(null)
 const groupName = ref('')
+const groupLoaded = ref(false)
+const hasGroup = ref(false)
+const creatingGroup = ref(false)
+const groupError = ref('')
 
 const hasFilteredResult = computed(() => visiblePlaces.value.length > 0)
 
@@ -56,12 +60,29 @@ onMounted(() => {
   fetchMyGroups()
     .then((groups) => {
       const primary = groups.find((group) => group.type === 'COUPLE') ?? groups[0]
+      hasGroup.value = groups.length > 0
       groupName.value = primary?.name ?? ''
+      groupLoaded.value = true
     })
     .catch((err) => {
       if (err?.code !== 'auth_required') console.warn('그룹 목록을 불러오지 못했습니다.', err)
     })
 })
+
+async function createCoupleGroup() {
+  if (creatingGroup.value) return
+  groupError.value = ''
+  creatingGroup.value = true
+  try {
+    const group = await createGroup({ groupType: 'COUPLE', name: '우리 둘' })
+    hasGroup.value = true
+    groupName.value = group.name
+  } catch (err) {
+    groupError.value = err?.message || '커플 러브맵을 만들지 못했습니다.'
+  } finally {
+    creatingGroup.value = false
+  }
+}
 
 function selectPlace(id) {
   store.select(id)
@@ -136,6 +157,7 @@ async function submitForm(draft) {
       {{ storageWarning }}
     </p>
     <p v-if="error" class="mapview__warning mapview__warning--error" role="alert">{{ error }}</p>
+    <p v-if="groupError" class="mapview__warning mapview__warning--error" role="alert">{{ groupError }}</p>
 
     <div class="mapview__layout">
       <MapCanvas
@@ -149,7 +171,13 @@ async function submitForm(draft) {
         @pick="onMapPick"
       >
         <aside class="mapview__side" aria-label="러브맵 정보">
-        <CoupleSummary :count="totalCount" :group-name="groupName" />
+        <CoupleSummary
+          :count="totalCount"
+          :group-name="groupName"
+          :can-create-group="groupLoaded && !hasGroup"
+          :creating-group="creatingGroup"
+          @create-group="createCoupleGroup"
+        />
         <RecentPlaces
           :places="recentPlaces"
           :selected-id="selectedId"

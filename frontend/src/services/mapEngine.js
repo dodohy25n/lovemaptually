@@ -152,6 +152,10 @@ async function createFallbackEngine(container) {
     center: [DEFAULT_CENTER.latitude, DEFAULT_CENTER.longitude],
     zoom: DEFAULT_ZOOM,
     zoomControl: true,
+    // Leaflet의 zoom transition 타이머는 화면 전환 뒤에도 남을 수 있습니다.
+    // 타일이 없는 대체 지도에서는 애니메이션이 필요하지 않으므로 비활성화해
+    // 제거된 map pane을 지연 콜백이 다시 참조하지 않게 합니다.
+    zoomAnimation: false,
     attributionControl: false, // 표시할 지도 출처가 없습니다.
   })
   let routeLayer = null

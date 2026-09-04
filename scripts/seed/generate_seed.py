@@ -1,6 +1,6 @@
 """데모 시드 데이터 생성기.
 
-고정 시드로 장소 40곳, 사용자 26명, 커플 13팀, 리뷰 약 250건을 만들어
+고정 시드로 장소 50곳, 사용자 26명, 커플 13팀, 리뷰 약 250건을 만들어
 scripts/seed/seed-data.json 에 씁니다. 두 번 실행해도 바이트 단위로 같은 결과가 나옵니다.
 
 리뷰 문장은 backend/src/main/resources/ai/matching-table.json 의 표현 목록에서 만들기 때문에
@@ -35,12 +35,15 @@ REGION_STREET = {
     "연남": "서울 마포구 성미산로",
 }
 
-# (이름, 카테고리) 10개씩. 모두 지어낸 상호입니다.
+# (이름, 카테고리). 인사동은 추천 후보를 넉넉히 두려고 20곳, 나머지는 10곳씩. 모두 지어낸 상호입니다.
 PLACE_NAMES = {
     "인사동": [
         ("달빛찻집", "카페"), ("한지빛전시관", "전시"), ("골목밥상", "식당"), ("청류국수", "식당"),
-        ("북촌담소", "카페"), ("연화당떡집", "디저트"), ("소나무뜰", "카페"), ("먹골전집", "술집"),
+        ("매운손칼국수", "식당"), ("연화당떡집", "디저트"), ("소나무뜰", "카페"), ("먹골전집", "술집"),
         ("돌담길산책로", "산책"), ("운현정원", "산책"),
+        ("북촌담소", "카페"), ("고요다실", "카페"), ("한지공예관", "전시"), ("인사동곳간", "식당"),
+        ("솔밭한상", "식당"), ("쌍계약과점", "디저트"), ("모란다과", "디저트"), ("옛골주점", "술집"),
+        ("낙원벽화길", "산책"), ("붓끝갤러리", "전시"),
     ],
     "여의도": [
         ("강바람카페", "카페"), ("윤슬다이닝", "식당"), ("한강뷰라운지", "술집"), ("샛강산책길", "산책"),
@@ -294,6 +297,43 @@ def join_sentences(rng, sentences):
     return out
 
 
+def load_cues():
+    with MATCHING_TABLE.open(encoding="utf-8") as f:
+        table = json.load(f)
+    return table["positiveCues"], table["negativeCues"]
+
+
+def derive_want(content, expression, fact_side, cues, window=25):
+    """서버와 같은 규칙으로 want 를 되짚습니다.
+
+    표현을 찾고 표현 시작부터 끝에서 25자 뒤까지를 창으로 삼아, 가장 가까운 감정 단서를 봅니다.
+    긍정 단서면 장소의 성격 쪽을 원하는 것이고, 부정 단서면 반대쪽을 원하는 것입니다.
+    """
+    positive, negative = cues
+    m = re.search(expression, content)
+    if m is None:
+        return None
+    span = m.end() - m.start()
+    text = content[m.start(): m.end() + window]
+    best_distance = None
+    sides = set()
+    for cue_list, side in ((positive, "POS"), (negative, "NEG")):
+        for cue in cue_list:
+            idx = text.find(cue)
+            if idx < 0:
+                continue
+            distance = max(0, idx - span)
+            if best_distance is None or distance < best_distance:
+                best_distance, sides = distance, {side}
+            elif distance == best_distance:
+                sides.add(side)
+    if not sides:
+        return None
+    if len(sides) > 1:
+        return "AMBIGUOUS"
+    return fact_side if sides == {"POS"} else flip(fact_side)
+
+
 def load_table():
     with MATCHING_TABLE.open(encoding="utf-8") as f:
         table = json.load(f)
@@ -309,26 +349,33 @@ def load_table():
     return by_tag
 
 
-def make_review_text(rng, table, traits, wants, force_tags=None, max_clauses=3):
-    """장소 성격과 사용자 취향으로 리뷰 본문을 만듭니다."""
-    names = [t for t, _ in traits]
-    k = rng.randint(1, min(max_clauses, len(names)))
-    chosen = list(force_tags or [])
-    # 사용자가 신경 쓰는 태그를 먼저 언급해야 문장의 감정이 별점과 맞습니다
-    cared = [t for t in names if t not in chosen and t in wants]
-    others = [t for t in names if t not in chosen and t not in wants]
-    rng.shuffle(cared)
-    rng.shuffle(others)
-    chosen += (cared + others)[: max(0, k - len(chosen))]
+def make_review_text(rng, table, traits, wants, exact_tags=None, max_clauses=3):
+    """장소 성격과 사용자 취향으로 리뷰 본문을 만듭니다.
+
+    exact_tags 를 주면 그 태그만 그 순서대로 씁니다 (데모 커플용). 반환은 (본문, [(태그, 성격, 표현)]).
+    """
     trait_map = dict(traits)
+    if exact_tags is not None:
+        chosen = list(exact_tags)
+    else:
+        names = [t for t, _ in traits]
+        k = rng.randint(1, min(max_clauses, len(names)))
+        # 사용자가 신경 쓰는 태그를 먼저 언급해야 문장의 감정이 별점과 맞습니다
+        cared = [t for t in names if t in wants]
+        others = [t for t in names if t not in wants]
+        rng.shuffle(cared)
+        rng.shuffle(others)
+        chosen = (cared + others)[:k]
     sentences = []
+    used = []
     for tag in chosen:
         side = trait_map[tag]
         expression = rng.choice(table[tag][side])
         want = wants.get(tag)
         cue = None if want is None else ("POS" if want == side else "NEG")
         sentences.append(build_clause(rng, expression, cue))
-    return join_sentences(rng, sentences)
+        used.append((tag, side, expression))
+    return join_sentences(rng, sentences), used
 
 
 def flip(side):

@@ -56,3 +56,44 @@ export async function login({ email, password }, { fetchImpl = globalThis.fetch 
 
   return auth
 }
+
+/** POST /api/auth/signup. 가입 후에는 기존 흐름대로 로그인 화면에서 다시 인증합니다. */
+export async function signup({ email, password, nickname }, { fetchImpl = globalThis.fetch } = {}) {
+  if (!config.apiBaseUrl) {
+    throw new AuthApiError('API 기본 주소가 설정되지 않았습니다.', 'missing_base_url')
+  }
+  if (typeof fetchImpl !== 'function') {
+    throw new AuthApiError('이 환경에서는 회원가입 요청을 보낼 수 없습니다.', 'fetch_unavailable')
+  }
+
+  const url = new URL('/api/auth/signup', config.apiBaseUrl)
+  let response
+  try {
+    response = await fetchImpl(url, {
+      method: 'POST',
+      headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        email: String(email).trim(),
+        password: String(password),
+        nickname: String(nickname).trim(),
+      }),
+    })
+  } catch {
+    throw new AuthApiError('회원가입 서버에 연결하지 못했습니다.', 'network_error')
+  }
+
+  const payload = await response.json().catch(() => null)
+  if (!response.ok) {
+    const duplicate = response.status === 409 && payload?.error?.code === 'EMAIL_ALREADY_EXISTS'
+    throw new AuthApiError(
+      payload?.message || '회원가입하지 못했습니다.',
+      duplicate ? 'email_already_exists' : 'http_error',
+    )
+  }
+
+  const auth = payload?.data
+  if (!auth?.accessToken || !auth?.userId) {
+    throw new AuthApiError('회원가입 응답 형식이 올바르지 않습니다.', 'invalid_response')
+  }
+  return auth
+}
